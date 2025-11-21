@@ -1,0 +1,34 @@
+﻿# Node
+node_modules/
+dist/
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.env
+.env.*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.python-version
+.venv/
+venv/
+env/
+poetry.lock
+pip-wheel-metadata/
+.cache/
+.mypy_cache/
+.pytest_cache/
+.coverage*
+htmlcov/
+build/
+dist/
+
+# General
+.DS_Store
+.idea/
+.vscode/
+Thumbs.db
