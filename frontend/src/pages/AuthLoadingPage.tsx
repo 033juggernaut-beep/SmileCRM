@@ -51,7 +51,7 @@ export const AuthLoadingPage = () => {
       sessionStorage.setItem(TELEGRAM_INIT_DATA_STORAGE_KEY, safeInitDataRaw)
 
       try {
-        const response = await apiClient.post<AuthResponse>(
+        const { data } = await apiClient.post<AuthResponse>(
           '/api/auth/telegram',
           {
             initData: safeInitDataRaw,
@@ -62,11 +62,11 @@ export const AuthLoadingPage = () => {
           return
         }
 
-        if (response.doctorExists) {
-          if (!response.accessToken) {
+        if (data.doctorExists) {
+          if (!data.accessToken) {
             throw new Error('Сервер не вернул accessToken')
           }
-          localStorage.setItem(TOKEN_STORAGE_KEY, response.accessToken)
+          localStorage.setItem(TOKEN_STORAGE_KEY, data.accessToken)
           navigate('/home', { replace: true })
         } else {
           localStorage.removeItem(TOKEN_STORAGE_KEY)

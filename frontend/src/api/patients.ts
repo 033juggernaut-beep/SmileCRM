@@ -1,4 +1,4 @@
-import { apiClient } from './client'
+import { apiClient, buildAuthHeaders } from './client'
 import { TOKEN_STORAGE_KEY } from '../constants/storage'
 
 export const PATIENT_STATUSES = [
@@ -128,57 +128,57 @@ const buildVisitPayload = (payload: CreateVisitInput | UpdateVisitInput) => {
 export const patientsApi = {
   async list(): Promise<Patient[]> {
     const authToken = getAuthTokenOrThrow()
-    const response = await apiClient.get<ApiPatient[]>('/api/patients', {
-      authToken,
+    const { data } = await apiClient.get<ApiPatient[]>('/api/patients', {
+      headers: buildAuthHeaders(authToken),
     })
-    return Array.isArray(response) ? response.map(mapPatient) : []
+    return Array.isArray(data) ? data.map(mapPatient) : []
   },
 
   async create(payload: CreatePatientInput): Promise<Patient> {
     const authToken = getAuthTokenOrThrow()
-    const response = await apiClient.post<ApiPatient>(
+    const { data } = await apiClient.post<ApiPatient>(
       '/api/patients',
       buildPatientPayload(payload),
-      { authToken },
+      { headers: buildAuthHeaders(authToken) },
     )
-    return mapPatient(response)
+    return mapPatient(data)
   },
 
   async getById(patientId: string): Promise<Patient> {
     const authToken = getAuthTokenOrThrow()
-    const response = await apiClient.get<ApiPatient>(`/api/patients/${patientId}`, {
-      authToken,
+    const { data } = await apiClient.get<ApiPatient>(`/api/patients/${patientId}`, {
+      headers: buildAuthHeaders(authToken),
     })
-    return mapPatient(response)
+    return mapPatient(data)
   },
 
   async getVisits(patientId: string): Promise<Visit[]> {
     const authToken = getAuthTokenOrThrow()
-    const response = await apiClient.get<ApiVisit[]>(
+    const { data } = await apiClient.get<ApiVisit[]>(
       `/api/patients/${patientId}/visits`,
-      { authToken },
+      { headers: buildAuthHeaders(authToken) },
     )
-    return Array.isArray(response) ? response.map(mapVisit) : []
+    return Array.isArray(data) ? data.map(mapVisit) : []
   },
 
   async createVisit(patientId: string, payload: CreateVisitInput): Promise<Visit> {
     const authToken = getAuthTokenOrThrow()
-    const response = await apiClient.post<ApiVisit>(
+    const { data } = await apiClient.post<ApiVisit>(
       `/api/patients/${patientId}/visits`,
       buildVisitPayload(payload),
-      { authToken },
+      { headers: buildAuthHeaders(authToken) },
     )
-    return mapVisit(response)
+    return mapVisit(data)
   },
 
   async updateVisit(visitId: string, payload: UpdateVisitInput): Promise<Visit> {
     const authToken = getAuthTokenOrThrow()
-    const response = await apiClient.patch<ApiVisit>(
+    const { data } = await apiClient.patch<ApiVisit>(
       `/api/visits/${visitId}`,
       buildVisitPayload(payload),
-      { authToken },
+      { headers: buildAuthHeaders(authToken) },
     )
-    return mapVisit(response)
+    return mapVisit(data)
   },
 }
 

@@ -14,7 +14,7 @@ import {
 import { useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { apiClient } from '../api/client'
+import { apiClient, buildAuthHeaders } from '../api/client'
 import {
   TELEGRAM_INIT_DATA_STORAGE_KEY,
   TOKEN_STORAGE_KEY,
@@ -87,14 +87,14 @@ export const RegisterDoctorPage = () => {
         initData: initDataRaw,
       }
 
-      const response = await apiClient.post<RegisterResponse>(
+      const { data } = await apiClient.post<RegisterResponse>(
         '/doctors/register',
         payload,
-        { authToken: token },
+        { headers: buildAuthHeaders(token) },
       )
 
-      if (response?.token) {
-        localStorage.setItem(TOKEN_STORAGE_KEY, response.token)
+      if (data?.token) {
+        localStorage.setItem(TOKEN_STORAGE_KEY, data.token)
       }
 
       navigate('/home', { replace: true })

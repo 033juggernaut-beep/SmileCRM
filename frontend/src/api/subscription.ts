@@ -1,5 +1,5 @@
 import { TOKEN_STORAGE_KEY } from '../constants/storage'
-import { apiClient } from './client'
+import { apiClient, buildAuthHeaders } from './client'
 
 export type SubscriptionStatus = 'trial' | 'active' | 'expired'
 
@@ -39,13 +39,13 @@ const getAuthTokenOrThrow = () => {
 
 export const getSubscription = async (): Promise<SubscriptionSnapshot> => {
   const authToken = getAuthTokenOrThrow()
-  const response = await apiClient.get<SubscriptionApiResponse>('/api/subscription', {
-    authToken,
+  const { data } = await apiClient.get<SubscriptionApiResponse>('/api/subscription', {
+    headers: buildAuthHeaders(authToken),
   })
   return {
-    status: response.status,
-    trialEndsAt: response.trialEndsAt,
-    currentPeriodEnd: response.currentPeriodEnd,
+    status: data.status,
+    trialEndsAt: data.trialEndsAt,
+    currentPeriodEnd: data.currentPeriodEnd,
   }
 }
 
@@ -54,15 +54,16 @@ export const createPayment = async (
 ): Promise<CreatePaymentApiResponse> => {
   const authToken = getAuthTokenOrThrow()
 
-  return apiClient.post<CreatePaymentApiResponse>(
+  const { data } = await apiClient.post<CreatePaymentApiResponse>(
     '/api/subscription/create-payment',
     {
       provider,
       amount: DEFAULT_PAYMENT_AMOUNT_AMD,
       currency: DEFAULT_PAYMENT_CURRENCY,
     },
-    { authToken },
+    { headers: buildAuthHeaders(authToken) },
   )
+  return data
 }
 
 
