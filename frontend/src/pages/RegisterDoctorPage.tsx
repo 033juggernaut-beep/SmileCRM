@@ -9,8 +9,10 @@ import {
   Stack,
   Text,
   Textarea,
+  chakra,
 } from '@chakra-ui/react'
-import { FormEvent, useState } from 'react'
+import { useState } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiClient } from '../api/client'
 import {
@@ -46,7 +48,7 @@ export const RegisterDoctorPage = () => {
 
   const handleChange =
     (field: keyof FormFields) =>
-    (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       setForm((current) => ({
         ...current,
         [field]: event.target.value,
@@ -108,78 +110,80 @@ export const RegisterDoctorPage = () => {
   }
 
   return (
-    <Stack spacing={6} as="form" onSubmit={handleSubmit}>
-      <Stack spacing={1}>
-        <Heading size="md">Регистрация врача</Heading>
-        <Text fontSize="sm" color="gray.500">
-          Заполните информацию о себе, чтобы продолжить работу в Dental Mini App.
-        </Text>
+    <chakra.form onSubmit={handleSubmit} w="full">
+      <Stack spacing={6}>
+        <Stack spacing={1}>
+          <Heading size="md">Регистрация врача</Heading>
+          <Text fontSize="sm" color="gray.500">
+            Заполните информацию о себе, чтобы продолжить работу в Dental Mini App.
+          </Text>
+        </Stack>
+
+        <Stack spacing={4}>
+          <FormControl isRequired>
+            <FormLabel>Имя</FormLabel>
+            <Input
+              value={form.firstName}
+              onChange={handleChange('firstName')}
+              placeholder="Например, Арман"
+            />
+          </FormControl>
+
+          <FormControl isRequired>
+            <FormLabel>Фамилия</FormLabel>
+            <Input
+              value={form.lastName}
+              onChange={handleChange('lastName')}
+              placeholder="Например, Петросян"
+            />
+          </FormControl>
+
+          <FormControl isRequired>
+            <FormLabel>Специализация</FormLabel>
+            <Input
+              value={form.specialization}
+              onChange={handleChange('specialization')}
+              placeholder="Ортодонт, терапевт и т.д."
+            />
+          </FormControl>
+
+          <FormControl isRequired>
+            <FormLabel>Телефон</FormLabel>
+            <Input
+              value={form.phone}
+              onChange={handleChange('phone')}
+              placeholder="+374 XX XX XX"
+            />
+          </FormControl>
+
+          <FormControl isRequired>
+            <FormLabel>Название клиники</FormLabel>
+            <Textarea
+              value={form.clinicName}
+              onChange={handleChange('clinicName')}
+              placeholder="Укажите клинику или индивидуальную практику"
+              rows={2}
+            />
+          </FormControl>
+        </Stack>
+
+        {error ? (
+          <Alert status="error" borderRadius="md">
+            <AlertIcon />
+            {error}
+          </Alert>
+        ) : null}
+
+        <Button
+          type="submit"
+          colorScheme="teal"
+          size="lg"
+          isLoading={isSubmitting}
+        >
+          Зарегистрироваться
+        </Button>
       </Stack>
-
-      <Stack spacing={4}>
-        <FormControl isRequired>
-          <FormLabel>Имя</FormLabel>
-          <Input
-            value={form.firstName}
-            onChange={handleChange('firstName')}
-            placeholder="Например, Арман"
-          />
-        </FormControl>
-
-        <FormControl isRequired>
-          <FormLabel>Фамилия</FormLabel>
-          <Input
-            value={form.lastName}
-            onChange={handleChange('lastName')}
-            placeholder="Например, Петросян"
-          />
-        </FormControl>
-
-        <FormControl isRequired>
-          <FormLabel>Специализация</FormLabel>
-          <Input
-            value={form.specialization}
-            onChange={handleChange('specialization')}
-            placeholder="Ортодонт, терапевт и т.д."
-          />
-        </FormControl>
-
-        <FormControl isRequired>
-          <FormLabel>Телефон</FormLabel>
-          <Input
-            value={form.phone}
-            onChange={handleChange('phone')}
-            placeholder="+374 XX XX XX"
-          />
-        </FormControl>
-
-        <FormControl isRequired>
-          <FormLabel>Название клиники</FormLabel>
-          <Textarea
-            value={form.clinicName}
-            onChange={handleChange('clinicName')}
-            placeholder="Укажите клинику или индивидуальную практику"
-            rows={2}
-          />
-        </FormControl>
-      </Stack>
-
-      {error ? (
-        <Alert status="error" borderRadius="md">
-          <AlertIcon />
-          {error}
-        </Alert>
-      ) : null}
-
-      <Button
-        type="submit"
-        colorScheme="teal"
-        size="lg"
-        isLoading={isSubmitting}
-      >
-        Зарегистрироваться
-      </Button>
-    </Stack>
+    </chakra.form>
   )
 }
 

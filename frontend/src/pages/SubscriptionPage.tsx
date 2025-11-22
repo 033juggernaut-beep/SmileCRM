@@ -11,12 +11,8 @@ import {
   useToast,
 } from '@chakra-ui/react'
 
-import {
-  PaymentProvider,
-  SubscriptionSnapshot,
-  createPayment,
-  getSubscription,
-} from '../api/subscription'
+import { createPayment, getSubscription } from '../api/subscription'
+import type { PaymentProvider, SubscriptionSnapshot } from '../api/subscription'
 
 const STATUS_LABELS: Record<SubscriptionSnapshot['status'], string> = {
   trial: 'Trial',

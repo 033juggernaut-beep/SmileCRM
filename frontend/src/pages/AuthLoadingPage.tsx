@@ -33,10 +33,14 @@ export const AuthLoadingPage = () => {
       return
     }
 
-    if (!initData.initDataRaw) {
+    const { initDataRaw } = initData
+
+    if (!initDataRaw) {
       setError('Telegram WebApp initData missing')
       return
     }
+
+    const safeInitDataRaw = initDataRaw
 
     let cancelled = false
 
@@ -44,16 +48,13 @@ export const AuthLoadingPage = () => {
       setIsAuthenticating(true)
       setError(null)
 
-      sessionStorage.setItem(
-        TELEGRAM_INIT_DATA_STORAGE_KEY,
-        initData.initDataRaw,
-      )
+      sessionStorage.setItem(TELEGRAM_INIT_DATA_STORAGE_KEY, safeInitDataRaw)
 
       try {
         const response = await apiClient.post<AuthResponse>(
           '/api/auth/telegram',
           {
-            initData: initData.initDataRaw,
+            initData: safeInitDataRaw,
           },
         )
 

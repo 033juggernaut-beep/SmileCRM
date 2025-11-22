@@ -10,9 +10,11 @@ import {
   Stack,
   Text,
   Textarea,
+  chakra,
   useToast,
 } from '@chakra-ui/react'
-import { FormEvent, useState } from 'react'
+import { useState } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   PATIENT_STATUSES,
@@ -45,14 +47,14 @@ export const AddPatientPage = () => {
 
   const handleChange =
     (field: keyof FormFields) =>
-    (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       setForm((prev) => ({
         ...prev,
         [field]: event.target.value,
       }))
     }
 
-  const handleStatusChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleStatusChange = (event: ChangeEvent<HTMLSelectElement>) => {
     setForm((prev) => ({
       ...prev,
       status: event.target.value as PatientStatus,
@@ -100,80 +102,82 @@ export const AddPatientPage = () => {
   }
 
   return (
-    <Stack as="form" spacing={5} onSubmit={handleSubmit}>
-      <Stack spacing={1}>
-        <Heading size="md">Добавить пациента</Heading>
-        <Text fontSize="xs" color="gray.500">
-          После сохранения пациент станет доступен в общем списке.
-        </Text>
+    <chakra.form onSubmit={handleSubmit} w="full">
+      <Stack spacing={5}>
+        <Stack spacing={1}>
+          <Heading size="md">Добавить пациента</Heading>
+          <Text fontSize="xs" color="gray.500">
+            После сохранения пациент станет доступен в общем списке.
+          </Text>
+        </Stack>
+
+        <Stack spacing={4}>
+          <FormControl isRequired>
+            <FormLabel>Имя</FormLabel>
+            <Input
+              placeholder="Например, Անի"
+              value={form.firstName}
+              onChange={handleChange('firstName')}
+            />
+          </FormControl>
+
+          <FormControl isRequired>
+            <FormLabel>Фамилия</FormLabel>
+            <Input
+              placeholder="Например, Սարգսյան"
+              value={form.lastName}
+              onChange={handleChange('lastName')}
+            />
+          </FormControl>
+
+          <FormControl isRequired>
+            <FormLabel>Диагноз</FormLabel>
+            <Textarea
+              placeholder="Короткое описание диагноза"
+              rows={3}
+              value={form.diagnosis}
+              onChange={handleChange('diagnosis')}
+            />
+          </FormControl>
+
+          <FormControl>
+            <FormLabel>Телефон</FormLabel>
+            <Input
+              placeholder="+374 ..."
+              value={form.phone}
+              onChange={handleChange('phone')}
+            />
+          </FormControl>
+
+          <FormControl>
+            <FormLabel>Статус</FormLabel>
+            <Select value={form.status} onChange={handleStatusChange}>
+              {PATIENT_STATUSES.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </Select>
+          </FormControl>
+        </Stack>
+
+        {error ? (
+          <Alert status="error" borderRadius="md">
+            <AlertIcon />
+            {error}
+          </Alert>
+        ) : null}
+
+        <Button
+          type="submit"
+          colorScheme="teal"
+          size="lg"
+          isLoading={isSubmitting}
+        >
+          Сохранить данные
+        </Button>
       </Stack>
-
-      <Stack spacing={4}>
-        <FormControl isRequired>
-          <FormLabel>Имя</FormLabel>
-          <Input
-            placeholder="Например, Անի"
-            value={form.firstName}
-            onChange={handleChange('firstName')}
-          />
-        </FormControl>
-
-        <FormControl isRequired>
-          <FormLabel>Фамилия</FormLabel>
-          <Input
-            placeholder="Например, Սարգսյան"
-            value={form.lastName}
-            onChange={handleChange('lastName')}
-          />
-        </FormControl>
-
-        <FormControl isRequired>
-          <FormLabel>Диагноз</FormLabel>
-          <Textarea
-            placeholder="Короткое описание диагноза"
-            rows={3}
-            value={form.diagnosis}
-            onChange={handleChange('diagnosis')}
-          />
-        </FormControl>
-
-        <FormControl>
-          <FormLabel>Телефон</FormLabel>
-          <Input
-            placeholder="+374 ..."
-            value={form.phone}
-            onChange={handleChange('phone')}
-          />
-        </FormControl>
-
-        <FormControl>
-          <FormLabel>Статус</FormLabel>
-          <Select value={form.status} onChange={handleStatusChange}>
-            {PATIENT_STATUSES.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </Select>
-        </FormControl>
-      </Stack>
-
-      {error ? (
-        <Alert status="error" borderRadius="md">
-          <AlertIcon />
-          {error}
-        </Alert>
-      ) : null}
-
-      <Button
-        type="submit"
-        colorScheme="teal"
-        size="lg"
-        isLoading={isSubmitting}
-      >
-        Сохранить данные
-      </Button>
-    </Stack>
+    </chakra.form>
   )
 }
 
