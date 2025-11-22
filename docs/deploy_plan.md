@@ -60,6 +60,21 @@
 3. Добавь те же переменные окружения.
 4. Railway выдаст `https://<project>.up.railway.app`.
 
+### Deploy backend на Render (детально)
+1. В репозитории уже есть `render.yaml`. На Render можно выбрать **Blueprint** и указать этот файл, либо вручную создать Web Service:
+   - Root directory: `backend`.
+   - Build command: `pip install -r requirements.txt`.
+   - Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
+2. Задай переменные окружения (см. `backend/.env.example`):
+   - `TELEGRAM_BOT_TOKEN`
+   - `SUPABASE_URL`
+   - `SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `FRONTEND_WEBAPP_URL=https://cerulean-sfogliatella-9f38c8.netlify.app`
+   - `WEBHOOK_URL=https://<render-service>.onrender.com`
+3. После деплоя проверь `https://<render-service>.onrender.com/health` и `https://<render-service>.onrender.com/docs`.
+4. Обнови Netlify переменную `VITE_API_URL` этим Render URL, чтобы Telegram Mini App перестал обращаться к localhost.
+
 ## 4. Настройка webhook бота
 
 1. В `.env` бекенда уже должен быть `WEBHOOK_URL=https://<backend-domain>`.

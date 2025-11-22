@@ -1,4 +1,8 @@
-﻿from fastapi import FastAPI, HTTPException, Request
+﻿import os
+
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 
 from app.api import auth, doctors, media, patients, payments, subscription, test_supabase, visits
 from app.bot.bot import get_bot, is_bot_configured, process_update
@@ -7,6 +11,25 @@ from app.config import get_settings
 settings = get_settings()
 
 app = FastAPI(title="SmileCRM Backend")
+
+_DEFAULT_ALLOWED_ORIGINS = {"https://cerulean-sfogliatella-9f38c8.netlify.app"}
+
+
+def _build_allowed_origins() -> list[str]:
+  origins = set(_DEFAULT_ALLOWED_ORIGINS)
+  if settings.FRONTEND_WEBAPP_URL:
+    origins.add(settings.FRONTEND_WEBAPP_URL.rstrip("/"))
+    origins.add(settings.FRONTEND_WEBAPP_URL)
+  return sorted(filter(None, origins))
+
+
+app.add_middleware(
+  CORSMiddleware,
+  allow_origins=_build_allowed_origins(),
+  allow_credentials=True,
+  allow_methods=["*"],
+  allow_headers=["*"],
+)
 
 
 @app.get("/health")
@@ -41,7 +64,8 @@ async def on_startup() -> None:
     await bot.set_webhook(f"{webhook_url}/bot/webhook")
 
 
-# Временный вывод маршрутов для отладки
 if __name__ == "__main__":
   for route in app.routes:
     print(route.path, route.methods)
+  port = int(os.environ.get("PORT", "8000"))
+  uvicorn.run("app.main:app", host="0.0.0.0", port=port)

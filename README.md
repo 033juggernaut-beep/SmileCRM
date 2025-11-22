@@ -27,3 +27,7 @@ uvicorn app.main:app --reload
 ```
 
 > Docker and ngrok are intentionally not used; rely on the native Node.js and Python toolchains.
+
+## Environment configuration
+
+- `VITE_API_URL` must point to the production backend and use HTTPS so that the Telegram Mini App can reach the API outside of localhost.

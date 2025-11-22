@@ -1,0 +1,23 @@
+# Render web service definition for the SmileCRM backend.
+services:
+  - type: web
+    name: smilecrm-backend
+    env: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: FRONTEND_WEBAPP_URL
+        sync: false
+      - key: WEBHOOK_URL
+        sync: false
+# Values for envVars are provided manually via the Render dashboard.
+
