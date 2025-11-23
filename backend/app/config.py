@@ -12,7 +12,7 @@ class Settings(BaseSettings):
   SUPABASE_SERVICE_ROLE_KEY: str = "supabase-service-role-key"
   TELEGRAM_BOT_TOKEN: str = "telegram-bot-token"
   TELEGRAM_WEBAPP_URL: Optional[str] = None
-  FRONTEND_WEBAPP_URL: str = "https://miniapp.local"
+  FRONTEND_WEBAPP_URL: str = "http://localhost:5173"
   WEBHOOK_URL: Optional[str] = None
   ENV: str = "development"
 

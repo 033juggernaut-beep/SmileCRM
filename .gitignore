@@ -10,6 +10,7 @@ yarn-error.log*
 .env.*
 !.env.example
 !backend/.env.example
+backend/.env
 
 # Python
 __pycache__/

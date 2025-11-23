@@ -14,8 +14,8 @@ from app.config import get_settings
 
 menu_router = Router()
 settings = get_settings()
-FRONTEND_URL = settings.FRONTEND_WEBAPP_URL or settings.TELEGRAM_WEBAPP_URL or "https://miniapp.local"
-IS_DEV = FRONTEND_URL.startswith("http://")
+FRONTEND_URL = settings.FRONTEND_WEBAPP_URL
+IS_DEV = FRONTEND_URL.startswith("http://localhost")
 
 MENU_ITEMS = [
   {
