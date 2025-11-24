@@ -52,7 +52,7 @@ export const AuthLoadingPage = () => {
 
       try {
         const { data } = await apiClient.post<AuthResponse>(
-          '/api/auth/telegram',
+          '/auth/telegram',
           {
             initData: safeInitDataRaw,
           },
