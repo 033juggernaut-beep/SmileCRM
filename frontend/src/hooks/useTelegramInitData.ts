@@ -7,9 +7,14 @@ type TelegramUser = {
   username?: string
 }
 
+type InitDataUnsafe = {
+  user?: TelegramUser
+}
+
 type TelegramInitData = {
   initDataRaw: string | null
   user: TelegramUser | null
+  initDataUnsafe?: InitDataUnsafe
 }
 
 export const useTelegramInitData = (): TelegramInitData | null => {
@@ -45,6 +50,7 @@ export const useTelegramInitData = (): TelegramInitData | null => {
         setState({
           initDataRaw,
           user,
+          initDataUnsafe: telegram?.initDataUnsafe as InitDataUnsafe | undefined,
         })
       }
     }
