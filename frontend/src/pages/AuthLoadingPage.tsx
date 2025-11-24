@@ -1,6 +1,7 @@
 import {
   Alert,
   AlertIcon,
+  Box,
   Button,
   Heading,
   Spinner,
@@ -15,6 +16,11 @@ import {
   TOKEN_STORAGE_KEY,
 } from '../constants/storage'
 import { useTelegramInitData } from '../hooks/useTelegramInitData'
+import {
+  getCurrentHref,
+  getDebugQueryParam,
+  isDebugMode,
+} from '../utils/debug'
 
 type AuthResponse = {
   doctorExists: boolean
@@ -27,6 +33,9 @@ export const AuthLoadingPage = () => {
   const [error, setError] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState(0)
   const [isAuthenticating, setIsAuthenticating] = useState(false)
+  const debugEnabled = isDebugMode()
+  const locationSearch = getDebugQueryParam()
+  const locationHref = getCurrentHref()
 
   useEffect(() => {
     if (!initData) {
@@ -127,6 +136,34 @@ export const AuthLoadingPage = () => {
         <Button onClick={handleRetry} colorScheme="teal" isLoading={isAuthenticating}>
           Повторить попытку
         </Button>
+        {debugEnabled ? (
+          <Box
+            borderWidth="1px"
+            borderRadius="lg"
+            borderColor="purple.200"
+            bg="purple.50"
+            p={4}
+          >
+            <Text fontSize="sm" color="gray.600" fontWeight="semibold">
+              DEBUG initDataRaw:
+            </Text>
+            <Text fontFamily="mono" fontSize="sm" wordBreak="break-all">
+              {initData?.initDataRaw ?? '—'}
+            </Text>
+            <Text fontSize="sm" color="gray.600" fontWeight="semibold" mt={3}>
+              DEBUG initDataUnsafe.user?.id:
+            </Text>
+            <Text fontFamily="mono" fontSize="sm">
+              {initData?.initDataUnsafe?.user?.id ?? '—'}
+            </Text>
+            <Text mt={3} fontSize="sm" color="gray.500">
+              DEBUG location.search: {locationSearch || '—'}
+            </Text>
+            <Text mt={1} fontSize="sm" color="gray.500" noOfLines={3}>
+              DEBUG location.href: {locationHref || '—'}
+            </Text>
+          </Box>
+        ) : null}
       </Stack>
     )
   }
