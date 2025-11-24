@@ -59,6 +59,10 @@ export const AuthLoadingPage = () => {
 
       sessionStorage.setItem(TELEGRAM_INIT_DATA_STORAGE_KEY, safeInitDataRaw)
 
+      console.log('[AUTH] Sending auth request')
+      console.log('[AUTH] initDataRaw length:', safeInitDataRaw.length)
+      console.log('[AUTH] initDataRaw preview:', safeInitDataRaw.substring(0, 100))
+
       try {
         const { data } = await apiClient.post<AuthResponse>(
           '/auth/telegram',
@@ -86,10 +90,21 @@ export const AuthLoadingPage = () => {
           return
         }
 
+        console.error('[AUTH] Request failed:', err)
+        let errorMessage = 'Не удалось связаться с сервером авторизации'
+        
+        if (err && typeof err === 'object' && 'response' in err) {
+          const response = (err as any).response
+          if (response?.data?.detail) {
+            errorMessage = `${errorMessage}: ${response.data.detail}`
+            console.error('[AUTH] Server error detail:', response.data.detail)
+          }
+        }
+
         setError(
           err instanceof Error
             ? err.message
-            : 'Не удалось связаться с сервером авторизации',
+            : errorMessage,
         )
       } finally {
         if (!cancelled) {

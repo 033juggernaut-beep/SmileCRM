@@ -14,10 +14,12 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 def _extract_init_data(raw_body: bytes) -> str:
+  print(f"[AUTH] Raw body length: {len(raw_body)}")
   if not raw_body:
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty body")
 
   body_str = raw_body.decode("utf-8", errors="replace").strip()
+  print(f"[AUTH] Body string preview: {body_str[:200]}")
   if not body_str:
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty body")
 
@@ -26,11 +28,13 @@ def _extract_init_data(raw_body: bytes) -> str:
 
   # Native Telegram payload (hash+user pairs) – return raw body as is.
   if payload and "hash" in payload and "user" in payload:
+    print("[AUTH] Detected native Telegram payload format")
     return body_str
 
   # Form payload that wraps init data under initData/init_data keys.
   init_data = payload.get("initData") or payload.get("init_data")
   if init_data:
+    print("[AUTH] Extracted initData from form payload")
     return init_data
 
   # JSON payload (used by the frontend mini app).
@@ -46,9 +50,14 @@ def _extract_init_data(raw_body: bytes) -> str:
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="JSON payload must be an object.")
 
   init_data = json_payload.get("initData") or json_payload.get("init_data")
+  print(f"[AUTH] JSON payload keys: {list(json_payload.keys())}")
   if not init_data or not isinstance(init_data, str):
-    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="initData field is missing or invalid.")
+    raise HTTPException(
+      status_code=status.HTTP_400_BAD_REQUEST, 
+      detail=f"initData field is missing or invalid. Found keys: {list(json_payload.keys())}"
+    )
 
+  print(f"[AUTH] Extracted initData from JSON: {init_data[:100]}")
   return init_data
 
 
@@ -60,9 +69,12 @@ async def telegram_auth_post(
   raw_body = await request.body()
   init_data_payload = _extract_init_data(raw_body)
 
+  print(f"[AUTH] Validating initData (length: {len(init_data_payload)})")
   try:
     user_info = validate_init_data(init_data_payload, settings.TELEGRAM_BOT_TOKEN)
+    print(f"[AUTH] Validation successful! User ID: {user_info.telegram_user_id}")
   except TelegramInitDataError as exc:
+    print(f"[AUTH] Validation failed: {exc}")
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
   doctor = doctors_service.get_by_telegram_user_id(user_info.telegram_user_id)
