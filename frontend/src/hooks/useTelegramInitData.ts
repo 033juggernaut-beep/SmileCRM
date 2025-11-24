@@ -21,7 +21,15 @@ export const useTelegramInitData = (): TelegramInitData | null => {
     const readInitData = () => {
       const telegram = window.Telegram?.WebApp
 
-      const initDataRaw = telegram?.initData ?? null
+      // 1) Получаем initDataRaw
+      let initDataRaw = telegram?.initData || null
+
+      // 2) Если Telegram вернул пустую строку или пробел — считаем это null
+      if (initDataRaw && initDataRaw.trim().length === 0) {
+        initDataRaw = null
+      }
+
+      // 3) Читаем user из initDataUnsafe, если он есть
       const unsafeUser = telegram?.initDataUnsafe?.user
 
       const user: TelegramUser | null = unsafeUser
@@ -52,4 +60,3 @@ export const useTelegramInitData = (): TelegramInitData | null => {
 
   return state
 }
-
