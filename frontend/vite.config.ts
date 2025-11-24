@@ -8,11 +8,14 @@ export default defineConfig(({ mode }) => {
   const publicEnv = Object.fromEntries(publicEnvEntries)
   console.log('[vite] Loaded public env variables:', publicEnv)
 
-  if (!publicEnv.VITE_API_BASE_URL) {
-    throw new Error('[vite] VITE_API_BASE_URL is not defined. Configure it before building.')
+  // In production mode, VITE_API_BASE_URL must be set
+  // In dev mode, it will fallback to localhost in client.ts
+  if (mode === 'production' && !publicEnv.VITE_API_BASE_URL) {
+    throw new Error('[vite] VITE_API_BASE_URL is required for production builds.')
   }
 
   return {
     plugins: [react()],
+    base: '/', // SPA base path for Vercel
   }
 })

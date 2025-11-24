@@ -15,6 +15,7 @@ type TelegramInitData = {
   initDataRaw: string | null
   user: TelegramUser | null
   initDataUnsafe?: InitDataUnsafe
+  isInTelegram: boolean // New field to indicate if running in Telegram
 }
 
 export const useTelegramInitData = (): TelegramInitData | null => {
@@ -25,6 +26,10 @@ export const useTelegramInitData = (): TelegramInitData | null => {
 
     const readInitData = () => {
       const telegram = window.Telegram?.WebApp
+      
+      // Check if running in Telegram by checking window.Telegram and user agent
+      const userAgent = navigator.userAgent || ''
+      const isInTelegram = !!(telegram || userAgent.includes('Telegram'))
 
       // 1) Получаем initDataRaw
       let initDataRaw = telegram?.initData || null
@@ -51,6 +56,7 @@ export const useTelegramInitData = (): TelegramInitData | null => {
           initDataRaw,
           user,
           initDataUnsafe: telegram?.initDataUnsafe as InitDataUnsafe | undefined,
+          isInTelegram,
         })
       }
     }

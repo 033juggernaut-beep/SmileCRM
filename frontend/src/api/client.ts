@@ -1,9 +1,11 @@
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_BASE_URL
+// Use env variable or fallback to localhost in dev mode
+const API_URL = import.meta.env.VITE_API_BASE_URL || 
+  (import.meta.env.DEV ? 'http://localhost:8000/api' : '')
 
 if (!API_URL) {
-  const message = '[api] VITE_API_BASE_URL is not configured'
+  const message = '[api] VITE_API_BASE_URL is not configured and not in dev mode'
   console.error(message, import.meta.env)
   throw new Error(message)
 }

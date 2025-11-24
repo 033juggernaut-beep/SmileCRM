@@ -1,8 +1,0 @@
-[build]
-  base = "frontend"
-  publish = "dist"
-  command = "npm run build"
-
-[template.environment]
-  VITE_API_URL = "https://smilecrm-backend-production.up.railway.app"
-

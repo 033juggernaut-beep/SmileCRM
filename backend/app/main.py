@@ -15,12 +15,25 @@ logger = fastapi_logger
 
 app = FastAPI(title="SmileCRM Backend")
 
+# CORS configuration for Vercel frontend
+# Allow both production and dev origins
+allowed_origins = [
+  "https://smile-crm-pied.vercel.app",  # Production Vercel deployment
+  "http://localhost:5173",  # Local Vite dev server
+  "http://localhost:5174",  # Alternative local port
+  "http://localhost:3000",  # Alternative local port
+]
+
+# If FRONTEND_WEBAPP_URL is set in env, add it to allowed origins
+if settings.FRONTEND_WEBAPP_URL:
+  allowed_origins.append(settings.FRONTEND_WEBAPP_URL)
+
 app.add_middleware(
   CORSMiddleware,
-  allow_origins=["*"],
+  allow_origins=allowed_origins,
   allow_credentials=True,
-  allow_methods=["*"],
-  allow_headers=["*"],
+  allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
 )
 
 

@@ -131,6 +131,30 @@ export const AuthLoadingPage = () => {
     )
   }
 
+  // If not in Telegram app, show friendly message with link to bot
+  if (!initData.isInTelegram) {
+    return (
+      <Stack spacing={4} textAlign="center" bg="white" borderRadius="xl" p={6}>
+        <Heading size="md">Откройте в Telegram</Heading>
+        <Text color="gray.600">
+          Это приложение работает только внутри Telegram.
+        </Text>
+        <Text color="gray.600">
+          Откройте бота <strong>@SmileCRM_bot</strong> в Telegram и нажмите кнопку "Բացել Mini App".
+        </Text>
+        <Button
+          as="a"
+          href="https://t.me/SmileCRM_bot"
+          target="_blank"
+          colorScheme="telegram"
+          size="lg"
+        >
+          Открыть @SmileCRM_bot
+        </Button>
+      </Stack>
+    )
+  }
+
   if (!initData.initDataRaw) {
     return (
       <ErrorState
