@@ -18,7 +18,8 @@ app = FastAPI(title="SmileCRM Backend")
 # CORS configuration for Vercel frontend
 # Allow both production and dev origins
 allowed_origins = [
-  "https://smilecrm-miniapp.vercel.app",  # Production Vercel deployment
+  "https://smilecrm-miniapp.vercel.app",  # Production Vercel deployment (no trailing slash)
+  "https://smilecrm-miniapp-r93fzn29z-maxs-projects-a5ae79fe.vercel.app",  # Vercel preview URL
   "http://localhost:5173",  # Local Vite dev server
   "http://localhost:5174",  # Alternative local port
   "http://localhost:3000",  # Alternative local port

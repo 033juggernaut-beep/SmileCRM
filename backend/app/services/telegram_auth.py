@@ -36,7 +36,9 @@ def _verify_hash(data: dict[str, str], received_hash: str | None, bot_token: str
     raise TelegramInitDataError("Telegram bot token is not configured.")
 
   data_check_string = _build_data_check_string(data)
-  secret_key = hashlib.sha256(bot_token.encode("utf-8")).digest()
+  # For Telegram Web App, use "WebAppData" constant as per official docs
+  # https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app
+  secret_key = hmac.new("WebAppData".encode(), bot_token.encode(), hashlib.sha256).digest()
   expected_hash = hmac.new(secret_key, data_check_string.encode("utf-8"), hashlib.sha256).hexdigest()
 
   if not hmac.compare_digest(expected_hash, received_hash):
