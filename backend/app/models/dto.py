@@ -40,6 +40,8 @@ class TelegramUserInfo(BaseModel):
   first_name: str
   last_name: str | None = None
   username: str | None = None
+  language_code: str | None = None
+  raw_data: dict | None = None
 
 
 class TelegramAuthRequest(BaseModel):
