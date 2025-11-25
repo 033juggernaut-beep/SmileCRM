@@ -12,7 +12,7 @@ Monorepo for the dental Telegram Mini App. It contains a frontend (Vite + React 
 
 ### Production URLs
 
-- **Frontend (Vercel):** https://smile-crm-pied.vercel.app
+- **Frontend (Vercel):** https://smilecrm-miniapp.vercel.app
 - **Backend (Render):** https://smilecrm.onrender.com/api
 - **Telegram Bot:** @SmileCRM_bot
 
@@ -34,7 +34,7 @@ The backend is deployed on Render. Required environment variables:
 - `SUPABASE_URL` - Supabase project URL
 - `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key
 - `TELEGRAM_BOT_TOKEN` - Telegram bot token from @BotFather
-- `FRONTEND_WEBAPP_URL` - Frontend URL (e.g., `https://smile-crm-pied.vercel.app`)
+- `FRONTEND_WEBAPP_URL` - Frontend URL (e.g., `https://smilecrm-miniapp.vercel.app`)
 - `WEBHOOK_URL` - Backend URL for Telegram webhooks (e.g., `https://smilecrm.onrender.com`)
 
 ## Local Development
@@ -90,7 +90,7 @@ The following changes were made to migrate from Netlify to Vercel:
    - Removed `netlify.toml`, added `vercel.json`
 
 2. **Backend:**
-   - Updated CORS to explicitly allow Vercel domain (`https://smile-crm-pied.vercel.app`)
+   - Updated CORS to explicitly allow Vercel domain (`https://smilecrm-miniapp.vercel.app`)
    - Added localhost ports for local development
    - Made CORS configuration more secure (removed `allow_origins=["*"]`)
 

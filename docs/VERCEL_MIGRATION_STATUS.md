@@ -61,7 +61,7 @@ VITE_API_BASE_URL=https://smilecrm.onrender.com/api
 SUPABASE_URL=<your-supabase-url>
 SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
 TELEGRAM_BOT_TOKEN=<your-bot-token>
-FRONTEND_WEBAPP_URL=https://smile-crm-pied.vercel.app
+FRONTEND_WEBAPP_URL=https://smilecrm-miniapp.vercel.app
 WEBHOOK_URL=https://smilecrm.onrender.com
 ```
 

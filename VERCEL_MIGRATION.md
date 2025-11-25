@@ -4,7 +4,7 @@ This document summarizes the changes made to migrate SmileCRM from Netlify to Ve
 
 ## Production URLs
 
-- **Frontend (Vercel):** https://smile-crm-pied.vercel.app
+- **Frontend (Vercel):** https://smilecrm-miniapp.vercel.app
 - **Backend (Render):** https://smilecrm.onrender.com/api
 - **Telegram Bot:** @SmileCRM_bot
 
@@ -49,7 +49,7 @@ This document summarizes the changes made to migrate SmileCRM from Netlify to Ve
 #### `backend/app/main.py`
 - ✅ Updated CORS configuration to explicitly allow Vercel domain
 - ✅ Changed from `allow_origins=["*"]` to specific allowed origins:
-  - `https://smile-crm-pied.vercel.app` (production)
+  - `https://smilecrm-miniapp.vercel.app` (production)
   - `http://localhost:5173` (local dev)
   - `http://localhost:5174` (alternative port)
   - `http://localhost:3000` (alternative port)
@@ -91,7 +91,7 @@ Required:
 - `TELEGRAM_BOT_TOKEN` - Telegram bot token from @BotFather
 
 Recommended:
-- `FRONTEND_WEBAPP_URL=https://smile-crm-pied.vercel.app`
+- `FRONTEND_WEBAPP_URL=https://smilecrm-miniapp.vercel.app`
 - `WEBHOOK_URL=https://smilecrm.onrender.com`
 
 ## Testing Checklist
@@ -124,7 +124,7 @@ Vercel will automatically detect the `vercel.json` configuration and deploy from
 1. Go to your Render dashboard
 2. Select the SmileCRM backend service
 3. Add/update environment variable:
-   - `FRONTEND_WEBAPP_URL=https://smile-crm-pied.vercel.app`
+   - `FRONTEND_WEBAPP_URL=https://smilecrm-miniapp.vercel.app`
 4. Render will automatically redeploy
 
 ## Rollback Plan
