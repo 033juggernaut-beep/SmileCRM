@@ -35,6 +35,10 @@ def _verify_hash(data: dict[str, str], received_hash: str | None, bot_token: str
   if not bot_token:
     raise TelegramInitDataError("Telegram bot token is not configured.")
 
+  # Log last 8 chars of token for verification (safe)
+  token_suffix = bot_token[-8:] if len(bot_token) >= 8 else "***"
+  print(f"[AUTH] Using TELEGRAM_BOT_TOKEN suffix: ...{token_suffix}")
+
   data_check_string = _build_data_check_string(data)
   # For Telegram Web App, use "WebAppData" constant as per official docs
   # https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app
@@ -69,6 +73,10 @@ def _extract_user_info(raw_user: str | None) -> TelegramUserInfo:
 
 def validate_init_data(init_data: str, bot_token: str) -> TelegramUserInfo:
   """Validate Telegram init data and extract user information."""
+  # Log token suffix for debugging (last 8 chars only)
+  token_suffix = bot_token[-8:] if bot_token and len(bot_token) >= 8 else "none"
+  print(f"[AUTH] validate_init_data called with token suffix: ...{token_suffix}")
+  
   data = _parse_query(init_data)
   received_hash = data.pop("hash", None)
   _verify_hash(data, received_hash, bot_token)
