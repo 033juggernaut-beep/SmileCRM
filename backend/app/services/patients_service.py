@@ -32,6 +32,26 @@ def get_patient(patient_id: str) -> dict[str, Any] | None:
   return rows[0] if rows else None
 
 
+def update_patient(patient_id: str, doctor_id: str, update_data: dict[str, Any]) -> dict[str, Any]:
+  """Update patient information."""
+  try:
+    updated = supabase_client.update(
+      "patients",
+      filters={"id": patient_id, "doctor_id": doctor_id},
+      values=update_data
+    )
+  except SupabaseNotConfiguredError:
+    # Fallback for local dev without Supabase
+    return {"id": patient_id, "doctor_id": doctor_id, **update_data}
+  
+  if not updated:
+    # If no rows updated, return the existing patient
+    existing = get_patient(patient_id)
+    return existing or {"id": patient_id, "doctor_id": doctor_id, **update_data}
+  
+  return updated[0]
+
+
 def create_patient(doctor_id: str, payload: Mapping[str, Any]) -> dict[str, Any]:
   """Create a patient that belongs to the provided doctor_id."""
   body = {"doctor_id": doctor_id, **payload}

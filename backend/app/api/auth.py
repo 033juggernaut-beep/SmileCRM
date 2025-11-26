@@ -1,5 +1,3 @@
-from uuid import uuid4
-
 import json
 from urllib.parse import parse_qs
 
@@ -8,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from app.config import Settings, get_settings
 from app.models.dto import TelegramAuthResponse
 from app.services import doctors_service
+from app.services.jwt_service import generate_access_token
 from app.services.telegram_auth import TelegramInitDataError, validate_init_data
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -92,6 +91,17 @@ async def telegram_auth_post(
 
   doctor = doctors_service.get_by_telegram_user_id(user_info.telegram_user_id)
   doctor_exists = doctor is not None
-  access_token = f"mock-token-{uuid4()}"
+  
+  # Generate real JWT token
+  if doctor and isinstance(doctor, dict):
+    doctor_id = doctor.get("id")
+  else:
+    # If doctor doesn't exist, return without token (will register later)
+    doctor_id = None
+  
+  # Generate JWT token (use doctor_id if exists, otherwise use telegram_user_id as placeholder)
+  token_doctor_id = doctor_id if doctor_id else f"telegram-{user_info.telegram_user_id}"
+  access_token = generate_access_token(token_doctor_id, user_info.telegram_user_id)
+  
   return TelegramAuthResponse(doctorExists=doctor_exists, accessToken=access_token)
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 
 from app.api.deps import AuthenticatedDoctor, get_current_doctor
 from app.models.dto import (
@@ -16,6 +17,15 @@ from app.services import patients_service, visits_service
 router = APIRouter(prefix="/patients", tags=["patients"])
 
 CurrentDoctor = Annotated[AuthenticatedDoctor, Depends(get_current_doctor)]
+
+
+class PatientUpdateRequest(BaseModel):
+  """Request body for updating a patient."""
+  first_name: str | None = None
+  last_name: str | None = None
+  diagnosis: str | None = None
+  phone: str | None = None
+  status: str | None = None
 
 
 @router.get("/", response_model=list[PatientResponse])
@@ -34,6 +44,39 @@ async def create_patient(payload: PatientCreateRequest, current_doctor: CurrentD
 async def get_patient(patient_id: str, current_doctor: CurrentDoctor) -> PatientResponse:
   patient = _get_patient_for_doctor(patient_id, current_doctor)
   return PatientResponse(**patient)
+
+
+@router.patch("/{patient_id}", response_model=PatientResponse)
+async def update_patient(
+  patient_id: str,
+  payload: PatientUpdateRequest,
+  current_doctor: CurrentDoctor
+) -> PatientResponse:
+  """
+  Update patient information.
+  
+  Only fields provided in the request will be updated.
+  """
+  # Check if patient exists and belongs to current doctor
+  patient = _get_patient_for_doctor(patient_id, current_doctor)
+  
+  # Build update payload (only non-None fields)
+  update_data = {
+    k: v for k, v in payload.model_dump().items() if v is not None
+  }
+  
+  if not update_data:
+    # No fields to update, return existing patient
+    return PatientResponse(**patient)
+  
+  # Update patient
+  updated_patient = patients_service.update_patient(
+    patient_id=patient_id,
+    doctor_id=current_doctor.doctor_id,
+    update_data=update_data
+  )
+  
+  return PatientResponse(**updated_patient)
 
 
 @router.get("/{patient_id}/visits", response_model=list[VisitResponse])

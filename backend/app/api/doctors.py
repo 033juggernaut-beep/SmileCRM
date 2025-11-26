@@ -1,13 +1,17 @@
-from uuid import uuid4
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
+from app.api.deps import AuthenticatedDoctor, get_current_doctor
 from app.config import Settings, get_settings
 from app.services import doctors_service
+from app.services.jwt_service import generate_access_token
 from app.services.telegram_auth import TelegramInitDataError, validate_init_data
 
 router = APIRouter(prefix="/doctors", tags=["doctors"])
+
+CurrentDoctor = Annotated[AuthenticatedDoctor, Depends(get_current_doctor)]
 
 
 class DoctorRegisterRequest(BaseModel):
@@ -26,9 +30,52 @@ class DoctorRegisterResponse(BaseModel):
   doctor_id: str
 
 
+class DoctorProfileResponse(BaseModel):
+  """Response for doctor profile."""
+  id: str
+  telegram_user_id: int
+  first_name: str
+  last_name: str | None
+  specialization: str | None
+  phone: str | None
+  clinic_name: str | None
+  subscription_status: str
+  trial_ends_at: str | None
+  subscription_ends_at: str | None
+
+
 @router.get("/")
 async def list_doctors_stub() -> dict[str, bool]:
   return {"ok": True}
+
+
+@router.get("/me", response_model=DoctorProfileResponse)
+async def get_current_doctor_profile(current_doctor: CurrentDoctor) -> DoctorProfileResponse:
+  """
+  Get current doctor profile.
+  
+  Requires valid JWT token in Authorization header.
+  """
+  doctor = doctors_service.get_by_id(current_doctor.doctor_id)
+  
+  if not doctor:
+    raise HTTPException(
+      status_code=status.HTTP_404_NOT_FOUND,
+      detail="Doctor profile not found"
+    )
+  
+  return DoctorProfileResponse(
+    id=doctor["id"],
+    telegram_user_id=doctor["telegram_user_id"],
+    first_name=doctor["first_name"],
+    last_name=doctor.get("last_name"),
+    specialization=doctor.get("specialization"),
+    phone=doctor.get("phone"),
+    clinic_name=doctor.get("clinic_name"),
+    subscription_status=doctor.get("subscription_status", "trial"),
+    trial_ends_at=doctor.get("trial_ends_at"),
+    subscription_ends_at=doctor.get("subscription_ends_at"),
+  )
 
 
 @router.post("/register", response_model=DoctorRegisterResponse)
@@ -72,8 +119,8 @@ async def register_doctor(
   existing_doctor = doctors_service.get_by_telegram_user_id(user_info.telegram_user_id)
   if existing_doctor:
     print(f"[REGISTER] ⚠️  Doctor already exists: ID={existing_doctor.get('id')}")
-    # Return existing doctor with new token
-    access_token = f"token-{uuid4()}"
+    # Return existing doctor with new JWT token
+    access_token = generate_access_token(existing_doctor["id"], user_info.telegram_user_id)
     return DoctorRegisterResponse(
       token=access_token,
       doctor_id=existing_doctor["id"],
@@ -102,8 +149,8 @@ async def register_doctor(
       detail="Failed to create doctor record"
     ) from exc
   
-  # Generate access token
-  access_token = f"token-{uuid4()}"
+  # Generate real JWT access token
+  access_token = generate_access_token(new_doctor["id"], user_info.telegram_user_id)
   print(f"[REGISTER] ✅ Registration complete! Doctor ID={new_doctor.get('id')}")
   
   return DoctorRegisterResponse(

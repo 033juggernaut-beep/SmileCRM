@@ -29,6 +29,19 @@ def get_by_telegram_user_id(telegram_user_id: int) -> dict[str, Any] | None:
   return rows[0] if rows else None
 
 
+def get_by_id(doctor_id: str) -> dict[str, Any] | None:
+  """Return doctor by UUID or None."""
+  try:
+    rows = supabase_client.select(
+      "doctors",
+      filters={"id": doctor_id},
+      limit=1,
+    )
+  except SupabaseNotConfiguredError:
+    return None
+  return rows[0] if rows else None
+
+
 def create_doctor_from_telegram_and_form(
   telegram_user: TelegramUserInfo,
   form_data: Mapping[str, Any] | None = None,
