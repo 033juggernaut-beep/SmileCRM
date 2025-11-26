@@ -131,8 +131,9 @@ export const AuthLoadingPage = () => {
     )
   }
 
-  // If not in Telegram app, show friendly message with link to bot
-  if (!initData.isInTelegram) {
+  // If not in Telegram app OR initData is missing, show friendly message with link to bot
+  // This covers both cases: opened in browser OR Telegram WebApp not properly initialized
+  if (!initData.isInTelegram || !initData.initDataRaw) {
     return (
       <Box
         minH="100vh"
@@ -195,15 +196,6 @@ export const AuthLoadingPage = () => {
           </Text>
         </Stack>
       </Box>
-    )
-  }
-
-  if (!initData.initDataRaw) {
-    return (
-      <ErrorState
-        message="Telegram WebApp initData missing"
-        onRetry={handleRetry}
-      />
     )
   }
 
@@ -285,22 +277,4 @@ const LoadingState = ({ title, subtitle, isBusy = true }: LoadingStateProps) => 
   </Stack>
 )
 
-type ErrorStateProps = {
-  message: string
-  onRetry?: () => void
-}
-
-const ErrorState = ({ message, onRetry }: ErrorStateProps) => (
-  <Stack spacing={4} textAlign="center" bg="white" borderRadius="xl" p={6}>
-    <Alert status="error" borderRadius="md">
-      <AlertIcon />
-      {message}
-    </Alert>
-    {onRetry ? (
-      <Button onClick={onRetry} colorScheme="teal">
-        Повторить попытку
-      </Button>
-    ) : null}
-  </Stack>
-)
 
