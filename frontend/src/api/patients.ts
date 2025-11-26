@@ -128,7 +128,7 @@ const buildVisitPayload = (payload: CreateVisitInput | UpdateVisitInput) => {
 export const patientsApi = {
   async list(): Promise<Patient[]> {
     const authToken = getAuthTokenOrThrow()
-    const { data } = await apiClient.get<ApiPatient[]>('/api/patients', {
+    const { data } = await apiClient.get<ApiPatient[]>('/patients', {
       headers: buildAuthHeaders(authToken),
     })
     return Array.isArray(data) ? data.map(mapPatient) : []
@@ -137,7 +137,7 @@ export const patientsApi = {
   async create(payload: CreatePatientInput): Promise<Patient> {
     const authToken = getAuthTokenOrThrow()
     const { data } = await apiClient.post<ApiPatient>(
-      '/api/patients',
+      '/patients',
       buildPatientPayload(payload),
       { headers: buildAuthHeaders(authToken) },
     )
@@ -146,7 +146,7 @@ export const patientsApi = {
 
   async getById(patientId: string): Promise<Patient> {
     const authToken = getAuthTokenOrThrow()
-    const { data } = await apiClient.get<ApiPatient>(`/api/patients/${patientId}`, {
+    const { data } = await apiClient.get<ApiPatient>(`/patients/${patientId}`, {
       headers: buildAuthHeaders(authToken),
     })
     return mapPatient(data)
@@ -155,7 +155,7 @@ export const patientsApi = {
   async getVisits(patientId: string): Promise<Visit[]> {
     const authToken = getAuthTokenOrThrow()
     const { data } = await apiClient.get<ApiVisit[]>(
-      `/api/patients/${patientId}/visits`,
+      `/patients/${patientId}/visits`,
       { headers: buildAuthHeaders(authToken) },
     )
     return Array.isArray(data) ? data.map(mapVisit) : []
@@ -164,7 +164,7 @@ export const patientsApi = {
   async createVisit(patientId: string, payload: CreateVisitInput): Promise<Visit> {
     const authToken = getAuthTokenOrThrow()
     const { data } = await apiClient.post<ApiVisit>(
-      `/api/patients/${patientId}/visits`,
+      `/patients/${patientId}/visits`,
       buildVisitPayload(payload),
       { headers: buildAuthHeaders(authToken) },
     )
@@ -174,7 +174,7 @@ export const patientsApi = {
   async updateVisit(visitId: string, payload: UpdateVisitInput): Promise<Visit> {
     const authToken = getAuthTokenOrThrow()
     const { data } = await apiClient.patch<ApiVisit>(
-      `/api/visits/${visitId}`,
+      `/visits/${visitId}`,
       buildVisitPayload(payload),
       { headers: buildAuthHeaders(authToken) },
     )
