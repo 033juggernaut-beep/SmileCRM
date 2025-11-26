@@ -1,4 +1,5 @@
-import { Heading, ListItem, Stack, Text, UnorderedList } from '@chakra-ui/react'
+import { useNavigate } from 'react-router-dom'
+import { Button, Heading, ListItem, Stack, Text, UnorderedList } from '@chakra-ui/react'
 
 const sections = [
   {
@@ -18,14 +19,26 @@ const sections = [
   },
 ]
 
-export const PrivacyPolicyPage = () => (
-  <Stack spacing={6}>
-    <Stack spacing={1}>
-      <Heading size="md">Գաղտնիության քաղաքականություն</Heading>
-      <Text fontSize="sm" color="gray.500">
-        Ստորև ներկայացված տեղեկությունը ժամանակավոր է և կարող է թարմացվել։
-      </Text>
-    </Stack>
+export const PrivacyPolicyPage = () => {
+  const navigate = useNavigate()
+  
+  return (
+    <Stack spacing={6}>
+      <Button
+        variant="link"
+        onClick={() => navigate('/home')}
+        alignSelf="flex-start"
+        leftIcon={<Text>←</Text>}
+      >
+        Назад к меню
+      </Button>
+      
+      <Stack spacing={1}>
+        <Heading size="md">Գաղտնիության քաղաքականություն</Heading>
+        <Text fontSize="sm" color="gray.500">
+          Ստորև ներկայացված տեղեկությունը ժամանակավոր է և կարող է թարմացվել։
+        </Text>
+      </Stack>
 
     <Stack spacing={5} bg="white" borderRadius="xl" borderWidth="1px" p={6}>
       {sections.map((section) => (
@@ -55,5 +68,6 @@ export const PrivacyPolicyPage = () => (
       </Stack>
     </Stack>
   </Stack>
-)
+  )
+}
 

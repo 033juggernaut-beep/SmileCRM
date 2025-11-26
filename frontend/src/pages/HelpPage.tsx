@@ -1,9 +1,11 @@
+import { useNavigate } from 'react-router-dom'
 import {
   Accordion,
   AccordionButton,
   AccordionIcon,
   AccordionItem,
   AccordionPanel,
+  Button,
   Heading,
   Stack,
   Text,
@@ -27,14 +29,26 @@ const FAQ_ITEMS = [
   },
 ]
 
-export const HelpPage = () => (
-  <Stack spacing={5}>
-    <Stack spacing={1}>
-      <Heading size="md">Օգնություն և FAQ</Heading>
-      <Text fontSize="sm" color="gray.500">
-        Ամենատարածված հարցերի պատասխանները։
-      </Text>
-    </Stack>
+export const HelpPage = () => {
+  const navigate = useNavigate()
+  
+  return (
+    <Stack spacing={5}>
+      <Button
+        variant="link"
+        onClick={() => navigate('/home')}
+        alignSelf="flex-start"
+        leftIcon={<Text>←</Text>}
+      >
+        Назад к меню
+      </Button>
+      
+      <Stack spacing={1}>
+        <Heading size="md">Օգնություն և FAQ</Heading>
+        <Text fontSize="sm" color="gray.500">
+          Ամենատարածված հարցերի պատասխանները։
+        </Text>
+      </Stack>
 
     <Accordion allowMultiple borderRadius="lg" overflow="hidden">
       {FAQ_ITEMS.map((item) => (
@@ -61,5 +75,6 @@ export const HelpPage = () => (
       ))}
     </Accordion>
   </Stack>
-)
+  )
+}
 
