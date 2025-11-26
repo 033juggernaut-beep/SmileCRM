@@ -104,6 +104,15 @@ export const AddPatientPage = () => {
   return (
     <chakra.form onSubmit={handleSubmit} w="full">
       <Stack spacing={5}>
+        <Button
+          variant="link"
+          onClick={() => navigate('/patients')}
+          alignSelf="flex-start"
+          leftIcon={<Text>←</Text>}
+        >
+          Назад к пациентам
+        </Button>
+        
         <Stack spacing={1}>
           <Heading size="md">Добавить пациента</Heading>
           <Text fontSize="xs" color="gray.500">

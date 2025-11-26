@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Alert,
   AlertDescription,
@@ -74,6 +75,7 @@ const openPaymentLink = (url: string) => {
 }
 
 export const SubscriptionPage = () => {
+  const navigate = useNavigate()
   const toast = useToast()
   const [snapshot, setSnapshot] = useState<SubscriptionSnapshot | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -134,6 +136,15 @@ export const SubscriptionPage = () => {
 
   return (
     <Stack spacing={6}>
+      <Button
+        variant="link"
+        onClick={() => navigate('/home')}
+        alignSelf="flex-start"
+        leftIcon={<Text>←</Text>}
+      >
+        Назад к меню
+      </Button>
+      
       <Stack spacing={1}>
         <Heading size="md">Բաժանորդագրություն</Heading>
         <Text fontSize="sm" color="gray.500">

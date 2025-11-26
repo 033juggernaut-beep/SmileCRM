@@ -159,6 +159,15 @@ export const PatientsListPage = () => {
 
   return (
     <Stack spacing={5}>
+      <Button
+        variant="link"
+        onClick={() => navigate('/home')}
+        alignSelf="flex-start"
+        leftIcon={<Text>←</Text>}
+      >
+        Назад к меню
+      </Button>
+      
       <Flex justify="space-between" align="center">
         <Heading size="md">Пациенты</Heading>
         <Button colorScheme="teal" onClick={() => navigate('/patients/new')}>
