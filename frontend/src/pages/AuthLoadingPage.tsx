@@ -134,24 +134,67 @@ export const AuthLoadingPage = () => {
   // If not in Telegram app, show friendly message with link to bot
   if (!initData.isInTelegram) {
     return (
-      <Stack spacing={4} textAlign="center" bg="white" borderRadius="xl" p={6}>
-        <Heading size="md">Откройте в Telegram</Heading>
-        <Text color="gray.600">
-          Это приложение работает только внутри Telegram.
-        </Text>
-        <Text color="gray.600">
-          Откройте бота <strong>@SmileCRM_bot</strong> в Telegram и нажмите кнопку "Բացել Mini App".
-        </Text>
-        <Button
-          as="a"
-          href="https://t.me/SmileCRM_bot"
-          target="_blank"
-          colorScheme="telegram"
-          size="lg"
+      <Box
+        minH="100vh"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        bg="gray.50"
+        p={4}
+      >
+        <Stack
+          spacing={6}
+          textAlign="center"
+          bg="white"
+          borderRadius="2xl"
+          p={8}
+          maxW="md"
+          boxShadow="lg"
         >
-          Открыть @SmileCRM_bot
-        </Button>
-      </Stack>
+          <Box fontSize="6xl">📱</Box>
+          
+          <Stack spacing={2}>
+            <Heading size="lg" color="teal.600">
+              Dental Mini App
+            </Heading>
+            <Text fontSize="md" color="gray.600">
+              Это мини-приложение работает только внутри Telegram
+            </Text>
+          </Stack>
+          
+          <Stack spacing={3} pt={2}>
+            <Text fontSize="sm" color="gray.500">
+              Чтобы использовать приложение:
+            </Text>
+            <Stack spacing={2} align="center">
+              <Text fontSize="sm" color="gray.700">
+                1️⃣ Откройте Telegram на вашем устройстве
+              </Text>
+              <Text fontSize="sm" color="gray.700">
+                2️⃣ Найдите бота <strong>@SmileCRM_bot</strong>
+              </Text>
+              <Text fontSize="sm" color="gray.700">
+                3️⃣ Нажмите кнопку <strong>"Բացել Mini App"</strong>
+              </Text>
+            </Stack>
+          </Stack>
+          
+          <Button
+            as="a"
+            href="https://t.me/SmileCRM_bot"
+            target="_blank"
+            colorScheme="telegram"
+            size="lg"
+            leftIcon={<Text fontSize="xl">▶️</Text>}
+          >
+            Открыть @SmileCRM_bot
+          </Button>
+          
+          <Text fontSize="xs" color="gray.400">
+            Приложение доступно только через Telegram
+          </Text>
+        </Stack>
+      </Box>
     )
   }
 
