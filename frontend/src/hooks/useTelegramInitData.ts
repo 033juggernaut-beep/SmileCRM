@@ -31,6 +31,29 @@ export const useTelegramInitData = (): TelegramInitData | null => {
       const userAgent = navigator.userAgent || ''
       const isInTelegram = !!(telegram || userAgent.includes('Telegram'))
 
+      // Initialize Telegram WebApp if available
+      if (telegram) {
+        // Expand to full screen
+        if (telegram.expand) {
+          telegram.expand()
+        }
+        
+        // Enable closing confirmation (optional, uncomment if needed)
+        // if (telegram.enableClosingConfirmation) {
+        //   telegram.enableClosingConfirmation()
+        // }
+        
+        // Set header color to match app theme
+        if (telegram.setHeaderColor) {
+          telegram.setHeaderColor('#319795') // teal.600 from Chakra UI
+        }
+        
+        // Ready signal
+        if (telegram.ready) {
+          telegram.ready()
+        }
+      }
+
       // 1) Получаем initDataRaw
       let initDataRaw = telegram?.initData || null
 

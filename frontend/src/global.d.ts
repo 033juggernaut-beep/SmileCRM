@@ -13,6 +13,59 @@ interface TelegramWebApp {
   initData?: string
   initDataUnsafe?: TelegramWebAppInitDataUnsafe
   openLink?: (url: string, options?: { try_instant_view?: boolean }) => void
+  
+  // Methods for controlling the Mini App
+  ready?: () => void
+  expand?: () => void
+  close?: () => void
+  
+  // Theme and appearance
+  setHeaderColor?: (color: string) => void
+  setBackgroundColor?: (color: string) => void
+  
+  // Closing confirmation
+  enableClosingConfirmation?: () => void
+  disableClosingConfirmation?: () => void
+  
+  // Info about the Mini App state
+  isExpanded?: boolean
+  viewportHeight?: number
+  viewportStableHeight?: number
+  
+  // Back button
+  BackButton?: {
+    show: () => void
+    hide: () => void
+    onClick: (callback: () => void) => void
+    offClick: (callback: () => void) => void
+    isVisible: boolean
+  }
+  
+  // Main button
+  MainButton?: {
+    text: string
+    color: string
+    textColor: string
+    isVisible: boolean
+    isActive: boolean
+    isProgressVisible: boolean
+    setText: (text: string) => void
+    show: () => void
+    hide: () => void
+    enable: () => void
+    disable: () => void
+    showProgress: (leaveActive?: boolean) => void
+    hideProgress: () => void
+    setParams: (params: {
+      text?: string
+      color?: string
+      text_color?: string
+      is_active?: boolean
+      is_visible?: boolean
+    }) => void
+    onClick: (callback: () => void) => void
+    offClick: (callback: () => void) => void
+  }
 }
 
 interface TelegramSdk {
