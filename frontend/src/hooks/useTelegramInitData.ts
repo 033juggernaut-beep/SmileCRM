@@ -33,25 +33,42 @@ export const useTelegramInitData = (): TelegramInitData | null => {
 
       // Initialize Telegram WebApp if available
       if (telegram) {
-        // Expand to full screen
-        if (telegram.expand) {
-          telegram.expand()
-        }
+        console.log('[Telegram WebApp] Initializing...', {
+          hasExpand: !!telegram.expand,
+          hasReady: !!telegram.ready,
+          isExpanded: telegram.isExpanded,
+        })
         
-        // Enable closing confirmation (optional, uncomment if needed)
-        // if (telegram.enableClosingConfirmation) {
-        //   telegram.enableClosingConfirmation()
-        // }
+        // IMPORTANT: Call ready() FIRST before other methods
+        if (telegram.ready) {
+          telegram.ready()
+          console.log('[Telegram WebApp] ready() called')
+        }
         
         // Set header color to match app theme
         if (telegram.setHeaderColor) {
           telegram.setHeaderColor('#319795') // teal.600 from Chakra UI
+          console.log('[Telegram WebApp] Header color set to #319795')
         }
         
-        // Ready signal
-        if (telegram.ready) {
-          telegram.ready()
+        // Expand to full screen AFTER ready()
+        if (telegram.expand) {
+          telegram.expand()
+          console.log('[Telegram WebApp] expand() called')
+          
+          // Try again after a delay to ensure it works
+          setTimeout(() => {
+            if (telegram.expand && !telegram.isExpanded) {
+              console.log('[Telegram WebApp] Re-calling expand() after delay')
+              telegram.expand()
+            }
+          }, 100)
         }
+        
+        // Enable closing confirmation (optional)
+        // if (telegram.enableClosingConfirmation) {
+        //   telegram.enableClosingConfirmation()
+        // }
       }
 
       // 1) Получаем initDataRaw
