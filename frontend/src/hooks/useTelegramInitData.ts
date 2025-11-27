@@ -35,8 +35,11 @@ export const useTelegramInitData = (): TelegramInitData | null => {
       if (telegram) {
         console.log('[Telegram WebApp] Initializing...', {
           hasExpand: !!telegram.expand,
+          hasRequestFullscreen: !!telegram.requestFullscreen,
           hasReady: !!telegram.ready,
           isExpanded: telegram.isExpanded,
+          platform: telegram.platform,
+          viewportHeight: telegram.viewportHeight,
         })
         
         // IMPORTANT: Call ready() FIRST before other methods
@@ -45,24 +48,72 @@ export const useTelegramInitData = (): TelegramInitData | null => {
           console.log('[Telegram WebApp] ready() called')
         }
         
-        // Set header color to match app theme
-        if (telegram.setHeaderColor) {
-          telegram.setHeaderColor('#319795') // teal.600 from Chakra UI
-          console.log('[Telegram WebApp] Header color set to #319795')
+        // Detect device type
+        const isDesktop = telegram.platform === 'tdesktop' || 
+                         telegram.platform === 'web' || 
+                         telegram.platform === 'macos' ||
+                         telegram.platform === 'windows' ||
+                         telegram.platform === 'linux'
+        
+        const isMobile = telegram.platform === 'ios' || 
+                        telegram.platform === 'android'
+        
+        console.log('[Telegram WebApp] Device detection:', {
+          platform: telegram.platform,
+          isDesktop,
+          isMobile,
+          userAgent: navigator.userAgent,
+        })
+        
+        // Function to aggressively expand the app
+        const expandApp = () => {
+          console.log('[Telegram WebApp] Attempting to expand...')
+          
+          // Try expand() first (works in all versions)
+          if (telegram.expand) {
+            telegram.expand()
+            console.log('[Telegram WebApp] expand() called')
+          }
+          
+          // For desktop/laptop, also try requestFullscreen if available
+          if (isDesktop && telegram.requestFullscreen) {
+            console.log('[Telegram WebApp] Requesting fullscreen for desktop...')
+            try {
+              telegram.requestFullscreen()
+            } catch (e) {
+              console.log('[Telegram WebApp] requestFullscreen failed:', e)
+            }
+          }
+          
+          console.log('[Telegram WebApp] After expand - isExpanded:', telegram.isExpanded)
         }
         
-        // Expand to full screen AFTER ready()
-        if (telegram.expand) {
-          telegram.expand()
-          console.log('[Telegram WebApp] expand() called')
-          
-          // Try again after a delay to ensure it works
+        // Call expand immediately
+        expandApp()
+        
+        // Try multiple times with increasing delays to ensure it works
+        const delays = [50, 100, 200, 300, 500]
+        delays.forEach(delay => {
           setTimeout(() => {
-            if (telegram.expand && !telegram.isExpanded) {
-              console.log('[Telegram WebApp] Re-calling expand() after delay')
-              telegram.expand()
+            if (!telegram.isExpanded) {
+              console.log(`[Telegram WebApp] Retrying expand after ${delay}ms (isExpanded: ${telegram.isExpanded})`)
+              expandApp()
             }
-          }, 100)
+          }, delay)
+        })
+        
+        // Set header color to match app theme (after expand)
+        setTimeout(() => {
+          if (telegram.setHeaderColor) {
+            telegram.setHeaderColor('#319795') // teal.600 from Chakra UI
+            console.log('[Telegram WebApp] Header color set to #319795')
+          }
+        }, 100)
+        
+        // Lock orientation to portrait on mobile for better UX (optional)
+        if (isMobile && telegram.lockOrientation) {
+          telegram.lockOrientation()
+          console.log('[Telegram WebApp] Orientation locked')
         }
         
         // Enable closing confirmation (optional)

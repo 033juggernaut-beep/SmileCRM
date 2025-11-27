@@ -18,6 +18,8 @@ interface TelegramWebApp {
   ready?: () => void
   expand?: () => void
   close?: () => void
+  requestFullscreen?: () => void // Request fullscreen mode (for desktop/laptop)
+  exitFullscreen?: () => void // Exit fullscreen mode
   
   // Theme and appearance
   setHeaderColor?: (color: string) => void
@@ -27,10 +29,24 @@ interface TelegramWebApp {
   enableClosingConfirmation?: () => void
   disableClosingConfirmation?: () => void
   
+  // Orientation control (mobile)
+  lockOrientation?: () => void
+  unlockOrientation?: () => void
+  
   // Info about the Mini App state
   isExpanded?: boolean
+  isFullscreen?: boolean
   viewportHeight?: number
   viewportStableHeight?: number
+  
+  // Platform information
+  platform?: 'android' | 'android_x' | 'ios' | 'macos' | 'tdesktop' | 'web' | 'weba' | 'webk' | 'windows' | 'linux' | 'unknown'
+  version?: string
+  colorScheme?: 'light' | 'dark'
+  
+  // Event handling
+  onEvent?: (eventType: string, callback: () => void) => void
+  offEvent?: (eventType: string, callback: () => void) => void
   
   // Back button
   BackButton?: {

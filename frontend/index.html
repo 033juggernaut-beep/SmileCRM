@@ -3,9 +3,64 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+      // Immediately expand the app as soon as Telegram WebApp is loaded
+      (function() {
+        const expandApp = function() {
+          if (window.Telegram && window.Telegram.WebApp) {
+            const tg = window.Telegram.WebApp;
+            console.log('[Early Init] Telegram WebApp detected, expanding...');
+            
+            if (tg.ready) {
+              tg.ready();
+            }
+            
+            if (tg.expand) {
+              tg.expand();
+              console.log('[Early Init] expand() called, isExpanded:', tg.isExpanded);
+            }
+            
+            // Try requestFullscreen if available
+            if (tg.requestFullscreen) {
+              try {
+                tg.requestFullscreen();
+                console.log('[Early Init] requestFullscreen() called');
+              } catch(e) {
+                console.log('[Early Init] requestFullscreen error:', e);
+              }
+            }
+          }
+        };
+        
+        // Try immediately
+        expandApp();
+        
+        // Try again after short delays
+        setTimeout(expandApp, 50);
+        setTimeout(expandApp, 100);
+        setTimeout(expandApp, 200);
+      })();
+    </script>
     <title>Dental Mini App</title>
+    <style>
+      /* Prevent any unwanted spacing during load */
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      #root {
+        width: 100%;
+        height: 100%;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
