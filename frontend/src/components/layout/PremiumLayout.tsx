@@ -29,10 +29,11 @@ export const PremiumLayout = ({
   return (
     <Flex
       direction="column"
-      minH="100vh"
+      h="100vh"
       w="100%"
       bg={backgrounds[background]}
       position="relative"
+      overflow="hidden"
     >
       {/* Header */}
       {showHeader && (
@@ -43,7 +44,7 @@ export const PremiumLayout = ({
         />
       )}
 
-      {/* Main Content */}
+      {/* Main Content - Scrollable */}
       <Box
         as="main"
         flex="1"
