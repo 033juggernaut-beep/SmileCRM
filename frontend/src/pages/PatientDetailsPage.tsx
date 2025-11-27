@@ -15,7 +15,7 @@ import {
   useToast,
 } from '@chakra-ui/react'
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import {
   PATIENT_STATUSES,
   type Patient,
