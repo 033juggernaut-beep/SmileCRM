@@ -1,7 +1,7 @@
 import {
   Alert,
   AlertIcon,
-  Button,
+  Box,
   FormControl,
   FormLabel,
   Heading,
@@ -19,6 +19,9 @@ import {
   TELEGRAM_INIT_DATA_STORAGE_KEY,
   TOKEN_STORAGE_KEY,
 } from '../constants/storage'
+import { PremiumLayout } from '../components/layout/PremiumLayout'
+import { PremiumCard } from '../components/premium/PremiumCard'
+import { PremiumButton } from '../components/premium/PremiumButton'
 
 type RegisterResponse = {
   token?: string
@@ -110,80 +113,112 @@ export const RegisterDoctorPage = () => {
   }
 
   return (
-    <chakra.form onSubmit={handleSubmit} w="full">
-      <Stack spacing={6}>
-        <Stack spacing={1}>
-          <Heading size="md">Регистрация врача</Heading>
-          <Text fontSize="sm" color="gray.500">
-            Заполните информацию о себе, чтобы продолжить работу в Dental Mini App.
-          </Text>
+    <PremiumLayout 
+      title="Регистрация" 
+      showBack={false}
+      background="light"
+    >
+      <chakra.form onSubmit={handleSubmit} w="full">
+        <Stack spacing={5}>
+          {/* Welcome Card */}
+          <PremiumCard variant="elevated">
+            <Stack spacing={3} align="center" textAlign="center">
+              <Box fontSize="3xl">👨‍⚕️</Box>
+              <Heading size="md" color="text.main">
+                Регистрация врача
+              </Heading>
+              <Text fontSize="sm" color="text.muted">
+                Заполните информацию о себе, чтобы продолжить работу в Dental Mini App.
+              </Text>
+            </Stack>
+          </PremiumCard>
+
+          {/* Form Card */}
+          <PremiumCard variant="elevated">
+            <Stack spacing={4}>
+              <FormControl isRequired>
+                <FormLabel fontWeight="semibold" color="text.main">
+                  Имя
+                </FormLabel>
+                <Input
+                  value={form.firstName}
+                  onChange={handleChange('firstName')}
+                  placeholder="Например, Արման"
+                  size="lg"
+                />
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel fontWeight="semibold" color="text.main">
+                  Фамилия
+                </FormLabel>
+                <Input
+                  value={form.lastName}
+                  onChange={handleChange('lastName')}
+                  placeholder="Например, Պետրոսյան"
+                  size="lg"
+                />
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel fontWeight="semibold" color="text.main">
+                  Специализация
+                </FormLabel>
+                <Input
+                  value={form.specialization}
+                  onChange={handleChange('specialization')}
+                  placeholder="Ортодонт, терапевт и т.д."
+                  size="lg"
+                />
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel fontWeight="semibold" color="text.main">
+                  Телефон
+                </FormLabel>
+                <Input
+                  value={form.phone}
+                  onChange={handleChange('phone')}
+                  placeholder="+374 XX XX XX XX"
+                  size="lg"
+                />
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel fontWeight="semibold" color="text.main">
+                  Название клиники
+                </FormLabel>
+                <Textarea
+                  value={form.clinicName}
+                  onChange={handleChange('clinicName')}
+                  placeholder="Укажите клинику или индивидуальную практику"
+                  rows={3}
+                  size="lg"
+                />
+              </FormControl>
+            </Stack>
+          </PremiumCard>
+
+          {/* Error Alert */}
+          {error ? (
+            <Alert status="error" borderRadius="md">
+              <AlertIcon />
+              {error}
+            </Alert>
+          ) : null}
+
+          {/* Submit Button */}
+          <PremiumButton
+            type="submit"
+            size="lg"
+            isLoading={isSubmitting}
+            w="full"
+          >
+            Зарегистрироваться
+          </PremiumButton>
         </Stack>
-
-        <Stack spacing={4}>
-          <FormControl isRequired>
-            <FormLabel>Имя</FormLabel>
-            <Input
-              value={form.firstName}
-              onChange={handleChange('firstName')}
-              placeholder="Например, Арман"
-            />
-          </FormControl>
-
-          <FormControl isRequired>
-            <FormLabel>Фамилия</FormLabel>
-            <Input
-              value={form.lastName}
-              onChange={handleChange('lastName')}
-              placeholder="Например, Петросян"
-            />
-          </FormControl>
-
-          <FormControl isRequired>
-            <FormLabel>Специализация</FormLabel>
-            <Input
-              value={form.specialization}
-              onChange={handleChange('specialization')}
-              placeholder="Ортодонт, терапевт и т.д."
-            />
-          </FormControl>
-
-          <FormControl isRequired>
-            <FormLabel>Телефон</FormLabel>
-            <Input
-              value={form.phone}
-              onChange={handleChange('phone')}
-              placeholder="+374 XX XX XX"
-            />
-          </FormControl>
-
-          <FormControl isRequired>
-            <FormLabel>Название клиники</FormLabel>
-            <Textarea
-              value={form.clinicName}
-              onChange={handleChange('clinicName')}
-              placeholder="Укажите клинику или индивидуальную практику"
-              rows={2}
-            />
-          </FormControl>
-        </Stack>
-
-        {error ? (
-          <Alert status="error" borderRadius="md">
-            <AlertIcon />
-            {error}
-          </Alert>
-        ) : null}
-
-        <Button
-          type="submit"
-          colorScheme="teal"
-          size="lg"
-          isLoading={isSubmitting}
-        >
-          Зарегистрироваться
-        </Button>
-      </Stack>
-    </chakra.form>
+      </chakra.form>
+    </PremiumLayout>
   )
 }
 

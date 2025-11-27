@@ -2,8 +2,6 @@ import {
   Alert,
   AlertIcon,
   Box,
-  Button,
-  Divider,
   Flex,
   FormControl,
   FormLabel,
@@ -17,7 +15,7 @@ import {
   useToast,
 } from '@chakra-ui/react'
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react'
 import {
   PATIENT_STATUSES,
   type Patient,
@@ -25,6 +23,9 @@ import {
   type Visit,
   patientsApi,
 } from '../api/patients'
+import { PremiumLayout } from '../components/layout/PremiumLayout'
+import { PremiumCard } from '../components/premium/PremiumCard'
+import { PremiumButton } from '../components/premium/PremiumButton'
 
 type VisitFormFields = {
   visitDate: string
@@ -155,24 +156,43 @@ export const PatientDetailsPage = () => {
 
   if (isLoading) {
     return (
-      <Stack spacing={4}>
-        <Heading size="md">Загружаем данные пациента…</Heading>
-        <Text color="gray.500">Пожалуйста, подождите пару секунд.</Text>
-      </Stack>
+      <PremiumLayout 
+        title="Загрузка..." 
+        showBack={true}
+        onBack={() => navigate('/patients')}
+        background="light"
+      >
+        <PremiumCard variant="elevated">
+          <Stack spacing={3} align="center" py={6}>
+            <Box fontSize="3xl">⏳</Box>
+            <Heading size="md">Загружаем данные пациента…</Heading>
+            <Text color="text.muted" textAlign="center">
+              Пожалуйста, подождите пару секунд.
+            </Text>
+          </Stack>
+        </PremiumCard>
+      </PremiumLayout>
     )
   }
 
   if (error || !patient || !id) {
     return (
-      <Stack spacing={4}>
-        <Alert status="error" borderRadius="md">
-          <AlertIcon />
-          {error ?? 'Пациент не найден'}
-        </Alert>
-        <Button onClick={() => navigate('/patients')} colorScheme="teal">
-          Вернуться к списку
-        </Button>
-      </Stack>
+      <PremiumLayout 
+        title="Ошибка" 
+        showBack={true}
+        onBack={() => navigate('/patients')}
+        background="light"
+      >
+        <Stack spacing={4}>
+          <Alert status="error" borderRadius="md">
+            <AlertIcon />
+            {error ?? 'Пациент не найден'}
+          </Alert>
+          <PremiumButton onClick={() => navigate('/patients')}>
+            Вернуться к списку
+          </PremiumButton>
+        </Stack>
+      </PremiumLayout>
     )
   }
 
@@ -184,91 +204,133 @@ export const PatientDetailsPage = () => {
     : null
 
   return (
-    <Stack spacing={6}>
-      <Button variant="link" onClick={() => navigate('/patients')}>
-        ← Назад к пациентам
-      </Button>
-
-      <Stack spacing={2}>
-        <Flex align="center" gap={3} wrap="wrap">
-          <Heading size="lg">
-            {patient.firstName} {patient.lastName}
-          </Heading>
-          {statusMeta ? (
-            <Tag colorScheme={statusMeta.color}>{statusMeta.label}</Tag>
-          ) : null}
-        </Flex>
-        <Text color="gray.500">{patient.diagnosis}</Text>
-      </Stack>
-
-      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-        <InfoCard label="Телефон" value={patient.phone ?? '—'} />
-        <InfoCard label="ID пациента" value={patient.id} />
-        <InfoCard label="Создан" value={formatDateTime(patient.createdAt)} />
-        <InfoCard label="Статус" value={statusMeta?.label ?? '—'} />
-      </SimpleGrid>
-
-      <Divider />
-
-      <Stack spacing={4}>
-        <Heading size="sm">Создать визит</Heading>
-        <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-          <FormControl isRequired>
-            <FormLabel>Дата визита</FormLabel>
-            <Input
-              type="date"
-              value={visitForm.visitDate}
-              onChange={handleVisitFieldChange('visitDate')}
-            />
-          </FormControl>
-          <FormControl>
-            <FormLabel>Следующий визит</FormLabel>
-            <Input
-              type="date"
-              value={visitForm.nextVisitDate}
-              onChange={handleVisitFieldChange('nextVisitDate')}
-            />
-          </FormControl>
-          <FormControl>
-            <FormLabel>Заметки</FormLabel>
-            <Textarea
-              rows={3}
-              value={visitForm.notes}
-              onChange={handleVisitFieldChange('notes')}
-              placeholder="Опишите рекомендации или прогресс лечения"
-            />
-          </FormControl>
-        </SimpleGrid>
-        {visitError ? (
-          <Alert status="error" borderRadius="md">
-            <AlertIcon />
-            {visitError}
-          </Alert>
-        ) : null}
-        <Button
-          colorScheme="teal"
-          onClick={handleCreateVisit}
-          isLoading={isCreatingVisit}
-        >
-          Добавить визит
-        </Button>
-      </Stack>
-
-      <Divider />
-
-      <Stack spacing={4}>
-        <Heading size="sm">История визитов</Heading>
-        {sortedVisits.length ? (
+    <PremiumLayout 
+      title={`${patient.firstName} ${patient.lastName}`}
+      showBack={true}
+      onBack={() => navigate('/patients')}
+      background="light"
+    >
+      <Stack spacing={5}>
+        {/* Patient Info Card */}
+        <PremiumCard variant="elevated">
           <Stack spacing={3}>
-            {sortedVisits.map((visit) => (
-              <VisitCard key={visit.id} visit={visit} />
-            ))}
+            <Flex align="center" gap={2} wrap="wrap">
+              <Text fontSize="2xl">👤</Text>
+              <Heading size="lg" color="text.main">
+                {patient.firstName} {patient.lastName}
+              </Heading>
+              {statusMeta && (
+                <Tag 
+                  colorScheme={statusMeta.color}
+                  size="md"
+                  borderRadius="base"
+                >
+                  {statusMeta.label}
+                </Tag>
+              )}
+            </Flex>
+            <Text color="text.muted" fontSize="md">
+              {patient.diagnosis}
+            </Text>
           </Stack>
-        ) : (
-          <Text color="gray.500">Для этого пациента еще нет визитов.</Text>
-        )}
+        </PremiumCard>
+
+        {/* Patient Details Grid */}
+        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+          <InfoCard label="Телефон" value={patient.phone ?? '—'} />
+          <InfoCard label="ID пациента" value={patient.id} />
+          <InfoCard label="Создан" value={formatDateTime(patient.createdAt)} />
+          <InfoCard label="Статус" value={statusMeta?.label ?? '—'} />
+        </SimpleGrid>
+
+        {/* Create Visit Section */}
+        <PremiumCard variant="elevated">
+          <Stack spacing={4}>
+            <Heading size="md" color="text.main">
+              Создать визит
+            </Heading>
+            
+            <Stack spacing={3}>
+              <FormControl isRequired>
+                <FormLabel fontWeight="semibold" color="text.main">
+                  Дата визита
+                </FormLabel>
+                <Input
+                  type="date"
+                  value={visitForm.visitDate}
+                  onChange={handleVisitFieldChange('visitDate')}
+                  size="lg"
+                />
+              </FormControl>
+              
+              <FormControl>
+                <FormLabel fontWeight="semibold" color="text.main">
+                  Следующий визит
+                </FormLabel>
+                <Input
+                  type="date"
+                  value={visitForm.nextVisitDate}
+                  onChange={handleVisitFieldChange('nextVisitDate')}
+                  size="lg"
+                />
+              </FormControl>
+              
+              <FormControl>
+                <FormLabel fontWeight="semibold" color="text.main">
+                  Заметки
+                </FormLabel>
+                <Textarea
+                  rows={3}
+                  value={visitForm.notes}
+                  onChange={handleVisitFieldChange('notes')}
+                  placeholder="Опишите рекомендации или прогресс лечения"
+                  size="lg"
+                />
+              </FormControl>
+            </Stack>
+
+            {visitError && (
+              <Alert status="error" borderRadius="md">
+                <AlertIcon />
+                {visitError}
+              </Alert>
+            )}
+
+            <PremiumButton
+              onClick={handleCreateVisit}
+              isLoading={isCreatingVisit}
+              w="full"
+            >
+              Добавить визит
+            </PremiumButton>
+          </Stack>
+        </PremiumCard>
+
+        {/* Visit History Section */}
+        <PremiumCard variant="elevated">
+          <Stack spacing={4}>
+            <Heading size="md" color="text.main">
+              История визитов
+            </Heading>
+            
+            {sortedVisits.length ? (
+              <Stack spacing={3}>
+                {sortedVisits.map((visit) => (
+                  <VisitCard key={visit.id} visit={visit} />
+                ))}
+              </Stack>
+            ) : (
+              <Box textAlign="center" py={6}>
+                <Text fontSize="3xl" mb={2}>📅</Text>
+                <Text color="text.muted">
+                  Для этого пациента еще нет визитов.
+                </Text>
+              </Box>
+            )}
+          </Stack>
+        </PremiumCard>
       </Stack>
-    </Stack>
+    </PremiumLayout>
   )
 }
 
@@ -278,34 +340,55 @@ type InfoCardProps = {
 }
 
 const InfoCard = ({ label, value }: InfoCardProps) => (
-  <Box borderWidth="1px" borderRadius="md" p={4} bg="white">
-    <Text fontSize="xs" textTransform="uppercase" color="gray.500" mb={1}>
+  <PremiumCard variant="flat" p={3}>
+    <Text fontSize="xs" textTransform="uppercase" color="text.muted" mb={1}>
       {label}
     </Text>
-    <Text fontWeight="semibold">{value || '—'}</Text>
-  </Box>
+    <Text fontWeight="semibold" color="text.main">
+      {value || '—'}
+    </Text>
+  </PremiumCard>
 )
 
 const VisitCard = ({ visit }: { visit: Visit }) => (
-  <Box borderWidth="1px" borderRadius="md" p={4} bg="white">
+  <Box 
+    borderWidth="1px" 
+    borderColor="border.light"
+    borderRadius="md" 
+    p={4} 
+    bg="bg.gray"
+    transition="all 0.2s"
+    _hover={{ boxShadow: 'sm' }}
+  >
     <Flex justify="space-between" align="flex-start" gap={3} wrap="wrap">
-      <Stack spacing={0}>
-        <Text fontWeight="semibold">{formatDate(visit.visitDate)}</Text>
-        <Text fontSize="sm" color="gray.500">
+      <Stack spacing={1}>
+        <Text fontWeight="semibold" color="text.main">
+          📅 {formatDate(visit.visitDate)}
+        </Text>
+        <Text fontSize="xs" color="text.muted">
           ID визита: {visit.id}
         </Text>
       </Stack>
-      <Text fontSize="sm" color="gray.500">
-        Создан {formatDateTime(visit.createdAt)}
+      <Text fontSize="xs" color="text.muted">
+        {formatDateTime(visit.createdAt)}
       </Text>
     </Flex>
-    {visit.notes ? (
-      <Text mt={3} whiteSpace="pre-wrap">
-        {visit.notes}
-      </Text>
-    ) : null}
-    <Text mt={3} fontSize="sm" color="gray.600">
-      Следующий визит: {formatDate(visit.nextVisitDate)}
+    {visit.notes && (
+      <Box 
+        mt={3} 
+        p={3} 
+        bg="white" 
+        borderRadius="base"
+        borderWidth="1px"
+        borderColor="border.light"
+      >
+        <Text whiteSpace="pre-wrap" fontSize="sm" color="text.main">
+          {visit.notes}
+        </Text>
+      </Box>
+    )}
+    <Text mt={3} fontSize="sm" color="text.muted">
+      ⏭️ Следующий визит: {formatDate(visit.nextVisitDate)}
     </Text>
   </Box>
 )

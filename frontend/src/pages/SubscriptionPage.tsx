@@ -4,7 +4,8 @@ import {
   Alert,
   AlertDescription,
   AlertIcon,
-  Button,
+  Box,
+  Flex,
   Heading,
   Skeleton,
   Stack,
@@ -14,6 +15,10 @@ import {
 
 import { createPayment, getSubscription } from '../api/subscription'
 import type { PaymentProvider, SubscriptionSnapshot } from '../api/subscription'
+import { PremiumLayout } from '../components/layout/PremiumLayout'
+import { PremiumCard } from '../components/premium/PremiumCard'
+import { PremiumButton } from '../components/premium/PremiumButton'
+import { gradients } from '../theme/premiumTheme'
 
 const STATUS_LABELS: Record<SubscriptionSnapshot['status'], string> = {
   trial: 'Trial',
@@ -135,86 +140,129 @@ export const SubscriptionPage = () => {
   }
 
   return (
-    <Stack spacing={6}>
-      <Button
-        variant="link"
-        onClick={() => navigate('/home')}
-        alignSelf="flex-start"
-        leftIcon={<Text>←</Text>}
-      >
-        Назад к меню
-      </Button>
-      
-      <Stack spacing={1}>
-        <Heading size="md">Բաժանորդագրություն</Heading>
-        <Text fontSize="sm" color="gray.500">
-          Կառավարեք ձեր Dental Mini App փորձաշրջանը այստեղ.
-        </Text>
-      </Stack>
-
-      <Stack
-        spacing={4}
-        bg="white"
-        borderRadius="xl"
-        borderWidth="1px"
-        borderColor="teal.100"
-        p={6}
-        boxShadow="sm"
-      >
-        <Stack spacing={0}>
-          <Text fontSize="sm" color="gray.500">
-            Վերաբերման կարգավիճակ
-          </Text>
-          {isLoading ? (
-            <Skeleton height="32px" width="120px" />
-          ) : (
-            <Heading size="lg" color={STATUS_COLORS[status]}>
-              {statusLabel}
+    <PremiumLayout 
+      title="Բաժանորդագրություն" 
+      showBack={true}
+      onBack={() => navigate('/home')}
+      background="light"
+    >
+      <Stack spacing={5}>
+        {/* Premium Banner */}
+        <Box
+          background={gradients.navy}
+          borderRadius="md"
+          p={6}
+          position="relative"
+          overflow="hidden"
+        >
+          {/* Decorative elements */}
+          <Box
+            position="absolute"
+            top="-20px"
+            right="-20px"
+            w="120px"
+            h="120px"
+            borderRadius="full"
+            bg="whiteAlpha.100"
+            filter="blur(30px)"
+          />
+          
+          <Flex direction="column" align="center" gap={3} position="relative">
+            <Text fontSize="4xl" lineHeight="1">🦷</Text>
+            <Heading size="lg" color="white" textAlign="center">
+              SmileCRM Premium
             </Heading>
-          )}
-        </Stack>
+            <Text fontSize="sm" color="whiteAlpha.800" textAlign="center">
+              Կառավարեք ձեր փորձաշրջանը և բաժանորդագրությունը
+            </Text>
+          </Flex>
+        </Box>
 
-        <Stack spacing={0}>
-          <Text fontSize="sm" color="gray.500">
-            Վերջնաժամկետ
-          </Text>
-          {isLoading ? (
-            <Skeleton height="20px" width="160px" />
-          ) : (
-            <Text fontWeight="semibold">{formattedDate}</Text>
-          )}
-        </Stack>
+        {/* Subscription Status Card */}
+        <PremiumCard variant="elevated">
+          <Stack spacing={4}>
+            <Stack spacing={2}>
+              <Text fontSize="sm" color="text.muted" textTransform="uppercase">
+                Կարգավիճակ
+              </Text>
+              {isLoading ? (
+                <Skeleton height="36px" width="140px" />
+              ) : (
+                <Heading size="xl" color={STATUS_COLORS[status]}>
+                  {statusLabel}
+                </Heading>
+              )}
+            </Stack>
 
-        <Alert status="info" borderRadius="md">
-          <AlertIcon />
-          <AlertDescription fontSize="sm">
-            {isLoading ? 'Բեռնվում է...' : statusMessage}
-          </AlertDescription>
-        </Alert>
+            <Stack spacing={2}>
+              <Text fontSize="sm" color="text.muted" textTransform="uppercase">
+                Վերջնաժամկետ
+              </Text>
+              {isLoading ? (
+                <Skeleton height="24px" width="180px" />
+              ) : (
+                <Text fontWeight="semibold" fontSize="lg" color="text.main">
+                  {formattedDate}
+                </Text>
+              )}
+            </Stack>
 
-        {errorMessage && (
-          <Alert status="error" borderRadius="md">
-            <AlertIcon />
-            <AlertDescription fontSize="sm">{errorMessage}</AlertDescription>
-          </Alert>
-        )}
+            <Alert status="info" borderRadius="md" mt={2}>
+              <AlertIcon />
+              <AlertDescription fontSize="sm">
+                {isLoading ? 'Բեռնվում է...' : statusMessage}
+              </AlertDescription>
+            </Alert>
 
-        <Stack spacing={3}>
-          {PAYMENT_OPTIONS.map((option) => (
-            <Button
-              key={option.provider}
-              colorScheme="teal"
-              variant="outline"
-              onClick={() => handlePayment(option.provider)}
-              isLoading={paymentInProgress === option.provider}
-              loadingText="Բացում..."
-            >
-              {option.label}
-            </Button>
-          ))}
-        </Stack>
+            {errorMessage && (
+              <Alert status="error" borderRadius="md">
+                <AlertIcon />
+                <AlertDescription fontSize="sm">{errorMessage}</AlertDescription>
+              </Alert>
+            )}
+          </Stack>
+        </PremiumCard>
+
+        {/* Payment Options Card */}
+        <PremiumCard variant="elevated">
+          <Stack spacing={4}>
+            <Stack spacing={1}>
+              <Heading size="md" color="text.main">
+                Վճարման տարբերակներ
+              </Heading>
+              <Text fontSize="sm" color="text.muted">
+                Ընտրեք հարմար վճարման համակարգը
+              </Text>
+            </Stack>
+
+            <Stack spacing={3}>
+              {PAYMENT_OPTIONS.map((option) => (
+                <PremiumButton
+                  key={option.provider}
+                  onClick={() => handlePayment(option.provider)}
+                  isLoading={paymentInProgress === option.provider}
+                  loadingText="Բացում..."
+                  size="lg"
+                  w="full"
+                >
+                  {option.label}
+                </PremiumButton>
+              ))}
+            </Stack>
+          </Stack>
+        </PremiumCard>
+
+        {/* Info Card */}
+        <PremiumCard variant="flat">
+          <Stack spacing={2}>
+            <Text fontSize="sm" color="text.muted">
+              💡 <strong>Հուշում:</strong> Փորձաշրջանը տևում է 7 օր անվճար։ 
+              Բաժանորդագրությունը ամսական 5000 դրամ է։
+            </Text>
+          </Stack>
+        </PremiumCard>
       </Stack>
-    </Stack>
+    </PremiumLayout>
   )
 }
 

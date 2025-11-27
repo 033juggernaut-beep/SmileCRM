@@ -1,10 +1,8 @@
 import {
   Alert,
   AlertIcon,
-  Button,
   FormControl,
   FormLabel,
-  Heading,
   Input,
   Select,
   Stack,
@@ -21,6 +19,9 @@ import {
   patientsApi,
 } from '../api/patients'
 import type { PatientStatus } from '../api/patients'
+import { PremiumLayout } from '../components/layout/PremiumLayout'
+import { PremiumCard } from '../components/premium/PremiumCard'
+import { PremiumButton } from '../components/premium/PremiumButton'
 
 type FormFields = {
   firstName: string
@@ -102,91 +103,112 @@ export const AddPatientPage = () => {
   }
 
   return (
-    <chakra.form onSubmit={handleSubmit} w="full">
-      <Stack spacing={5}>
-        <Button
-          variant="link"
-          onClick={() => navigate('/patients')}
-          alignSelf="flex-start"
-          leftIcon={<Text>←</Text>}
-        >
-          Назад к пациентам
-        </Button>
-        
-        <Stack spacing={1}>
-          <Heading size="md">Добавить пациента</Heading>
-          <Text fontSize="xs" color="gray.500">
-            После сохранения пациент станет доступен в общем списке.
-          </Text>
+    <PremiumLayout 
+      title="Добавить пациента" 
+      showBack={true}
+      onBack={() => navigate('/patients')}
+      background="light"
+    >
+      <chakra.form onSubmit={handleSubmit} w="full">
+        <Stack spacing={5}>
+          {/* Info Card */}
+          <PremiumCard variant="elevated" p={4}>
+            <Text fontSize="sm" color="text.muted" textAlign="center">
+              После сохранения пациент станет доступен в общем списке.
+            </Text>
+          </PremiumCard>
+
+          {/* Form Card */}
+          <PremiumCard variant="elevated">
+            <Stack spacing={4}>
+              <FormControl isRequired>
+                <FormLabel fontWeight="semibold" color="text.main">
+                  Имя
+                </FormLabel>
+                <Input
+                  placeholder="Например, Անի"
+                  value={form.firstName}
+                  onChange={handleChange('firstName')}
+                  size="lg"
+                />
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel fontWeight="semibold" color="text.main">
+                  Фамилия
+                </FormLabel>
+                <Input
+                  placeholder="Например, Սարգսյան"
+                  value={form.lastName}
+                  onChange={handleChange('lastName')}
+                  size="lg"
+                />
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel fontWeight="semibold" color="text.main">
+                  Диагноз
+                </FormLabel>
+                <Textarea
+                  placeholder="Короткое описание диагноза"
+                  rows={3}
+                  value={form.diagnosis}
+                  onChange={handleChange('diagnosis')}
+                  size="lg"
+                />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel fontWeight="semibold" color="text.main">
+                  Телефон
+                </FormLabel>
+                <Input
+                  placeholder="+374 ..."
+                  value={form.phone}
+                  onChange={handleChange('phone')}
+                  size="lg"
+                />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel fontWeight="semibold" color="text.main">
+                  Статус
+                </FormLabel>
+                <Select 
+                  value={form.status} 
+                  onChange={handleStatusChange}
+                  size="lg"
+                >
+                  {PATIENT_STATUSES.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+              </FormControl>
+            </Stack>
+          </PremiumCard>
+
+          {/* Error Alert */}
+          {error ? (
+            <Alert status="error" borderRadius="md">
+              <AlertIcon />
+              {error}
+            </Alert>
+          ) : null}
+
+          {/* Submit Button */}
+          <PremiumButton
+            type="submit"
+            size="lg"
+            isLoading={isSubmitting}
+            w="full"
+          >
+            Сохранить данные
+          </PremiumButton>
         </Stack>
-
-        <Stack spacing={4}>
-          <FormControl isRequired>
-            <FormLabel>Имя</FormLabel>
-            <Input
-              placeholder="Например, Անի"
-              value={form.firstName}
-              onChange={handleChange('firstName')}
-            />
-          </FormControl>
-
-          <FormControl isRequired>
-            <FormLabel>Фамилия</FormLabel>
-            <Input
-              placeholder="Например, Սարգսյան"
-              value={form.lastName}
-              onChange={handleChange('lastName')}
-            />
-          </FormControl>
-
-          <FormControl isRequired>
-            <FormLabel>Диагноз</FormLabel>
-            <Textarea
-              placeholder="Короткое описание диагноза"
-              rows={3}
-              value={form.diagnosis}
-              onChange={handleChange('diagnosis')}
-            />
-          </FormControl>
-
-          <FormControl>
-            <FormLabel>Телефон</FormLabel>
-            <Input
-              placeholder="+374 ..."
-              value={form.phone}
-              onChange={handleChange('phone')}
-            />
-          </FormControl>
-
-          <FormControl>
-            <FormLabel>Статус</FormLabel>
-            <Select value={form.status} onChange={handleStatusChange}>
-              {PATIENT_STATUSES.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </Select>
-          </FormControl>
-        </Stack>
-
-        {error ? (
-          <Alert status="error" borderRadius="md">
-            <AlertIcon />
-            {error}
-          </Alert>
-        ) : null}
-
-        <Button
-          type="submit"
-          colorScheme="teal"
-          size="lg"
-          isLoading={isSubmitting}
-        >
-          Сохранить данные
-        </Button>
-      </Stack>
-    </chakra.form>
+      </chakra.form>
+    </PremiumLayout>
   )
 }
 

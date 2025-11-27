@@ -140,41 +140,43 @@ export const AuthLoadingPage = () => {
         display="flex"
         alignItems="center"
         justifyContent="center"
-        bg="gray.50"
+        bg="bg.gray"
         p={4}
       >
         <Stack
           spacing={6}
           textAlign="center"
           bg="white"
-          borderRadius="2xl"
+          borderRadius="md"
           p={8}
           maxW="md"
-          boxShadow="lg"
+          boxShadow="premiumLg"
+          borderWidth="1px"
+          borderColor="border.light"
         >
           <Box fontSize="6xl">📱</Box>
           
           <Stack spacing={2}>
-            <Heading size="lg" color="teal.600">
+            <Heading size="lg" color="primary.500">
               Dental Mini App
             </Heading>
-            <Text fontSize="md" color="gray.600">
+            <Text fontSize="md" color="text.muted">
               Это мини-приложение работает только внутри Telegram
             </Text>
           </Stack>
           
           <Stack spacing={3} pt={2}>
-            <Text fontSize="sm" color="gray.500">
+            <Text fontSize="sm" color="text.muted">
               Чтобы использовать приложение:
             </Text>
             <Stack spacing={2} align="center">
-              <Text fontSize="sm" color="gray.700">
+              <Text fontSize="sm" color="text.main">
                 1️⃣ Откройте Telegram на вашем устройстве
               </Text>
-              <Text fontSize="sm" color="gray.700">
+              <Text fontSize="sm" color="text.main">
                 2️⃣ Найдите бота <strong>@SmileCRM_bot</strong>
               </Text>
-              <Text fontSize="sm" color="gray.700">
+              <Text fontSize="sm" color="text.main">
                 3️⃣ Нажмите кнопку <strong>"Բացել Mini App"</strong>
               </Text>
             </Stack>
@@ -184,14 +186,16 @@ export const AuthLoadingPage = () => {
             as="a"
             href="https://t.me/SmileCRM_bot"
             target="_blank"
-            colorScheme="telegram"
+            bg="primary.500"
+            color="white"
             size="lg"
             leftIcon={<Text fontSize="xl">▶️</Text>}
+            _hover={{ bg: 'primary.600' }}
           >
             Открыть @SmileCRM_bot
           </Button>
           
-          <Text fontSize="xs" color="gray.400">
+          <Text fontSize="xs" color="text.muted">
             Приложение доступно только через Telegram
           </Text>
         </Stack>
@@ -202,18 +206,35 @@ export const AuthLoadingPage = () => {
   if (error) {
     return (
       <Stack spacing={4}>
-        <Heading size="md">Пробуем авторизоваться…</Heading>
-        <Alert status="error" borderRadius="md">
-          <AlertIcon />
-          {error}
-        </Alert>
-        <Button onClick={handleRetry} colorScheme="teal" isLoading={isAuthenticating}>
-          Повторить попытку
-        </Button>
+        <Box 
+          bg="white" 
+          borderRadius="md" 
+          borderWidth="1px" 
+          borderColor="border.light" 
+          boxShadow="premium"
+          p={6}
+        >
+          <Stack spacing={4}>
+            <Heading size="md" color="text.main">Пробуем авторизоваться…</Heading>
+            <Alert status="error" borderRadius="md">
+              <AlertIcon />
+              {error}
+            </Alert>
+            <Button 
+              onClick={handleRetry} 
+              bg="primary.500"
+              color="white"
+              _hover={{ bg: 'primary.600' }}
+              isLoading={isAuthenticating}
+            >
+              Повторить попытку
+            </Button>
+          </Stack>
+        </Box>
         {debugEnabled ? (
           <Box
             borderWidth="1px"
-            borderRadius="lg"
+            borderRadius="md"
             borderColor="purple.200"
             bg="purple.50"
             p={4}
@@ -263,15 +284,15 @@ const LoadingState = ({ title, subtitle, isBusy = true }: LoadingStateProps) => 
     align="center"
     textAlign="center"
     bg="white"
-    borderRadius="xl"
+    borderRadius="md"
     borderWidth="1px"
-    borderColor="teal.100"
-    boxShadow="sm"
+    borderColor="border.light"
+    boxShadow="premium"
     p={6}
   >
-    {isBusy && <Spinner size="lg" color="teal.500" thickness="4px" />}
-    <Heading size="md">{title}</Heading>
-    <Text fontSize="sm" color="gray.500">
+    {isBusy && <Spinner size="lg" color="primary.500" thickness="4px" />}
+    <Heading size="md" color="text.main">{title}</Heading>
+    <Text fontSize="sm" color="text.muted">
       {subtitle}
     </Text>
   </Stack>

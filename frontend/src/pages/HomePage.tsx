@@ -1,27 +1,44 @@
-import { Button, Heading, Stack, Text, useToast } from '@chakra-ui/react'
+import { Box, Heading, Stack, Text, useToast } from '@chakra-ui/react'
 import { useNavigate } from 'react-router-dom'
+import { PremiumLayout } from '../components/layout/PremiumLayout'
+import { PremiumCard } from '../components/premium/PremiumCard'
+import { PremiumListItem } from '../components/premium/PremiumListItem'
 
 type MenuItem = {
+  icon: string
   label: string
   helper: string
   to?: string
 }
 
 const MENU_ITEMS: MenuItem[] = [
-  { label: '📋 Իմ պացիենտները', helper: 'Список ваших пациентов', to: '/patients' },
+  { 
+    icon: '📋',
+    label: 'Իմ պացիենտները', 
+    helper: 'Список ваших пациентов', 
+    to: '/patients' 
+  },
   {
-    label: '➕ Ավելացնել նոր պացիենտ',
+    icon: '➕',
+    label: 'Ավելացնել նոր պացիենտ',
     helper: 'Быстро добавить нового пациента',
     to: '/patients/new',
   },
   {
-    label: '💳 Բաժանորդագրություն',
+    icon: '💳',
+    label: 'Բաժանորդագրություն',
     helper: 'Управление подпиской',
     to: '/subscription',
   },
-  { label: 'ℹ️ Օգնություն', helper: 'База знаний и поддержка', to: '/help' },
+  { 
+    icon: 'ℹ️',
+    label: 'Օգնություն', 
+    helper: 'База знаний и поддержка', 
+    to: '/help' 
+  },
   {
-    label: '🔒 Գաղտնիության քաղաքականություն',
+    icon: '🔒',
+    label: 'Գաղտնիության քաղաքականություն',
     helper: 'Политика приватности',
     to: '/privacy',
   },
@@ -45,36 +62,44 @@ export const HomePage = () => {
   }
 
   return (
-    <Stack spacing={5}>
-      <Stack spacing={1}>
-        <Heading size="md">Главное меню</Heading>
-        <Text fontSize="sm" color="gray.500">
-          Выберите раздел. Полный функционал скоро появится.
-        </Text>
-      </Stack>
+    <PremiumLayout 
+      title="SmileCRM" 
+      showBack={false}
+      background="gradient"
+    >
+      <Stack spacing={6}>
+        {/* Welcome Section */}
+        <PremiumCard variant="elevated" p={5}>
+          <Stack spacing={2}>
+            <Heading size="lg" color="text.main">
+              Главное меню
+            </Heading>
+            <Text fontSize="sm" color="text.muted">
+              Выберите раздел. Полный функционал скоро появится.
+            </Text>
+          </Stack>
+        </PremiumCard>
 
-      <Stack spacing={3}>
-        {MENU_ITEMS.map((item) => (
-          <Button
-            key={item.label}
-            variant="outline"
-            justifyContent="flex-start"
-            size="lg"
-            py={6}
-            px={4}
-            borderRadius="lg"
-            onClick={() => handleClick(item)}
-          >
-            <Stack spacing={1} align="flex-start">
-              <Text fontWeight="semibold">{item.label}</Text>
-              <Text fontSize="xs" color="gray.500">
-                {item.helper}
-              </Text>
-            </Stack>
-          </Button>
-        ))}
+        {/* Menu Items */}
+        <PremiumCard variant="elevated" p={0} overflow="hidden">
+          {MENU_ITEMS.map((item, index) => (
+            <PremiumListItem
+              key={item.label}
+              icon={item.icon}
+              title={item.label}
+              subtitle={item.helper}
+              rightElement={
+                <Box color="text.muted" fontSize="lg">
+                  →
+                </Box>
+              }
+              showBorder={index < MENU_ITEMS.length - 1}
+              onClick={() => handleClick(item)}
+            />
+          ))}
+        </PremiumCard>
       </Stack>
-    </Stack>
+    </PremiumLayout>
   )
 }
 

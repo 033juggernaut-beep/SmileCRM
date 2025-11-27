@@ -1,4 +1,4 @@
-import { Box, Flex, Heading } from '@chakra-ui/react'
+import { Box } from '@chakra-ui/react'
 import { Outlet } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 
@@ -34,13 +34,11 @@ export const AppLayout = () => {
   }, [])
 
   return (
-    <Flex 
-      direction="column" 
+    <Box 
       w="100vw"
       minH={viewportHeight} 
       maxH={viewportHeight}
       h={viewportHeight}
-      bg="gray.50"
       overflow="hidden"
       position="fixed"
       top={0}
@@ -48,27 +46,8 @@ export const AppLayout = () => {
       right={0}
       bottom={0}
     >
-      <Box as="header" bg="teal.600" color="white" px={4} py={3} boxShadow="sm" flexShrink={0}>
-        <Heading size="md" fontWeight="semibold">
-          Dental Mini App
-        </Heading>
-      </Box>
-
-      <Flex
-        as="main"
-        flex="1"
-        align="center"
-        justify="center"
-        px={4}
-        py={8}
-        overflow="auto"
-        w="100%"
-      >
-        <Box w="full" maxW="600px">
-          <Outlet />
-        </Box>
-      </Flex>
-    </Flex>
+      <Outlet />
+    </Box>
   )
 }
 
