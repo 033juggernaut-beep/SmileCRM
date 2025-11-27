@@ -35,16 +35,9 @@ export const AppLayout = () => {
 
   return (
     <Box 
-      w="100vw"
-      minH={viewportHeight} 
-      maxH={viewportHeight}
-      h={viewportHeight}
-      overflow="hidden"
-      position="fixed"
-      top={0}
-      left={0}
-      right={0}
-      bottom={0}
+      w="100%"
+      minH={viewportHeight}
+      position="relative"
     >
       <Outlet />
     </Box>

@@ -30,7 +30,7 @@ export const PremiumLayout = ({
     <Flex
       direction="column"
       minH="100vh"
-      w="100vw"
+      w="100%"
       bg={backgrounds[background]}
       position="relative"
     >
@@ -48,11 +48,13 @@ export const PremiumLayout = ({
         as="main"
         flex="1"
         w="full"
-        maxW="600px"
+        maxW={{ base: '100%', md: '800px', lg: '1000px' }}
         mx="auto"
-        px={4}
+        px={{ base: 4, md: 6, lg: 8 }}
         py={6}
+        pb={8}
         overflowY="auto"
+        overflowX="hidden"
       >
         {children}
       </Box>
