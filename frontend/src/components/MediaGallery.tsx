@@ -152,21 +152,6 @@ export const MediaGallery = ({ patientId }: MediaGalleryProps) => {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   }
 
-  const formatDate = (dateString?: string): string => {
-    if (!dateString) return '—'
-    try {
-      return new Date(dateString).toLocaleDateString('ru-RU', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    } catch {
-      return dateString
-    }
-  }
-
   return (
     <Stack spacing={5}>
       {/* Upload Section */}
