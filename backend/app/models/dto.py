@@ -97,3 +97,16 @@ class SubscriptionCreatePaymentResponse(BaseModel):
   currency: str
   externalPaymentId: str
 
+
+class MediaFileResponse(BaseModel):
+  id: str
+  patient_id: str
+  doctor_id: str
+  file_name: str
+  file_type: str
+  file_size: int
+  storage_path: str
+  storage_bucket: str
+  public_url: str
+  created_at: datetime | None = None
+

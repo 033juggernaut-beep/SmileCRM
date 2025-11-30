@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Mapping, Sequence
+import uuid
+from datetime import datetime
 
 from postgrest.exceptions import APIError as PostgrestAPIError
 from supabase import Client, create_client
@@ -132,6 +134,53 @@ class SupabaseClient:
     if isinstance(data, dict):
       return [data]
     return []
+
+  def upload_file(
+    self,
+    bucket: str,
+    path: str,
+    file_data: bytes,
+    *,
+    content_type: str | None = None,
+  ) -> str:
+    """Upload a file to Supabase Storage and return the public URL."""
+    client = self._client_or_raise()
+    try:
+      # Upload file to storage
+      options = {}
+      if content_type:
+        options["content-type"] = content_type
+      
+      response = client.storage.from_(bucket).upload(
+        path=path,
+        file=file_data,
+        file_options=options if options else None,
+      )
+      
+      # Get public URL
+      public_url = client.storage.from_(bucket).get_public_url(path)
+      return public_url
+    except Exception as exc:
+      raise SupabaseRequestError(
+        f"Failed to upload file to storage bucket '{bucket}'.", 
+        original_error=exc
+      ) from exc
+
+  def get_file_url(self, bucket: str, path: str) -> str:
+    """Get the public URL for a file in Supabase Storage."""
+    client = self._client_or_raise()
+    return client.storage.from_(bucket).get_public_url(path)
+
+  def delete_file(self, bucket: str, path: str) -> None:
+    """Delete a file from Supabase Storage."""
+    client = self._client_or_raise()
+    try:
+      client.storage.from_(bucket).remove([path])
+    except Exception as exc:
+      raise SupabaseRequestError(
+        f"Failed to delete file from storage bucket '{bucket}'.", 
+        original_error=exc
+      ) from exc
 
 
 supabase_client = SupabaseClient(client=supabase)

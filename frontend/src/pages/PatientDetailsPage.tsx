@@ -26,6 +26,7 @@ import {
 import { PremiumLayout } from '../components/layout/PremiumLayout'
 import { PremiumCard } from '../components/premium/PremiumCard'
 import { PremiumButton } from '../components/premium/PremiumButton'
+import { MediaGallery } from '../components/MediaGallery'
 
 type VisitFormFields = {
   visitDate: string
@@ -329,6 +330,9 @@ export const PatientDetailsPage = () => {
             )}
           </Stack>
         </PremiumCard>
+
+        {/* Media Gallery Section */}
+        {id && <MediaGallery patientId={id} />}
       </Stack>
     </PremiumLayout>
   )
