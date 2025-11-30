@@ -122,11 +122,10 @@ def delete_media_file(file_id: str, doctor_id: str) -> bool:
             # Continue even if storage deletion fails
             pass
     
-    # Delete database record
-    supabase_client.update(
+    # Delete database record (hard delete)
+    supabase_client.delete(
         "media_files",
         filters={"id": file_id},
-        values={"deleted_at": "NOW()"},  # Soft delete
     )
     
     return True

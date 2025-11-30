@@ -113,6 +113,23 @@ class SupabaseClient:
       raise SupabaseRequestError("Failed to update Supabase rows.", original_error=exc) from exc
     return self._extract_rows(response)
 
+  def delete(
+    self,
+    table: str,
+    *,
+    filters: Mapping[str, Any],
+  ) -> list[dict[str, Any]]:
+    if not filters:
+      raise ValueError("Supabase delete requires at least one filter.")
+    client = self._client_or_raise()
+    query = client.table(table).delete()
+    query = self._apply_filters(query, filters)
+    try:
+      response = query.execute()
+    except PostgrestAPIError as exc:  # pragma: no cover
+      raise SupabaseRequestError("Failed to delete Supabase rows.", original_error=exc) from exc
+    return self._extract_rows(response)
+
   def _client_or_raise(self) -> Client:
     if not self.client:
       raise SupabaseNotConfiguredError("Supabase client is not configured.")

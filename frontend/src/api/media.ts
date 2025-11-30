@@ -88,5 +88,16 @@ export const mediaApi = {
 
     return Array.isArray(data) ? data.map(mapMediaFile) : []
   },
+
+  async deletePatientMedia(
+    patientId: string,
+    mediaId: string,
+  ): Promise<void> {
+    const authToken = getAuthTokenOrThrow()
+
+    await apiClient.delete(`/patients/${patientId}/media/${mediaId}`, {
+      headers: buildAuthHeaders(authToken),
+    })
+  },
 }
 

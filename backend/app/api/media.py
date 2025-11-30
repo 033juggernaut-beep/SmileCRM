@@ -134,3 +134,45 @@ async def list_patient_media(
     return [MediaFileResponse(**media) for media in media_files]
 
 
+@router.delete(
+    "/patients/{patient_id}/media/{media_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_patient_media(
+    patient_id: str,
+    media_id: str,
+    current_doctor: CurrentDoctor,
+) -> None:
+    """
+    Delete a media file for a patient.
+    
+    - **patient_id**: UUID of the patient
+    - **media_id**: UUID of the media file
+    
+    Returns 204 No Content on success.
+    """
+    # Verify patient belongs to current doctor
+    patient = patients_service.get_patient(patient_id)
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient not found.",
+        )
+    
+    patient_doctor_id = patient.get("doctor_id")
+    if patient_doctor_id and patient_doctor_id != current_doctor.doctor_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient not found.",
+        )
+    
+    # Delete media file
+    success = media_service.delete_media_file(media_id, current_doctor.doctor_id)
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Media file not found.",
+        )
+
+

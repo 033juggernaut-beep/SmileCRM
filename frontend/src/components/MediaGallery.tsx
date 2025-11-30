@@ -6,6 +6,7 @@ import {
   FormControl,
   FormLabel,
   Heading,
+  IconButton,
   Image,
   Input,
   SimpleGrid,
@@ -30,6 +31,7 @@ export const MediaGallery = ({ patientId }: MediaGalleryProps) => {
   const [error, setError] = useState<string | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const toast = useToast()
 
@@ -143,6 +145,39 @@ export const MediaGallery = ({ patientId }: MediaGalleryProps) => {
     setPreviewUrl(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
+    }
+  }
+
+  const handleDeleteMedia = async (mediaId: string, fileName: string) => {
+    // Ask for confirmation
+    if (!window.confirm(`Удалить файл "${fileName}"?`)) {
+      return
+    }
+
+    setDeletingId(mediaId)
+    try {
+      await mediaApi.deletePatientMedia(patientId, mediaId)
+      
+      toast({
+        title: 'Файл удален',
+        description: fileName,
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      })
+
+      // Remove from list
+      setMediaFiles((prev) => prev.filter((media) => media.id !== mediaId))
+    } catch (err) {
+      toast({
+        title: 'Ошибка',
+        description: err instanceof Error ? err.message : 'Не удалось удалить файл',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      })
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -263,7 +298,12 @@ export const MediaGallery = ({ patientId }: MediaGalleryProps) => {
           ) : (
             <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={3}>
               {mediaFiles.map((media) => (
-                <MediaFileCard key={media.id} media={media} />
+                <MediaFileCard
+                  key={media.id}
+                  media={media}
+                  onDelete={handleDeleteMedia}
+                  isDeleting={deletingId === media.id}
+                />
               ))}
             </SimpleGrid>
           )}
@@ -275,9 +315,11 @@ export const MediaGallery = ({ patientId }: MediaGalleryProps) => {
 
 type MediaFileCardProps = {
   media: MediaFile
+  onDelete: (mediaId: string, fileName: string) => void
+  isDeleting: boolean
 }
 
-const MediaFileCard = ({ media }: MediaFileCardProps) => {
+const MediaFileCard = ({ media, onDelete, isDeleting }: MediaFileCardProps) => {
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
@@ -297,6 +339,11 @@ const MediaFileCard = ({ media }: MediaFileCardProps) => {
     }
   }
 
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onDelete(media.id, media.fileName)
+  }
+
   return (
     <Box
       borderWidth="1px"
@@ -306,35 +353,52 @@ const MediaFileCard = ({ media }: MediaFileCardProps) => {
       bg="white"
       transition="all 0.2s"
       _hover={{ boxShadow: 'md', transform: 'translateY(-2px)' }}
-      cursor="pointer"
-      onClick={() => window.open(media.publicUrl, '_blank')}
+      position="relative"
     >
-      <Box position="relative" h="150px" bg="bg.gray">
-        <Image
-          src={media.publicUrl}
-          alt={media.fileName}
-          objectFit="cover"
-          w="full"
-          h="full"
-        />
+      <Box
+        cursor="pointer"
+        onClick={() => window.open(media.publicUrl, '_blank')}
+      >
+        <Box position="relative" h="150px" bg="bg.gray">
+          <Image
+            src={media.publicUrl}
+            alt={media.fileName}
+            objectFit="cover"
+            w="full"
+            h="full"
+          />
+        </Box>
+        <Box p={3}>
+          <Text
+            fontSize="sm"
+            fontWeight="semibold"
+            color="text.main"
+            noOfLines={1}
+            title={media.fileName}
+          >
+            {media.fileName}
+          </Text>
+          <Text fontSize="xs" color="text.muted">
+            {formatFileSize(media.fileSize)}
+          </Text>
+          <Text fontSize="xs" color="text.muted">
+            {formatDate(media.createdAt)}
+          </Text>
+        </Box>
       </Box>
-      <Box p={3}>
-        <Text
-          fontSize="sm"
-          fontWeight="semibold"
-          color="text.main"
-          noOfLines={1}
-          title={media.fileName}
-        >
-          {media.fileName}
-        </Text>
-        <Text fontSize="xs" color="text.muted">
-          {formatFileSize(media.fileSize)}
-        </Text>
-        <Text fontSize="xs" color="text.muted">
-          {formatDate(media.createdAt)}
-        </Text>
-      </Box>
+      
+      <IconButton
+        aria-label="Удалить файл"
+        icon={<Text>🗑️</Text>}
+        size="sm"
+        colorScheme="red"
+        position="absolute"
+        top={2}
+        right={2}
+        onClick={handleDelete}
+        isLoading={isDeleting}
+        isDisabled={isDeleting}
+      />
     </Box>
   )
 }
