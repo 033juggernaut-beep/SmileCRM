@@ -39,6 +39,7 @@ import {
   type PatientPayment,
 } from '../api/patientFinance'
 import { apiClient } from '../api/client'
+import { TOKEN_STORAGE_KEY } from '../constants/storage'
 import { PremiumLayout } from '../components/layout/PremiumLayout'
 import { PremiumCard } from '../components/premium/PremiumCard'
 import { PremiumButton } from '../components/premium/PremiumButton'
@@ -210,7 +211,7 @@ export const PatientDetailsPage = () => {
       // We need to call a patient update endpoint
       // Since we don't have a direct update method in patientsApi, 
       // we'll need to make a raw API call
-      const authToken = localStorage.getItem('smilecrm_auth_token')
+      const authToken = localStorage.getItem(TOKEN_STORAGE_KEY)
       if (!authToken) throw new Error('Требуется авторизация')
       
       await apiClient.patch(
