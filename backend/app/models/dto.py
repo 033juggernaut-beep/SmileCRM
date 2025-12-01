@@ -1,7 +1,8 @@
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, condecimal
 
 
 class DoctorDTO(BaseModel):
@@ -20,9 +21,11 @@ class PatientDTO(BaseModel):
 class PatientBase(BaseModel):
   first_name: str
   last_name: str
-  diagnosis: str
+  diagnosis: str | None = None
   phone: str | None = None
   status: str | None = None
+  treatment_plan_total: condecimal(max_digits=12, decimal_places=2) | None = None  # type: ignore
+  treatment_plan_currency: str | None = Field(default="AMD")
 
 
 class PatientCreateRequest(PatientBase):
@@ -57,6 +60,7 @@ class VisitBase(BaseModel):
   visit_date: date
   next_visit_date: date | None = None
   notes: str | None = None
+  medications: str | None = None
 
 
 class VisitCreateRequest(VisitBase):
@@ -74,6 +78,7 @@ class VisitUpdateRequest(BaseModel):
   visit_date: date | None = None
   next_visit_date: date | None = None
   notes: str | None = None
+  medications: str | None = None
 
 
 class SubscriptionStatusResponse(BaseModel):
@@ -109,4 +114,30 @@ class MediaFileResponse(BaseModel):
   storage_bucket: str
   public_url: str
   created_at: datetime | None = None
+
+
+# Patient Payment Models
+class PatientPaymentCreateRequest(BaseModel):
+  amount: condecimal(max_digits=12, decimal_places=2, gt=0) = Field(..., description="Payment amount")  # type: ignore
+  comment: str | None = Field(default=None, description="Optional payment note")
+  visit_id: str | None = Field(default=None, description="Optional visit ID this payment relates to")
+
+
+class PatientPaymentResponse(BaseModel):
+  id: str
+  patient_id: str
+  doctor_id: str
+  visit_id: str | None
+  amount: Decimal
+  currency: str
+  paid_at: datetime
+  comment: str | None
+  created_at: datetime | None
+
+
+class PatientFinanceSummary(BaseModel):
+  treatment_plan_total: Decimal | None = Field(description="Total cost of treatment plan")
+  treatment_plan_currency: str = Field(default="AMD")
+  total_paid: Decimal = Field(description="Total amount paid so far")
+  remaining: Decimal | None = Field(description="Remaining balance (null if no plan set)")
 

@@ -3,7 +3,9 @@ from __future__ import annotations
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from decimal import Decimal
+
+from pydantic import BaseModel, condecimal
 
 from app.api.deps import AuthenticatedDoctor, get_current_doctor
 from app.models.dto import (
@@ -26,6 +28,8 @@ class PatientUpdateRequest(BaseModel):
   diagnosis: str | None = None
   phone: str | None = None
   status: str | None = None
+  treatment_plan_total: condecimal(max_digits=12, decimal_places=2) | None = None  # type: ignore
+  treatment_plan_currency: str | None = None
 
 
 @router.get("/", response_model=list[PatientResponse])

@@ -12,11 +12,13 @@ export type Patient = {
   id: string
   firstName: string
   lastName: string
-  diagnosis: string
+  diagnosis?: string | null
   phone?: string
   status?: PatientStatus
   doctorId?: string
   createdAt?: string
+  treatmentPlanTotal?: number | null
+  treatmentPlanCurrency?: string | null
 }
 
 export type Visit = {
@@ -26,38 +28,45 @@ export type Visit = {
   visitDate: string
   nextVisitDate?: string
   notes?: string
+  medications?: string | null
   createdAt?: string
 }
 
 export type CreatePatientInput = {
   firstName: string
   lastName: string
-  diagnosis: string
+  diagnosis?: string
   phone?: string
   status?: PatientStatus
+  treatmentPlanTotal?: number
+  treatmentPlanCurrency?: string
 }
 
 export type CreateVisitInput = {
   visitDate: string
   nextVisitDate?: string
   notes?: string
+  medications?: string
 }
 
 export type UpdateVisitInput = {
   visitDate?: string
   nextVisitDate?: string
   notes?: string
+  medications?: string
 }
 
 type ApiPatient = {
   id: string
   first_name: string
   last_name: string
-  diagnosis: string
+  diagnosis?: string | null
   phone?: string | null
   status?: string | null
   doctor_id?: string | null
   created_at?: string
+  treatment_plan_total?: number | null
+  treatment_plan_currency?: string | null
 }
 
 type ApiVisit = {
@@ -67,6 +76,7 @@ type ApiVisit = {
   visit_date: string
   next_visit_date?: string | null
   notes?: string | null
+  medications?: string | null
   created_at?: string
 }
 
@@ -88,11 +98,13 @@ const mapPatient = (data: ApiPatient): Patient => ({
   id: data.id,
   firstName: data.first_name,
   lastName: data.last_name,
-  diagnosis: data.diagnosis,
+  diagnosis: data.diagnosis ?? undefined,
   phone: data.phone ?? undefined,
   status: isKnownStatus(data.status) ? data.status : undefined,
   doctorId: data.doctor_id ?? undefined,
   createdAt: data.created_at,
+  treatmentPlanTotal: data.treatment_plan_total ?? undefined,
+  treatmentPlanCurrency: data.treatment_plan_currency ?? undefined,
 })
 
 const mapVisit = (data: ApiVisit): Visit => ({
@@ -102,6 +114,7 @@ const mapVisit = (data: ApiVisit): Visit => ({
   visitDate: data.visit_date,
   nextVisitDate: data.next_visit_date ?? undefined,
   notes: data.notes ?? undefined,
+  medications: data.medications ?? undefined,
   createdAt: data.created_at,
 })
 
@@ -111,6 +124,8 @@ const buildPatientPayload = (payload: CreatePatientInput) => ({
   diagnosis: payload.diagnosis,
   phone: payload.phone,
   status: payload.status,
+  treatment_plan_total: payload.treatmentPlanTotal,
+  treatment_plan_currency: payload.treatmentPlanCurrency,
 })
 
 const buildVisitPayload = (payload: CreateVisitInput | UpdateVisitInput) => {
@@ -118,6 +133,7 @@ const buildVisitPayload = (payload: CreateVisitInput | UpdateVisitInput) => {
     visit_date: payload.visitDate,
     next_visit_date: payload.nextVisitDate,
     notes: payload.notes,
+    medications: payload.medications,
   }
 
   return Object.fromEntries(

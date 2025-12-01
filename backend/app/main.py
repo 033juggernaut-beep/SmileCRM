@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.logger import logger as fastapi_logger
 import uvicorn
 
-from app.api import auth, doctors, media, patients, payments, subscription, test_supabase, visits
+from app.api import auth, doctors, media, patient_finance, patients, payments, subscription, test_supabase, visits
 from app.bot.bot import get_bot, is_bot_configured, process_update
 from app.config import get_settings
 
@@ -46,6 +46,7 @@ async def health_check() -> dict[str, str]:
 app.include_router(auth.router, prefix="/api")
 app.include_router(doctors.router, prefix="/api")
 app.include_router(patients.router, prefix="/api")
+app.include_router(patient_finance.router, prefix="/api")
 app.include_router(test_supabase.router)
 app.include_router(visits.router, prefix="/api")
 app.include_router(subscription.router, prefix="/api")

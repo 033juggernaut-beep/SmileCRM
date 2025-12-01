@@ -66,8 +66,8 @@ export const AddPatientPage = () => {
     event.preventDefault()
     setError(null)
 
-    if (!form.firstName.trim() || !form.lastName.trim() || !form.diagnosis.trim()) {
-      setError('Пожалуйста, заполните имя, фамилию и диагноз.')
+    if (!form.firstName.trim() || !form.lastName.trim()) {
+      setError('Пожалуйста, заполните имя и фамилию.')
       return
     }
 
@@ -77,7 +77,7 @@ export const AddPatientPage = () => {
       const newPatient = await patientsApi.create({
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
-        diagnosis: form.diagnosis.trim(),
+        diagnosis: form.diagnosis.trim() || undefined,
         phone: form.phone.trim() || undefined,
         status: form.status,
       })
@@ -145,12 +145,12 @@ export const AddPatientPage = () => {
                 />
               </FormControl>
 
-              <FormControl isRequired>
+              <FormControl>
                 <FormLabel fontWeight="semibold" color="text.main">
                   Диагноз
                 </FormLabel>
                 <Textarea
-                  placeholder="Короткое описание диагноза"
+                  placeholder="Короткое описание диагноза (необязательно)"
                   rows={3}
                   value={form.diagnosis}
                   onChange={handleChange('diagnosis')}
