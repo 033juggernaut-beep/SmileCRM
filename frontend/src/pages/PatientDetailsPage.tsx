@@ -273,10 +273,15 @@ export const PatientDetailsPage = () => {
     
     setIsAddingPayment(true)
     try {
+      // Log what we're sending
+      console.log('[Payment] Creating payment:', { amount, comment: paymentComment || undefined })
+      
       const newPayment = await patientFinanceApi.createPayment(id, {
         amount,
-        comment: paymentComment || undefined,
+        comment: paymentComment.trim() || undefined,
       })
+      
+      console.log('[Payment] Created:', newPayment)
       
       setPayments((prev) => [newPayment, ...prev])
       setPaymentAmount('')

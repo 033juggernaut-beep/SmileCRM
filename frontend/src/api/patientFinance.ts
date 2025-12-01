@@ -75,11 +75,23 @@ const mapFinanceSummary = (data: ApiPatientFinanceSummary): PatientFinanceSummar
   remaining: data.remaining,
 })
 
-const buildPaymentPayload = (payload: CreatePatientPaymentInput) => ({
-  amount: payload.amount,
-  comment: payload.comment,
-  visit_id: payload.visitId,
-})
+const buildPaymentPayload = (payload: CreatePatientPaymentInput) => {
+  const body: Record<string, unknown> = {
+    amount: payload.amount,
+  }
+  
+  // Only include comment if it has a value
+  if (payload.comment) {
+    body.comment = payload.comment
+  }
+  
+  // Only include visit_id if it has a value
+  if (payload.visitId) {
+    body.visit_id = payload.visitId
+  }
+  
+  return body
+}
 
 export const patientFinanceApi = {
   async listPayments(patientId: string): Promise<PatientPayment[]> {
