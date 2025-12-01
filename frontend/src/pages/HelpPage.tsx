@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Accordion,
@@ -5,6 +6,8 @@ import {
   AccordionIcon,
   AccordionItem,
   AccordionPanel,
+  Alert,
+  AlertIcon,
   Box,
   Heading,
   Stack,
@@ -12,6 +15,8 @@ import {
 } from '@chakra-ui/react'
 import { PremiumLayout } from '../components/layout/PremiumLayout'
 import { PremiumCard } from '../components/premium/PremiumCard'
+import { PremiumButton } from '../components/premium/PremiumButton'
+import { API_URL, testBackendConnection } from '../api/client'
 
 const FAQ_ITEMS = [
   {
@@ -48,6 +53,23 @@ const FAQ_ITEMS = [
 
 export const HelpPage = () => {
   const navigate = useNavigate()
+  const [connectionTest, setConnectionTest] = useState<{
+    testing: boolean
+    result?: 'success' | 'error'
+    message?: string
+  }>({ testing: false })
+
+  const handleTestConnection = async () => {
+    setConnectionTest({ testing: true })
+    const result = await testBackendConnection()
+    setConnectionTest({
+      testing: false,
+      result: result.success ? 'success' : 'error',
+      message: result.success
+        ? 'Կապը հաջող է! Սերվերը հասանելի է։'
+        : `Սխալ: ${result.error}`,
+    })
+  }
   
   return (
     <PremiumLayout 
@@ -104,6 +126,40 @@ export const HelpPage = () => {
               </AccordionItem>
             ))}
           </Accordion>
+        </PremiumCard>
+
+        {/* Connection Test Card */}
+        <PremiumCard variant="elevated">
+          <Stack spacing={3}>
+            <Stack spacing={1} align="center" textAlign="center">
+              <Text fontSize="2xl">🔌</Text>
+              <Heading size="sm" color="text.main">
+                Ստուգել կապը սերվերի հետ
+              </Heading>
+              <Text fontSize="xs" color="text.muted">
+                API URL: {API_URL}
+              </Text>
+            </Stack>
+            
+            <PremiumButton
+              onClick={handleTestConnection}
+              isLoading={connectionTest.testing}
+              size="sm"
+            >
+              Թեստավորել կապը
+            </PremiumButton>
+
+            {connectionTest.result && (
+              <Alert
+                status={connectionTest.result}
+                borderRadius="md"
+                fontSize="sm"
+              >
+                <AlertIcon />
+                {connectionTest.message}
+              </Alert>
+            )}
+          </Stack>
         </PremiumCard>
 
         {/* Contact Card */}

@@ -144,12 +144,24 @@ export const PatientDetailsPage = () => {
         duration: 3000,
         isClosable: true,
       })
-    } catch (err) {
-      setVisitError(
-        err instanceof Error
-          ? err.message
-          : 'Не удалось создать визит. Попробуйте снова.',
-      )
+    } catch (err: any) {
+      console.error('Failed to create visit:', err)
+      let errorMessage = 'Network Error'
+      
+      // Check if it's an axios error with response
+      if (err.response) {
+        // Server responded with error status
+        const detail = err.response.data?.detail
+        errorMessage = detail || `Ошибка сервера: ${err.response.status}`
+      } else if (err.request) {
+        // Request was made but no response received
+        errorMessage = 'Сервер не отвечает. Проверьте подключение к интернету.'
+      } else if (err instanceof Error) {
+        // Something else happened
+        errorMessage = err.message
+      }
+      
+      setVisitError(errorMessage)
     } finally {
       setIsCreatingVisit(false)
     }
