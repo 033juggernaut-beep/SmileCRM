@@ -957,7 +957,7 @@ const VisitCard = ({
             </PremiumButton>
             <PremiumButton
               size="sm"
-              variant="outline"
+              variant="secondary"
               onClick={onCancelEdit}
             >
               Отмена
