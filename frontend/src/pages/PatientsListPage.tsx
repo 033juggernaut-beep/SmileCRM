@@ -128,7 +128,7 @@ export const PatientsListPage = () => {
             key={patient.id}
             icon="👤"
             title={`${patient.firstName} ${patient.lastName}`}
-            subtitle={patient.diagnosis}
+            subtitle={patient.diagnosis ?? undefined}
             rightElement={
               <Stack spacing={1} align="flex-end">
                 {patient.status && (
