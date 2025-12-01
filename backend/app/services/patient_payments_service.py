@@ -94,6 +94,48 @@ def get_finance_summary(patient_id: str, doctor_id: str) -> dict[str, Any]:
   }
 
 
+def update_payment(
+  payment_id: str,
+  doctor_id: str,
+  amount: Decimal | None = None,
+  comment: str | None = None,
+) -> dict[str, Any] | None:
+  """
+  Update a payment record. Returns the updated payment or None if not found.
+  Only allows updates if the payment belongs to the doctor.
+  """
+  try:
+    # First verify the payment belongs to this doctor
+    payments = supabase_client.select(
+      "patient_payments",
+      filters={"id": payment_id, "doctor_id": doctor_id},
+      limit=1,
+    )
+    if not payments:
+      return None
+    
+    # Build update data
+    update_data: dict[str, Any] = {}
+    if amount is not None:
+      update_data["amount"] = float(amount)
+    if comment is not None:
+      update_data["comment"] = comment
+    
+    if not update_data:
+      # Nothing to update, return existing payment
+      return payments[0]
+    
+    # Update the payment
+    updated = supabase_client.update(
+      "patient_payments",
+      filters={"id": payment_id},
+      values=update_data,
+    )
+    return updated[0] if updated else payments[0]
+  except SupabaseNotConfiguredError:
+    return None
+
+
 def delete_payment(payment_id: str, doctor_id: str) -> bool:
   """
   Delete a payment record. Returns True if successful.

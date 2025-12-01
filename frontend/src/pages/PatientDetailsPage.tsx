@@ -8,6 +8,7 @@ import {
   FormLabel,
   Heading,
   HStack,
+  IconButton,
   Input,
   NumberInput,
   NumberInputField,
@@ -23,7 +24,9 @@ import {
   Thead,
   Tr,
   useToast,
+  Tooltip,
 } from '@chakra-ui/react'
+import { EditIcon, CheckIcon, CloseIcon } from '@chakra-ui/icons'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
@@ -91,6 +94,16 @@ export const PatientDetailsPage = () => {
   const [paymentComment, setPaymentComment] = useState<string>('')
   const [isUpdatingPlan, setIsUpdatingPlan] = useState(false)
   const [isAddingPayment, setIsAddingPayment] = useState(false)
+
+  // Edit state for payments
+  const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null)
+  const [editPaymentComment, setEditPaymentComment] = useState<string>('')
+  const [isSavingPayment, setIsSavingPayment] = useState(false)
+
+  // Edit state for visits
+  const [editingVisitId, setEditingVisitId] = useState<string | null>(null)
+  const [editVisitMedications, setEditVisitMedications] = useState<string>('')
+  const [isSavingVisit, setIsSavingVisit] = useState(false)
 
   const sortedVisits = useMemo(
     () =>
@@ -311,6 +324,94 @@ export const PatientDetailsPage = () => {
     }
   }
 
+  // Start editing a payment comment
+  const handleStartEditPayment = (payment: PatientPayment) => {
+    setEditingPaymentId(payment.id)
+    setEditPaymentComment(payment.comment || '')
+  }
+
+  // Cancel editing a payment
+  const handleCancelEditPayment = () => {
+    setEditingPaymentId(null)
+    setEditPaymentComment('')
+  }
+
+  // Save payment comment edit
+  const handleSavePaymentComment = async (paymentId: string) => {
+    if (!id) return
+    
+    setIsSavingPayment(true)
+    try {
+      const updated = await patientFinanceApi.updatePayment(id, paymentId, {
+        comment: editPaymentComment.trim() || undefined,
+      })
+      
+      setPayments((prev) =>
+        prev.map((p) => (p.id === paymentId ? updated : p))
+      )
+      setEditingPaymentId(null)
+      setEditPaymentComment('')
+      
+      toast({
+        title: 'Комментарий сохранен',
+        status: 'success',
+        duration: 2000,
+      })
+    } catch (err) {
+      toast({
+        title: 'Ошибка',
+        description: err instanceof Error ? err.message : 'Не удалось сохранить',
+        status: 'error',
+        duration: 3000,
+      })
+    } finally {
+      setIsSavingPayment(false)
+    }
+  }
+
+  // Start editing visit medications
+  const handleStartEditVisit = (visit: Visit) => {
+    setEditingVisitId(visit.id)
+    setEditVisitMedications(visit.medications || '')
+  }
+
+  // Cancel editing visit
+  const handleCancelEditVisit = () => {
+    setEditingVisitId(null)
+    setEditVisitMedications('')
+  }
+
+  // Save visit medications
+  const handleSaveVisitMedications = async (visitId: string) => {
+    setIsSavingVisit(true)
+    try {
+      const updated = await patientsApi.updateVisit(visitId, {
+        medications: editVisitMedications.trim() || undefined,
+      })
+      
+      setVisits((prev) =>
+        prev.map((v) => (v.id === visitId ? updated : v))
+      )
+      setEditingVisitId(null)
+      setEditVisitMedications('')
+      
+      toast({
+        title: 'Медикаменты сохранены',
+        status: 'success',
+        duration: 2000,
+      })
+    } catch (err) {
+      toast({
+        title: 'Ошибка',
+        description: err instanceof Error ? err.message : 'Не удалось сохранить',
+        status: 'error',
+        duration: 3000,
+      })
+    } finally {
+      setIsSavingVisit(false)
+    }
+  }
+
   const formatCurrency = (amount: number | null | undefined, currency: string = 'AMD') => {
     if (amount === null || amount === undefined) return '—'
     return `${amount.toLocaleString('ru-RU')} ${currency}`
@@ -491,7 +592,17 @@ export const PatientDetailsPage = () => {
             {sortedVisits.length ? (
               <Stack spacing={3}>
                 {sortedVisits.map((visit) => (
-                  <VisitCard key={visit.id} visit={visit} />
+                  <VisitCard 
+                    key={visit.id} 
+                    visit={visit}
+                    isEditing={editingVisitId === visit.id}
+                    editMedications={editVisitMedications}
+                    isSaving={isSavingVisit}
+                    onStartEdit={() => handleStartEditVisit(visit)}
+                    onCancelEdit={handleCancelEditVisit}
+                    onSaveEdit={() => handleSaveVisitMedications(visit.id)}
+                    onMedicationsChange={setEditVisitMedications}
+                  />
                 ))}
               </Stack>
             ) : (
@@ -630,6 +741,7 @@ export const PatientDetailsPage = () => {
                           <Th>Дата</Th>
                           <Th isNumeric>Сумма</Th>
                           <Th>Комментарий</Th>
+                          <Th w="40px"></Th>
                         </Tr>
                       </Thead>
                       <Tbody>
@@ -641,8 +753,61 @@ export const PatientDetailsPage = () => {
                             <Td isNumeric fontWeight="semibold" fontSize="sm">
                               {formatCurrency(payment.amount, payment.currency)}
                             </Td>
-                            <Td fontSize="sm" color="text.muted">
-                              {payment.comment || '—'}
+                            <Td fontSize="sm">
+                              {editingPaymentId === payment.id ? (
+                                <HStack spacing={2}>
+                                  <Input
+                                    size="sm"
+                                    value={editPaymentComment}
+                                    onChange={(e) => setEditPaymentComment(e.target.value)}
+                                    placeholder="Комментарий"
+                                    autoFocus
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        handleSavePaymentComment(payment.id)
+                                      } else if (e.key === 'Escape') {
+                                        handleCancelEditPayment()
+                                      }
+                                    }}
+                                  />
+                                  <Tooltip label="Сохранить">
+                                    <IconButton
+                                      aria-label="Save"
+                                      icon={<CheckIcon />}
+                                      size="sm"
+                                      colorScheme="green"
+                                      isLoading={isSavingPayment}
+                                      onClick={() => handleSavePaymentComment(payment.id)}
+                                    />
+                                  </Tooltip>
+                                  <Tooltip label="Отмена">
+                                    <IconButton
+                                      aria-label="Cancel"
+                                      icon={<CloseIcon />}
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={handleCancelEditPayment}
+                                    />
+                                  </Tooltip>
+                                </HStack>
+                              ) : (
+                                <Text color={payment.comment ? 'text.main' : 'text.muted'}>
+                                  {payment.comment || '—'}
+                                </Text>
+                              )}
+                            </Td>
+                            <Td>
+                              {editingPaymentId !== payment.id && (
+                                <Tooltip label="Редактировать комментарий">
+                                  <IconButton
+                                    aria-label="Edit comment"
+                                    icon={<EditIcon />}
+                                    size="xs"
+                                    variant="ghost"
+                                    onClick={() => handleStartEditPayment(payment)}
+                                  />
+                                </Tooltip>
+                              )}
                             </Td>
                           </Tr>
                         ))}
@@ -685,7 +850,27 @@ const InfoCard = ({ label, value }: InfoCardProps) => (
   </PremiumCard>
 )
 
-const VisitCard = ({ visit }: { visit: Visit }) => (
+type VisitCardProps = {
+  visit: Visit
+  isEditing: boolean
+  editMedications: string
+  isSaving: boolean
+  onStartEdit: () => void
+  onCancelEdit: () => void
+  onSaveEdit: () => void
+  onMedicationsChange: (value: string) => void
+}
+
+const VisitCard = ({ 
+  visit, 
+  isEditing, 
+  editMedications, 
+  isSaving,
+  onStartEdit, 
+  onCancelEdit, 
+  onSaveEdit,
+  onMedicationsChange,
+}: VisitCardProps) => (
   <Box 
     borderWidth="1px" 
     borderColor="border.light"
@@ -725,23 +910,67 @@ const VisitCard = ({ visit }: { visit: Visit }) => (
         </Text>
       </Box>
     )}
-    {visit.medications && (
-      <Box 
-        mt={3} 
-        p={3} 
-        bg="blue.50" 
-        borderRadius="base"
-        borderWidth="1px"
-        borderColor="blue.200"
-      >
-        <Text fontSize="xs" color="blue.700" mb={1} fontWeight="semibold">
+    
+    {/* Medications section with edit capability */}
+    <Box 
+      mt={3} 
+      p={3} 
+      bg={visit.medications ? 'blue.50' : 'gray.50'}
+      borderRadius="base"
+      borderWidth="1px"
+      borderColor={visit.medications ? 'blue.200' : 'gray.200'}
+    >
+      <Flex justify="space-between" align="center" mb={2}>
+        <Text fontSize="xs" color={visit.medications ? 'blue.700' : 'gray.500'} fontWeight="semibold">
           💊 Медикаменты:
         </Text>
-        <Text whiteSpace="pre-wrap" fontSize="sm" color="text.main">
-          {visit.medications}
+        {!isEditing && (
+          <Tooltip label="Редактировать медикаменты">
+            <IconButton
+              aria-label="Edit medications"
+              icon={<EditIcon />}
+              size="xs"
+              variant="ghost"
+              onClick={onStartEdit}
+            />
+          </Tooltip>
+        )}
+      </Flex>
+      
+      {isEditing ? (
+        <Stack spacing={2}>
+          <Textarea
+            value={editMedications}
+            onChange={(e) => onMedicationsChange(e.target.value)}
+            placeholder="Например: Ибупрофен 200мг 2 раза в день после еды"
+            size="sm"
+            rows={3}
+            autoFocus
+          />
+          <HStack justify="flex-end" spacing={2}>
+            <PremiumButton
+              size="sm"
+              onClick={onSaveEdit}
+              isLoading={isSaving}
+            >
+              💾 Сохранить
+            </PremiumButton>
+            <PremiumButton
+              size="sm"
+              variant="outline"
+              onClick={onCancelEdit}
+            >
+              Отмена
+            </PremiumButton>
+          </HStack>
+        </Stack>
+      ) : (
+        <Text whiteSpace="pre-wrap" fontSize="sm" color={visit.medications ? 'text.main' : 'text.muted'}>
+          {visit.medications || 'Не указаны — нажмите ✏️ чтобы добавить'}
         </Text>
-      </Box>
-    )}
+      )}
+    </Box>
+    
     <Text mt={3} fontSize="sm" color="text.muted">
       ⏭️ Следующий визит: {formatDate(visit.nextVisitDate)}
     </Text>

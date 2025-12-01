@@ -26,6 +26,11 @@ export type CreatePatientPaymentInput = {
   visitId?: string
 }
 
+export type UpdatePatientPaymentInput = {
+  amount?: number
+  comment?: string
+}
+
 type ApiPatientPayment = {
   id: string
   patient_id: string
@@ -123,6 +128,30 @@ export const patientFinanceApi = {
       { headers: buildAuthHeaders(authToken) },
     )
     return mapFinanceSummary(data)
+  },
+
+  async updatePayment(
+    patientId: string,
+    paymentId: string,
+    payload: UpdatePatientPaymentInput,
+  ): Promise<PatientPayment> {
+    const authToken = getAuthTokenOrThrow()
+    
+    // Build payload with only defined values
+    const body: Record<string, unknown> = {}
+    if (payload.amount !== undefined) {
+      body.amount = payload.amount
+    }
+    if (payload.comment !== undefined) {
+      body.comment = payload.comment
+    }
+    
+    const { data } = await apiClient.patch<ApiPatientPayment>(
+      `/patients/${patientId}/payments/${paymentId}`,
+      body,
+      { headers: buildAuthHeaders(authToken) },
+    )
+    return mapPayment(data)
   },
 
   async deletePayment(patientId: string, paymentId: string): Promise<void> {

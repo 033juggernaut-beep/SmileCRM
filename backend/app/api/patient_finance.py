@@ -9,6 +9,7 @@ from app.models.dto import (
   PatientFinanceSummary,
   PatientPaymentCreateRequest,
   PatientPaymentResponse,
+  PatientPaymentUpdateRequest,
 )
 from app.services import patient_payments_service, patients_service
 
@@ -102,6 +103,48 @@ async def get_patient_finance_summary(
   
   summary = patient_payments_service.get_finance_summary(patient_id, current_doctor.doctor_id)
   return PatientFinanceSummary(**summary)
+
+
+@router.patch(
+  "/{patient_id}/payments/{payment_id}",
+  response_model=PatientPaymentResponse,
+)
+async def update_patient_payment(
+  patient_id: str,
+  payment_id: str,
+  payload: PatientPaymentUpdateRequest,
+  current_doctor: CurrentDoctor,
+) -> PatientPaymentResponse:
+  """Update a payment record (amount or comment)."""
+  # Verify patient belongs to this doctor
+  patient = patients_service.get_patient(patient_id)
+  if not patient:
+    raise HTTPException(
+      status_code=status.HTTP_404_NOT_FOUND,
+      detail="Patient not found.",
+    )
+  
+  patient_doctor_id = patient.get("doctor_id")
+  if patient_doctor_id and patient_doctor_id != current_doctor.doctor_id:
+    raise HTTPException(
+      status_code=status.HTTP_404_NOT_FOUND,
+      detail="Patient not found.",
+    )
+  
+  updated = patient_payments_service.update_payment(
+    payment_id=payment_id,
+    doctor_id=current_doctor.doctor_id,
+    amount=payload.amount,
+    comment=payload.comment,
+  )
+  
+  if not updated:
+    raise HTTPException(
+      status_code=status.HTTP_404_NOT_FOUND,
+      detail="Payment not found.",
+    )
+  
+  return PatientPaymentResponse(**updated)
 
 
 @router.delete("/{patient_id}/payments/{payment_id}", status_code=status.HTTP_204_NO_CONTENT)

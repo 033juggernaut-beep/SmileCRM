@@ -123,6 +123,11 @@ class PatientPaymentCreateRequest(BaseModel):
   visit_id: str | None = Field(default=None, description="Optional visit ID this payment relates to")
 
 
+class PatientPaymentUpdateRequest(BaseModel):
+  amount: condecimal(max_digits=12, decimal_places=2, gt=0) | None = Field(default=None, description="Payment amount")  # type: ignore
+  comment: str | None = Field(default=None, description="Payment note")
+
+
 class PatientPaymentResponse(BaseModel):
   id: str
   patient_id: str
