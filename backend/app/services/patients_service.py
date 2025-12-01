@@ -1,8 +1,20 @@
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Any, Mapping
 
 from .supabase_client import SupabaseNotConfiguredError, supabase_client
+
+
+def _serialize_numeric(data: dict[str, Any]) -> dict[str, Any]:
+  """Convert Decimal objects to float for JSON serialization."""
+  result = {}
+  for key, value in data.items():
+    if isinstance(value, Decimal):
+      result[key] = float(value)
+    else:
+      result[key] = value
+  return result
 
 
 def list_patients(doctor_id: str | None = None) -> list[dict[str, Any]]:
@@ -34,11 +46,13 @@ def get_patient(patient_id: str) -> dict[str, Any] | None:
 
 def update_patient(patient_id: str, doctor_id: str, update_data: dict[str, Any]) -> dict[str, Any]:
   """Update patient information."""
+  # Serialize Decimal objects to float for JSON
+  serialized_data = _serialize_numeric(update_data)
   try:
     updated = supabase_client.update(
       "patients",
       filters={"id": patient_id, "doctor_id": doctor_id},
-      values=update_data
+      values=serialized_data
     )
   except SupabaseNotConfiguredError:
     # Fallback for local dev without Supabase
@@ -55,9 +69,11 @@ def update_patient(patient_id: str, doctor_id: str, update_data: dict[str, Any])
 def create_patient(doctor_id: str, payload: Mapping[str, Any]) -> dict[str, Any]:
   """Create a patient that belongs to the provided doctor_id."""
   body = {"doctor_id": doctor_id, **payload}
+  # Serialize Decimal objects to float for JSON
+  serialized_body = _serialize_numeric(body)
   try:
-    inserted = supabase_client.insert("patients", body)
+    inserted = supabase_client.insert("patients", serialized_body)
   except SupabaseNotConfiguredError:
-    return {"id": f"local-patient-{doctor_id}", **body}
-  return inserted[0] if inserted else body
+    return {"id": f"local-patient-{doctor_id}", **serialized_body}
+  return inserted[0] if inserted else serialized_body
 
