@@ -26,7 +26,7 @@ import {
   useToast,
   Tooltip,
 } from '@chakra-ui/react'
-import { EditIcon, CheckIcon, CloseIcon } from '@chakra-ui/icons'
+// Using emoji instead of @chakra-ui/icons for better compatibility
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
@@ -773,7 +773,7 @@ export const PatientDetailsPage = () => {
                                   <Tooltip label="Сохранить">
                                     <IconButton
                                       aria-label="Save"
-                                      icon={<CheckIcon />}
+                                      icon={<Text>✓</Text>}
                                       size="sm"
                                       colorScheme="green"
                                       isLoading={isSavingPayment}
@@ -783,7 +783,7 @@ export const PatientDetailsPage = () => {
                                   <Tooltip label="Отмена">
                                     <IconButton
                                       aria-label="Cancel"
-                                      icon={<CloseIcon />}
+                                      icon={<Text>✕</Text>}
                                       size="sm"
                                       variant="ghost"
                                       onClick={handleCancelEditPayment}
@@ -801,7 +801,7 @@ export const PatientDetailsPage = () => {
                                 <Tooltip label="Редактировать комментарий">
                                   <IconButton
                                     aria-label="Edit comment"
-                                    icon={<EditIcon />}
+                                    icon={<Text>✏️</Text>}
                                     size="xs"
                                     variant="ghost"
                                     onClick={() => handleStartEditPayment(payment)}
@@ -928,7 +928,7 @@ const VisitCard = ({
           <Tooltip label="Редактировать медикаменты">
             <IconButton
               aria-label="Edit medications"
-              icon={<EditIcon />}
+              icon={<Text>✏️</Text>}
               size="xs"
               variant="ghost"
               onClick={onStartEdit}
