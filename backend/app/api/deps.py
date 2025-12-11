@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 
 from fastapi import Header, HTTPException, status
 
+from app.config import get_settings
 from app.services import doctors_service
 from app.services.jwt_service import JWTError, verify_doctor_token
 
@@ -62,8 +63,10 @@ def get_current_doctor(authorization: str | None = Header(default=None)) -> Auth
       detail="Doctor not found"
     )
   
-  # Check subscription status
-  _check_subscription_status(doctor)
+  # Check subscription status (skip in development if configured)
+  settings = get_settings()
+  if not settings.SKIP_SUBSCRIPTION_CHECK:
+    _check_subscription_status(doctor)
   
   return AuthenticatedDoctor(
     doctor_id=doctor_id,

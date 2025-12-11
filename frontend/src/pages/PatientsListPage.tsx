@@ -18,6 +18,7 @@ import { PremiumLayout } from '../components/layout/PremiumLayout'
 import { PremiumCard } from '../components/premium/PremiumCard'
 import { PremiumButton } from '../components/premium/PremiumButton'
 import { PremiumListItem } from '../components/premium/PremiumListItem'
+import { getErrorMessage, isPaymentRequiredError } from '../utils/errorHandler'
 
 const statusLabels = PATIENT_STATUSES.reduce(
   (acc, item) => {
@@ -51,9 +52,12 @@ export const PatientsListPage = () => {
         }
       } catch (err) {
         if (mounted) {
-          setError(
-            err instanceof Error ? err.message : 'Не удалось загрузить пациентов',
-          )
+          // If it's a payment required error, redirect to subscription page
+          if (isPaymentRequiredError(err)) {
+            navigate('/subscription')
+            return
+          }
+          setError(getErrorMessage(err))
         }
       } finally {
         if (mounted) {
@@ -67,7 +71,7 @@ export const PatientsListPage = () => {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [navigate])
 
   const renderContent = () => {
     if (isLoading) {
@@ -87,14 +91,46 @@ export const PatientsListPage = () => {
     if (error) {
       return (
         <PremiumCard variant="elevated">
-          <Stack spacing={3} align="center" py={4}>
-            <Text color="red.500" textAlign="center">{error}</Text>
-            <PremiumButton 
-              variant="secondary" 
-              onClick={() => navigate(0)}
-            >
-              Обновить страницу
-            </PremiumButton>
+          <Stack spacing={4} align="center" py={6}>
+            <Box fontSize="4xl">⚠️</Box>
+            <Stack spacing={2} textAlign="center">
+              <Text fontWeight="semibold" fontSize="lg" color="red.500">
+                Ошибка загрузки
+              </Text>
+              <Text fontSize="sm" color="text.muted">
+                {error}
+              </Text>
+            </Stack>
+            <Stack spacing={2} w="full" px={4}>
+              <PremiumButton 
+                onClick={() => {
+                  setError(null)
+                  setIsLoading(true)
+                  void patientsApi.list().then(
+                    (data) => {
+                      setPatients(data)
+                      setIsLoading(false)
+                    },
+                    (err) => {
+                      if (isPaymentRequiredError(err)) {
+                        navigate('/subscription')
+                        return
+                      }
+                      setError(getErrorMessage(err))
+                      setIsLoading(false)
+                    }
+                  )
+                }}
+              >
+                Попробовать снова
+              </PremiumButton>
+              <PremiumButton 
+                variant="secondary" 
+                onClick={() => navigate(0)}
+              >
+                Обновить страницу
+              </PremiumButton>
+            </Stack>
           </Stack>
         </PremiumCard>
       )

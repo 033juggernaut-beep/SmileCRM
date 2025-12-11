@@ -15,6 +15,9 @@ class Settings(BaseSettings):
   FRONTEND_WEBAPP_URL: str = "http://localhost:5173"
   WEBHOOK_URL: Optional[str] = None
   ENV: str = "development"
+  
+  # Skip subscription/trial check for development
+  SKIP_SUBSCRIPTION_CHECK: bool = False
 
 
 @lru_cache
