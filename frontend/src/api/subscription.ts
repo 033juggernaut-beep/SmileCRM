@@ -39,7 +39,7 @@ const getAuthTokenOrThrow = () => {
 
 export const getSubscription = async (): Promise<SubscriptionSnapshot> => {
   const authToken = getAuthTokenOrThrow()
-  const { data } = await apiClient.get<SubscriptionApiResponse>('/api/subscription', {
+  const { data } = await apiClient.get<SubscriptionApiResponse>('/subscription', {
     headers: buildAuthHeaders(authToken),
   })
   return {
@@ -55,7 +55,7 @@ export const createPayment = async (
   const authToken = getAuthTokenOrThrow()
 
   const { data } = await apiClient.post<CreatePaymentApiResponse>(
-    '/api/subscription/create-payment',
+    '/subscription/create-payment',
     {
       provider,
       amount: DEFAULT_PAYMENT_AMOUNT_AMD,
