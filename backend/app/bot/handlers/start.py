@@ -7,33 +7,50 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, W
 from app.config import get_settings
 from app.services import doctors_service
 
-from .menu import MAIN_MENU_KEYBOARD
-
 start_router = Router()
 settings = get_settings()
 FRONTEND_URL = settings.FRONTEND_WEBAPP_URL
-IS_DEV = FRONTEND_URL.startswith("http://localhost")
 
 
-def _build_webapp_url(page: str | None = None) -> str:
-  if page:
-    return f"{FRONTEND_URL}?page={page}"
-  return FRONTEND_URL
+# Multilingual welcome message for new users
+WELCOME_NEW = (
+  "\U0001F44B Barev Dzez! Welcome to SmileCRM!\n\n"
+  "\U0001F9B7 SmileCRM \u2014 CRM for dental clinics\n\n"
+  "\U0001F1E6\U0001F1F2 Barev Dzez SmileCRM! Atomabanakan klinikanerum CRM.\n"
+  "\U0001F1F7\U0001F1FA Добро пожаловать в SmileCRM — CRM для стоматологий.\n"
+  "\U0001F1EC\U0001F1E7 Welcome to SmileCRM — CRM for dental clinics.\n\n"
+  "\U0001F381 7 or anvchar / 7 дней бесплатно / 7-day free trial!\n\n"
+  "Нажмите «Открыть SmileCRM» \U0001F447"
+)
+
+# Welcome message for existing/registered users  
+WELCOME_EXISTING = (
+  "\U0001F44B Barev, Doctor!\n\n"
+  "\U0001F1E6\U0001F1F2 Sharunakel SmileCRM-um!\n"
+  "\U0001F1F7\U0001F1FA Продолжайте работу в SmileCRM!\n"
+  "\U0001F1EC\U0001F1E7 Continue using SmileCRM!\n\n"
+  "Нажмите «Открыть SmileCRM» \U0001F447"
+)
 
 
-def _build_inline_button(label: str, page: str | None = None) -> InlineKeyboardMarkup:
-  url = _build_webapp_url(page)
+def _build_webapp_button() -> InlineKeyboardMarkup:
+  """Build WebApp button to open SmileCRM Mini App."""
   return InlineKeyboardMarkup(
     inline_keyboard=[
-      [InlineKeyboardButton(text=label, web_app=WebAppInfo(url=url))],
+      [InlineKeyboardButton(
+        text="🦷 Открыть SmileCRM",
+        web_app=WebAppInfo(url=FRONTEND_URL)
+      )],
     ]
   )
 
 
 @start_router.message(CommandStart())
 async def handle_start(message: Message) -> None:
+  """Handle /start command - always show welcome + WebApp button."""
   telegram_user_id = message.from_user.id if message.from_user else None
 
+  # Check if doctor already registered
   doctor = None
   if telegram_user_id is not None:
     try:
@@ -41,33 +58,17 @@ async def handle_start(message: Message) -> None:
     except AttributeError:
       doctor = None
 
-  if not doctor:
-    register_url = _build_webapp_url("register")
-    if IS_DEV:
-      await message.answer(f"Բարև Ձեզ 👋\nԳրանցվելու համար բացեք Mini App: {register_url}")
-    else:
-      register_markup = _build_inline_button("Գրանցվել (բացել Mini App)", page="register")
-      await message.answer("Բարև Ձեզ 👋\nԳրանցվելու համար բացեք Mini App.", reply_markup=register_markup)
-    return
-
-  first_name = None
-  if isinstance(doctor, dict):
-    first_name = doctor.get("first_name")
+  # Choose message based on registration status
+  if doctor:
+    welcome_text = WELCOME_EXISTING
   else:
-    first_name = getattr(doctor, "first_name", None)
-  fallback_name = message.from_user.first_name if message.from_user else ""
-  doctor_name = first_name or fallback_name or ""
+    welcome_text = WELCOME_NEW
 
-  greeting = f"Բարև Ձեզ, Դոկտոր {doctor_name}!"
-  await message.answer(greeting.strip(), reply_markup=MAIN_MENU_KEYBOARD)
-
-  open_app_message = "Բացեք Dental Mini App՝ շարունակելու համար։"
-  if IS_DEV:
-    await message.answer(f"{open_app_message}\n{_build_webapp_url(None)}")
-  else:
-    open_app_markup = _build_inline_button("Բացել Mini App")
-    await message.answer(open_app_message, reply_markup=open_app_markup)
+  # Always send welcome message with WebApp button
+  await message.answer(
+    welcome_text,
+    reply_markup=_build_webapp_button()
+  )
 
 
 __all__ = ["start_router"]
-
