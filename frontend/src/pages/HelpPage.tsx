@@ -17,47 +17,45 @@ import { PremiumLayout } from '../components/layout/PremiumLayout'
 import { PremiumCard } from '../components/premium/PremiumCard'
 import { PremiumButton } from '../components/premium/PremiumButton'
 import { API_URL, testBackendConnection } from '../api/client'
-
-const FAQ_ITEMS = [
-  {
-    icon: '🔐',
-    title: 'Ինչպես գրանցվել',
-    body:
-      'Բացեք Dental Mini App-ը Telegram-ում, մուտք գործեք ձեր պրոֆիլով և հետևեք ավտոմատացված քայլերին՝ հաստատելու համար initData-ն։',
-  },
-  {
-    icon: '➕',
-    title: 'Ինչպես ավելացնել պացիենտ',
-    body:
-      'Սեղմեք "Ավելացնել նոր պացիենտ" գլխավոր էջից, լրացրեք հիմնական տվյալները և պահպանեք. նոր գրառումը կհայտնվի ցուցակում։',
-  },
-  {
-    icon: '⏰',
-    title: 'Ի՞նչ է trial-ը',
-    body:
-      'Trial-ը 7-օրյա անվճար փորձաշրջան է. դուք լիարժեք օգտագործում եք Dental Mini App-ը, հետո որոշում՝ շարունակել վճարովի բաժանորդագրությամբ թե ոչ։',
-  },
-  {
-    icon: '📊',
-    title: 'Ինչպես կառավարել վիզիտները',
-    body:
-      'Բացեք պացիենտի էջը, ավելացրեք նոր վիզիտ՝ նշելով ամսաթիվը, նշումները և հաջորդ հանդիպման ժամը։',
-  },
-  {
-    icon: '💳',
-    title: 'Ինչպես վճարել բաժանորդագրությունը',
-    body:
-      'Անցեք "Բաժանորդագրություն" բաժին և ընտրեք Idram կամ IDBank Pay վճարման համակարգերից մեկը։',
-  },
-]
+import { useLanguage } from '../context/LanguageContext'
 
 export const HelpPage = () => {
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const [connectionTest, setConnectionTest] = useState<{
     testing: boolean
     result?: 'success' | 'error'
     message?: string
   }>({ testing: false })
+
+  // FAQ items with translations
+  const FAQ_ITEMS = [
+    {
+      icon: '🔐',
+      title: t('help.faq1Title'),
+      body: t('help.faq1Body'),
+    },
+    {
+      icon: '➕',
+      title: t('help.faq2Title'),
+      body: t('help.faq2Body'),
+    },
+    {
+      icon: '⏰',
+      title: t('help.faq3Title'),
+      body: t('help.faq3Body'),
+    },
+    {
+      icon: '📊',
+      title: t('help.faq4Title'),
+      body: t('help.faq4Body'),
+    },
+    {
+      icon: '💳',
+      title: t('help.faq5Title'),
+      body: t('help.faq5Body'),
+    },
+  ]
 
   const handleTestConnection = async () => {
     setConnectionTest({ testing: true })
@@ -66,14 +64,14 @@ export const HelpPage = () => {
       testing: false,
       result: result.success ? 'success' : 'error',
       message: result.success
-        ? 'Կապը հաջող է! Սերվերը հասանելի է։'
-        : `Սխալ: ${result.error}`,
+        ? t('help.connectionSuccess')
+        : `${t('help.connectionError')}: ${result.error}`,
     })
   }
   
   return (
     <PremiumLayout 
-      title="Օգնություն" 
+      title={t('help.title')} 
       showBack={true}
       onBack={() => navigate('/home')}
       background="gradient"
@@ -84,10 +82,10 @@ export const HelpPage = () => {
           <Stack spacing={2} align="center" textAlign="center">
             <Box fontSize="3xl">❓</Box>
             <Heading size="md" color="text.main">
-              Օգնություն և FAQ
+              {t('help.faqTitle')}
             </Heading>
             <Text fontSize="sm" color="text.muted">
-              Ամենատարածված հարցերի պատասխանները։
+              {t('help.faqHint')}
             </Text>
           </Stack>
         </PremiumCard>
@@ -97,7 +95,7 @@ export const HelpPage = () => {
           <Accordion allowMultiple>
             {FAQ_ITEMS.map((item, index) => (
               <AccordionItem 
-                key={item.title} 
+                key={index} 
                 border="none"
                 borderBottomWidth={index < FAQ_ITEMS.length - 1 ? '1px' : '0'}
                 borderColor="border.light"
@@ -134,7 +132,7 @@ export const HelpPage = () => {
             <Stack spacing={1} align="center" textAlign="center">
               <Text fontSize="2xl">🔌</Text>
               <Heading size="sm" color="text.main">
-                Ստուգել կապը սերվերի հետ
+                {t('help.connectionTest')}
               </Heading>
               <Text fontSize="xs" color="text.muted">
                 API URL: {API_URL}
@@ -146,7 +144,7 @@ export const HelpPage = () => {
               isLoading={connectionTest.testing}
               size="sm"
             >
-              Թեստավորել կապը
+              {t('help.testConnection')}
             </PremiumButton>
 
             {connectionTest.result && (
@@ -167,7 +165,7 @@ export const HelpPage = () => {
           <Stack spacing={2} align="center" textAlign="center">
             <Text fontSize="2xl">💬</Text>
             <Text fontSize="sm" color="text.muted">
-              Հարցեր ունե՞ք։ Գրեք մեզ{' '}
+              {t('help.contactHint')}{' '}
               <Text as="span" fontWeight="semibold" color="primary.500">
                 support@smilecrm.app
               </Text>
@@ -178,4 +176,3 @@ export const HelpPage = () => {
     </PremiumLayout>
   )
 }
-

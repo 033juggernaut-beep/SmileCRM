@@ -13,7 +13,6 @@ import {
 import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  PATIENT_STATUSES,
   type Patient,
   type PatientStatus,
   patientsApi,
@@ -22,14 +21,7 @@ import { PremiumLayout } from '../components/layout/PremiumLayout'
 import { PremiumCard } from '../components/premium/PremiumCard'
 import { PremiumButton } from '../components/premium/PremiumButton'
 import { getErrorMessage, isPaymentRequiredError } from '../utils/errorHandler'
-
-const statusLabels = PATIENT_STATUSES.reduce(
-  (acc, item) => {
-    acc[item.value] = item.label
-    return acc
-  },
-  {} as Record<PatientStatus, string>,
-)
+import { useLanguage } from '../context/LanguageContext'
 
 const statusColors: Record<PatientStatus, { bg: string; color: string }> = {
   in_progress: { bg: 'warning.500', color: 'black' },
@@ -37,11 +29,18 @@ const statusColors: Record<PatientStatus, { bg: string; color: string }> = {
 }
 
 export const PatientsListPage = () => {
+  const { t } = useLanguage()
   const [patients, setPatients] = useState<Patient[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const navigate = useNavigate()
+  
+  // Translated status labels
+  const statusLabels: Record<PatientStatus, string> = {
+    in_progress: t('patients.statusInProgress'),
+    completed: t('patients.statusCompleted'),
+  }
 
   useEffect(() => {
     let mounted = true
@@ -108,7 +107,7 @@ export const PatientsListPage = () => {
             <Text fontSize="4xl">⚠️</Text>
             <Stack spacing={2} textAlign="center">
               <Text fontWeight="semibold" fontSize="lg" color="error.400">
-                Ошибка загрузки
+                {t('patients.loadError')}
               </Text>
               <Text fontSize="sm" color="text.muted">
                 {error}
@@ -136,7 +135,7 @@ export const PatientsListPage = () => {
                 }}
                 fullWidth
               >
-                Попробовать снова
+                {t('common.tryAgain')}
               </PremiumButton>
             </Stack>
           </Stack>
@@ -151,17 +150,17 @@ export const PatientsListPage = () => {
             <Text fontSize="5xl">👤</Text>
             <Stack spacing={2} textAlign="center">
               <Text fontWeight="bold" fontSize="xl" color="text.primary">
-                Нет пациентов
+                {t('patients.noPatients')}
               </Text>
               <Text fontSize="sm" color="text.muted">
-                Добавьте первого пациента для начала работы
+                {t('patients.noPatientsHint')}
               </Text>
             </Stack>
             <PremiumButton 
               onClick={() => navigate('/patients/new')}
               leftIcon={<Text>➕</Text>}
             >
-              Добавить пациента
+              {t('patients.addPatient')}
             </PremiumButton>
           </Stack>
         </PremiumCard>
@@ -173,7 +172,7 @@ export const PatientsListPage = () => {
         <PremiumCard variant="flat">
           <Stack spacing={2} align="center" py={6}>
             <Text fontSize="3xl">🔍</Text>
-            <Text color="text.muted">Ничего не найдено</Text>
+            <Text color="text.muted">{t('patients.notFound')}</Text>
           </Stack>
         </PremiumCard>
       )
@@ -252,7 +251,7 @@ export const PatientsListPage = () => {
 
   return (
     <PremiumLayout 
-      title="Пациенты" 
+      title={t('patients.title')} 
       showBack={true}
       onBack={() => navigate('/home')}
       background="gradient"
@@ -262,14 +261,14 @@ export const PatientsListPage = () => {
         {/* Header with count */}
         <Flex justify="space-between" align="center">
           <Heading size="md" color="text.primary">
-            {isLoading ? 'Загрузка...' : `${patients.length} пациентов`}
+            {isLoading ? t('common.loading') : `${patients.length} ${t('patients.count')}`}
           </Heading>
           <PremiumButton
             size="sm"
             onClick={() => navigate('/patients/new')}
             leftIcon={<Text fontSize="sm">➕</Text>}
           >
-            Добавить
+            {t('patients.addNew')}
           </PremiumButton>
         </Flex>
 
@@ -280,7 +279,7 @@ export const PatientsListPage = () => {
               <Text color="text.muted">🔍</Text>
             </InputLeftElement>
             <Input
-              placeholder="Поиск пациента..."
+              placeholder={t('patients.searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               bg="bg.secondary"

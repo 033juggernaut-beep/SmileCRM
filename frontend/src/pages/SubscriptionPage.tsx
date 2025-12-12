@@ -19,23 +19,13 @@ import { PremiumLayout } from '../components/layout/PremiumLayout'
 import { PremiumCard } from '../components/premium/PremiumCard'
 import { PremiumButton } from '../components/premium/PremiumButton'
 import { gradients } from '../theme/premiumTheme'
-
-const STATUS_LABELS: Record<SubscriptionSnapshot['status'], string> = {
-  trial: 'Trial',
-  active: 'Active',
-  expired: 'Expired',
-}
+import { useLanguage } from '../context/LanguageContext'
 
 const STATUS_COLORS: Record<SubscriptionSnapshot['status'], string> = {
   trial: 'teal.600',
   active: 'green.600',
   expired: 'red.500',
 }
-
-const PAYMENT_OPTIONS: { label: string; provider: PaymentProvider }[] = [
-  { label: 'Վճարել Idram-ով', provider: 'idram' },
-  { label: 'Վճարել IDBank Pay-ով', provider: 'idbank' },
-]
 
 const formatDate = (value: string | null): string => {
   if (!value) {
@@ -52,23 +42,6 @@ const formatDate = (value: string | null): string => {
   }).format(date)
 }
 
-const buildStatusMessage = (status: SubscriptionSnapshot['status'], formattedDate: string) => {
-  switch (status) {
-    case 'trial':
-      return formattedDate === '—'
-        ? 'Փորձաշրջանը ակտիվ է, հետեւեք ավարտի օրվան.'
-        : `Փորձաշրջանը ակտիվ է մինչև ${formattedDate}.`
-    case 'active':
-      return formattedDate === '—'
-        ? 'Բաժանորդագրությունը ակտիվ է.'
-        : `Բաժանորդագրությունը ակտիվ է մինչև ${formattedDate}.`
-    case 'expired':
-      return 'Բաժանորդագրությունը սպառված է։ Շարունակելու համար կատարեք վճարում։'
-    default:
-      return ''
-  }
-}
-
 const openPaymentLink = (url: string) => {
   if (typeof window === 'undefined') return
   const telegram = window.Telegram?.WebApp
@@ -80,12 +53,43 @@ const openPaymentLink = (url: string) => {
 }
 
 export const SubscriptionPage = () => {
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const toast = useToast()
   const [snapshot, setSnapshot] = useState<SubscriptionSnapshot | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [paymentInProgress, setPaymentInProgress] = useState<PaymentProvider | null>(null)
+
+  // Translated status labels
+  const STATUS_LABELS: Record<SubscriptionSnapshot['status'], string> = {
+    trial: t('subscription.trial'),
+    active: t('subscription.active'),
+    expired: t('subscription.expired'),
+  }
+
+  // Translated payment options
+  const PAYMENT_OPTIONS: { label: string; provider: PaymentProvider }[] = [
+    { label: t('subscription.payIdram'), provider: 'idram' },
+    { label: t('subscription.payIdbank'), provider: 'idbank' },
+  ]
+
+  const buildStatusMessage = useCallback((status: SubscriptionSnapshot['status'], formattedDate: string) => {
+    switch (status) {
+      case 'trial':
+        return formattedDate === '—'
+          ? t('subscription.trialActiveNoDate')
+          : `${t('subscription.trialActive')} ${formattedDate}.`
+      case 'active':
+        return formattedDate === '—'
+          ? t('subscription.subscriptionActiveNoDate')
+          : `${t('subscription.subscriptionActive')} ${formattedDate}.`
+      case 'expired':
+        return t('subscription.subscriptionExpired')
+      default:
+        return ''
+    }
+  }, [t])
 
   const fetchSubscription = useCallback(async () => {
     setIsLoading(true)
@@ -95,10 +99,10 @@ export const SubscriptionPage = () => {
       setSnapshot(response)
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Չհաջողվեց ստանալ բաժանորդագրության վիճակը'
+        error instanceof Error ? error.message : t('subscription.errorLoad')
       setErrorMessage(message)
       toast({
-        title: 'Չհաջողվեց ստանալ բաժանորդագրությունը',
+        title: t('subscription.errorLoad'),
         description: message,
         status: 'error',
         duration: 4000,
@@ -107,7 +111,7 @@ export const SubscriptionPage = () => {
     } finally {
       setIsLoading(false)
     }
-  }, [toast])
+  }, [toast, t])
 
   useEffect(() => {
     void fetchSubscription()
@@ -126,9 +130,9 @@ export const SubscriptionPage = () => {
       openPaymentLink(paymentUrl)
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Չհաջողվեց սկսել վճարումը'
+        error instanceof Error ? error.message : t('subscription.errorPayment')
       toast({
-        title: 'Վճարումը ձախողվեց',
+        title: t('subscription.paymentFailed'),
         description: message,
         status: 'error',
         duration: 4000,
@@ -141,7 +145,7 @@ export const SubscriptionPage = () => {
 
   return (
     <PremiumLayout 
-      title="Բաժանորդագրություն" 
+      title={t('subscription.title')} 
       showBack={true}
       onBack={() => navigate('/home')}
       background="gradient"
@@ -170,10 +174,10 @@ export const SubscriptionPage = () => {
           <Flex direction="column" align="center" gap={3} position="relative">
             <Text fontSize="4xl" lineHeight="1">🦷</Text>
             <Heading size="lg" color="white" textAlign="center">
-              SmileCRM Premium
+              {t('subscription.premiumTitle')}
             </Heading>
             <Text fontSize="sm" color="whiteAlpha.800" textAlign="center">
-              Կառավարեք ձեր փորձաշրջանը և բաժանորդագրությունը
+              {t('subscription.premiumHint')}
             </Text>
           </Flex>
         </Box>
@@ -183,7 +187,7 @@ export const SubscriptionPage = () => {
           <Stack spacing={4}>
             <Stack spacing={2}>
               <Text fontSize="sm" color="text.muted" textTransform="uppercase">
-                Կարգավիճակ
+                {t('subscription.status')}
               </Text>
               {isLoading ? (
                 <Skeleton height="36px" width="140px" />
@@ -196,7 +200,7 @@ export const SubscriptionPage = () => {
 
             <Stack spacing={2}>
               <Text fontSize="sm" color="text.muted" textTransform="uppercase">
-                Վերջնաժամկետ
+                {t('subscription.deadline')}
               </Text>
               {isLoading ? (
                 <Skeleton height="24px" width="180px" />
@@ -210,7 +214,7 @@ export const SubscriptionPage = () => {
             <Alert status="info" borderRadius="md" mt={2}>
               <AlertIcon />
               <AlertDescription fontSize="sm">
-                {isLoading ? 'Բեռնվում է...' : statusMessage}
+                {isLoading ? t('common.loading') : statusMessage}
               </AlertDescription>
             </Alert>
 
@@ -228,10 +232,10 @@ export const SubscriptionPage = () => {
           <Stack spacing={4}>
             <Stack spacing={1}>
               <Heading size="md" color="text.main">
-                Վճարման տարբերակներ
+                {t('subscription.paymentOptions')}
               </Heading>
               <Text fontSize="sm" color="text.muted">
-                Ընտրեք հարմար վճարման համակարգը
+                {t('subscription.choosePayment')}
               </Text>
             </Stack>
 
@@ -241,7 +245,7 @@ export const SubscriptionPage = () => {
                   key={option.provider}
                   onClick={() => handlePayment(option.provider)}
                   isLoading={paymentInProgress === option.provider}
-                  loadingText="Բացում..."
+                  loadingText={t('subscription.opening')}
                   size="lg"
                   w="full"
                 >
@@ -256,8 +260,7 @@ export const SubscriptionPage = () => {
         <PremiumCard variant="flat">
           <Stack spacing={2}>
             <Text fontSize="sm" color="text.muted">
-              💡 <strong>Հուշում:</strong> Փորձաշրջանը տևում է 7 օր անվճար։ 
-              Բաժանորդագրությունը ամսական 5000 դրամ է։
+              {t('subscription.hint')}
             </Text>
           </Stack>
         </PremiumCard>
@@ -265,4 +268,3 @@ export const SubscriptionPage = () => {
     </PremiumLayout>
   )
 }
-

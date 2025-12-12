@@ -18,7 +18,6 @@ import { useCallback, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  PATIENT_STATUSES,
   patientsApi,
 } from '../api/patients'
 import type { PatientStatus } from '../api/patients'
@@ -27,6 +26,7 @@ import { PremiumLayout } from '../components/layout/PremiumLayout'
 import { PremiumCard } from '../components/premium/PremiumCard'
 import { PremiumButton } from '../components/premium/PremiumButton'
 import { VoiceAssistantButton } from '../components/VoiceAssistantButton'
+import { useLanguage } from '../context/LanguageContext'
 
 type FormFields = {
   firstName: string
@@ -45,11 +45,18 @@ const initialFormState: FormFields = {
 }
 
 export const AddPatientPage = () => {
+  const { t } = useLanguage()
   const [form, setForm] = useState<FormFields>(initialFormState)
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
   const toast = useToast()
+  
+  // Translated status options
+  const statusOptions = [
+    { value: 'in_progress' as PatientStatus, label: t('patients.statusInProgress') },
+    { value: 'completed' as PatientStatus, label: t('patients.statusCompleted') },
+  ]
 
   const handleChange =
     (field: keyof FormFields) =>
@@ -89,7 +96,7 @@ export const AddPatientPage = () => {
     setError(null)
 
     if (!form.firstName.trim() || !form.lastName.trim()) {
-      setError('Пожалуйста, заполните имя и фамилию.')
+      setError(t('addPatient.validationError'))
       return
     }
 
@@ -105,8 +112,8 @@ export const AddPatientPage = () => {
       })
 
       toast({
-        title: 'Пациент добавлен',
-        description: `${newPatient.firstName} ${newPatient.lastName} создан в системе`,
+        title: t('addPatient.successTitle'),
+        description: `${newPatient.firstName} ${newPatient.lastName} ${t('addPatient.successDescription')}`,
         status: 'success',
         duration: 4000,
         isClosable: true,
@@ -117,7 +124,7 @@ export const AddPatientPage = () => {
       setError(
         err instanceof Error
           ? err.message
-          : 'Не удалось создать пациента. Попробуйте снова.',
+          : t('addPatient.errorCreate'),
       )
     } finally {
       setIsSubmitting(false)
@@ -126,7 +133,7 @@ export const AddPatientPage = () => {
 
   return (
     <PremiumLayout 
-      title="Новый пациент" 
+      title={t('addPatient.title')} 
       showBack={true}
       onBack={() => navigate('/patients')}
       background="gradient"
@@ -138,10 +145,10 @@ export const AddPatientPage = () => {
           <Flex justify="space-between" align="center">
             <Box>
               <Heading size="md" color="text.primary">
-                Данные пациента
+                {t('addPatient.dataTitle')}
               </Heading>
               <Text fontSize="sm" color="text.muted" mt={1}>
-                Заполните информацию о пациенте
+                {t('addPatient.dataHint')}
               </Text>
             </Box>
             <VoiceAssistantButton
@@ -156,10 +163,10 @@ export const AddPatientPage = () => {
             <Stack spacing={5}>
               <FormControl isRequired>
                 <FormLabel color="text.secondary" fontSize="sm">
-                  Имя
+                  {t('addPatient.firstName')}
                 </FormLabel>
                 <Input
-                  placeholder="First name"
+                  placeholder={t('addPatient.firstNamePlaceholder')}
                   value={form.firstName}
                   onChange={handleChange('firstName')}
                   size="lg"
@@ -168,10 +175,10 @@ export const AddPatientPage = () => {
 
               <FormControl isRequired>
                 <FormLabel color="text.secondary" fontSize="sm">
-                  Фамилия
+                  {t('addPatient.lastName')}
                 </FormLabel>
                 <Input
-                  placeholder="Last name"
+                  placeholder={t('addPatient.lastNamePlaceholder')}
                   value={form.lastName}
                   onChange={handleChange('lastName')}
                   size="lg"
@@ -180,10 +187,10 @@ export const AddPatientPage = () => {
 
               <FormControl>
                 <FormLabel color="text.secondary" fontSize="sm">
-                  Телефон
+                  {t('addPatient.phone')}
                 </FormLabel>
                 <Input
-                  placeholder="+374 XX XXX XXX"
+                  placeholder={t('addPatient.phonePlaceholder')}
                   value={form.phone}
                   onChange={handleChange('phone')}
                   size="lg"
@@ -193,7 +200,7 @@ export const AddPatientPage = () => {
 
               <FormControl>
                 <FormLabel color="text.secondary" fontSize="sm">
-                  Статус
+                  {t('addPatient.status')}
                 </FormLabel>
                 <Select 
                   value={form.status} 
@@ -206,7 +213,7 @@ export const AddPatientPage = () => {
                     },
                   }}
                 >
-                  {PATIENT_STATUSES.map((option) => (
+                  {statusOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -216,10 +223,10 @@ export const AddPatientPage = () => {
 
               <FormControl>
                 <FormLabel color="text.secondary" fontSize="sm">
-                  Диагноз / Заметки
+                  {t('addPatient.diagnosis')}
                 </FormLabel>
                 <Textarea
-                  placeholder="Описание диагноза или заметки..."
+                  placeholder={t('addPatient.diagnosisPlaceholder')}
                   rows={4}
                   value={form.diagnosis}
                   onChange={handleChange('diagnosis')}
@@ -247,10 +254,10 @@ export const AddPatientPage = () => {
             type="submit"
             size="lg"
             isLoading={isSubmitting}
-            loadingText="Сохранение..."
+            loadingText={t('addPatient.saving')}
             fullWidth
           >
-            ✓ Сохранить пациента
+            {t('addPatient.save')}
           </PremiumButton>
         </Stack>
       </chakra.form>

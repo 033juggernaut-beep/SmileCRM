@@ -2,34 +2,44 @@ import { useNavigate } from 'react-router-dom'
 import { Box, Heading, ListItem, Stack, Text, UnorderedList } from '@chakra-ui/react'
 import { PremiumLayout } from '../components/layout/PremiumLayout'
 import { PremiumCard } from '../components/premium/PremiumCard'
-
-const sections = [
-  {
-    icon: '📝',
-    title: '1. Տեղեկատվության հավաքագրում',
-    body:
-      'Dental Mini App-ը օգտագործում է Telegram initData-ն՝ հաստատելու համար ձեր ինքնությունը և պահպանելու մուտքը։ Մասնագիտական տվյալները (օր.՝ անուն, կլինիկա, մասնագիտացում) մնում են միայն ձեր վերահսկողության ներքո։',
-  },
-  {
-    icon: '🔄',
-    title: '2. Տվյալների օգտագործում',
-    body:
-      'Հավաքագրված տվյալները օգտագործվում են միայն ծառայության ներքին գործառույթների համար՝ պացիենտների հաշվառում, բաժանորդագրության կառավարում և աջակցության տրամադրում։',
-  },
-  {
-    icon: '🔒',
-    title: '3. Տվյալների անվտանգություն',
-    body:
-      'Մենք կիրառում ենք արդյունաբերական անվտանգության մեթոդներ և երբեք չենք փոխանցում տվյալները երրորդ անձանց առանց ձեր համաձայնության։',
-  },
-]
+import { useLanguage } from '../context/LanguageContext'
 
 export const PrivacyPolicyPage = () => {
+  const { t, language } = useLanguage()
   const navigate = useNavigate()
+  
+  // Sections with translations
+  const sections = [
+    {
+      icon: '📝',
+      title: t('privacy.section1Title'),
+      body: t('privacy.section1Body'),
+    },
+    {
+      icon: '🔄',
+      title: t('privacy.section2Title'),
+      body: t('privacy.section2Body'),
+    },
+    {
+      icon: '🔒',
+      title: t('privacy.section3Title'),
+      body: t('privacy.section3Body'),
+    },
+  ]
+
+  // Format date based on language
+  const formatDate = () => {
+    const localeMap: Record<string, string> = {
+      am: 'hy-AM',
+      ru: 'ru-RU',
+      en: 'en-US',
+    }
+    return new Date().toLocaleDateString(localeMap[language] || 'en-US')
+  }
   
   return (
     <PremiumLayout 
-      title="Գաղտնիություն" 
+      title={t('privacy.title')} 
       showBack={true}
       onBack={() => navigate('/home')}
       background="gradient"
@@ -40,10 +50,10 @@ export const PrivacyPolicyPage = () => {
           <Stack spacing={2} align="center" textAlign="center">
             <Box fontSize="3xl">🛡️</Box>
             <Heading size="md" color="text.main">
-              Գաղտնիության քաղաքականություն
+              {t('privacy.policyTitle')}
             </Heading>
             <Text fontSize="sm" color="text.muted">
-              Ստորև ներկայացված տեղեկությունը ժամանակավոր է և կարող է թարմացվել։
+              {t('privacy.policyHint')}
             </Text>
           </Stack>
         </PremiumCard>
@@ -51,8 +61,8 @@ export const PrivacyPolicyPage = () => {
         {/* Main Content */}
         <PremiumCard variant="elevated">
           <Stack spacing={5}>
-            {sections.map((section) => (
-              <Stack key={section.title} spacing={2}>
+            {sections.map((section, index) => (
+              <Stack key={index} spacing={2}>
                 <Stack direction="row" align="center" spacing={2}>
                   <Text fontSize="xl">{section.icon}</Text>
                   <Heading size="sm" color="text.main">
@@ -71,15 +81,15 @@ export const PrivacyPolicyPage = () => {
               <Stack direction="row" align="center" spacing={2}>
                 <Text fontSize="xl">📧</Text>
                 <Heading size="sm" color="text.main">
-                  Կոնտակտ
+                  {t('privacy.contact')}
                 </Heading>
               </Stack>
               <Text fontSize="sm" color="text.main" lineHeight="tall" pl={8}>
-                Հարցերի դեպքում գրեք մեզ{' '}
+                {t('privacy.contactBody')}{' '}
                 <Text as="span" fontWeight="semibold" color="primary.500">
                   support@smilecrm.app
                 </Text>{' '}
-                հասցեին կամ կապվեք Telegram միջոցով։
+                {t('privacy.orViaTelegram')}
               </Text>
             </Stack>
 
@@ -89,17 +99,13 @@ export const PrivacyPolicyPage = () => {
               <Stack direction="row" align="center" spacing={2}>
                 <Text fontSize="xl">📋</Text>
                 <Heading size="sm" color="text.main">
-                  Ավելացվող դրույթներ
+                  {t('privacy.additionalTerms')}
                 </Heading>
               </Stack>
               <UnorderedList fontSize="sm" color="text.main" pl={8} spacing={1}>
-                <ListItem>Տվյալները պահվում են միայն անհրաժեշտ ժամկետով։</ListItem>
-                <ListItem>
-                  Դուք կարող եք պահանջել ձեր տվյալների հեռացումը support-ից։
-                </ListItem>
-                <ListItem>
-                  Քաղաքականությունը կթարմացվի ծառայության զարգացման հետ։
-                </ListItem>
+                <ListItem>{t('privacy.term1')}</ListItem>
+                <ListItem>{t('privacy.term2')}</ListItem>
+                <ListItem>{t('privacy.term3')}</ListItem>
               </UnorderedList>
             </Stack>
           </Stack>
@@ -108,11 +114,10 @@ export const PrivacyPolicyPage = () => {
         {/* Update Notice */}
         <PremiumCard variant="flat">
           <Text fontSize="xs" color="text.muted" textAlign="center">
-            Վերջին թարմացում: {new Date().toLocaleDateString('hy-AM')}
+            {t('privacy.lastUpdated')}: {formatDate()}
           </Text>
         </PremiumCard>
       </Stack>
     </PremiumLayout>
   )
 }
-

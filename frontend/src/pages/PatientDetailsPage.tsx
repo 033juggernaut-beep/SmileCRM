@@ -31,7 +31,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import axios from 'axios'
 import {
-  PATIENT_STATUSES,
   type Patient,
   type PatientStatus,
   type Visit,
@@ -50,6 +49,7 @@ import { PremiumCard } from '../components/premium/PremiumCard'
 import { PremiumButton } from '../components/premium/PremiumButton'
 import { MediaGallery } from '../components/MediaGallery'
 import { VoiceAssistantButton } from '../components/VoiceAssistantButton'
+import { useLanguage } from '../context/LanguageContext'
 
 type VisitFormFields = {
   visitDate: string
@@ -58,23 +58,22 @@ type VisitFormFields = {
   medications: string
 }
 
-const statusLabels = PATIENT_STATUSES.reduce(
-  (acc, item) => {
-    acc[item.value] = item.label
-    return acc
-  },
-  {} as Record<PatientStatus, string>,
-)
-
 const statusColors: Record<PatientStatus, { bg: string; color: string }> = {
   in_progress: { bg: 'warning.500', color: 'black' },
   completed: { bg: 'success.500', color: 'white' },
 }
 
 export const PatientDetailsPage = () => {
+  const { t } = useLanguage()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const toast = useToast()
+  
+  // Translated status labels
+  const statusLabels: Record<PatientStatus, string> = {
+    in_progress: t('patients.statusInProgress'),
+    completed: t('patients.statusCompleted'),
+  }
 
   const [patient, setPatient] = useState<Patient | null>(null)
   const [visits, setVisits] = useState<Visit[]>([])
@@ -118,7 +117,7 @@ export const PatientDetailsPage = () => {
 
   useEffect(() => {
     if (!id) {
-      setError('Пациент не найден')
+      setError(t('patientDetails.notFound'))
       setIsLoading(false)
       return
     }
@@ -145,7 +144,7 @@ export const PatientDetailsPage = () => {
       } catch (err) {
         if (!cancelled) {
           setError(
-            err instanceof Error ? err.message : 'Ошибка загрузки пациента',
+            err instanceof Error ? err.message : t('patientDetails.loadError'),
           )
         }
       } finally {
@@ -203,7 +202,7 @@ export const PatientDetailsPage = () => {
       return
     }
     if (!visitForm.visitDate) {
-      setVisitError('Укажите дату визита')
+      setVisitError(t('patientDetails.visitDateRequired'))
       return
     }
     setVisitError(null)
@@ -218,7 +217,7 @@ export const PatientDetailsPage = () => {
       setVisits((prev) => [created, ...prev])
       setVisitForm({ visitDate: '', nextVisitDate: '', notes: '', medications: '' })
       toast({
-        title: 'Визит добавлен',
+        title: t('patientDetails.visitAdded'),
         description: formatDate(created.visitDate),
         status: 'success',
         duration: 3000,
@@ -233,10 +232,10 @@ export const PatientDetailsPage = () => {
         if (err.response) {
           // Server responded with error status
           const detail = err.response.data?.detail
-          errorMessage = detail || `Ошибка сервера: ${err.response.status}`
+          errorMessage = detail || `${t('patientDetails.serverError')}: ${err.response.status}`
         } else if (err.request) {
           // Request was made but no response received
-          errorMessage = 'Сервер не отвечает. Проверьте подключение к интернету.'
+          errorMessage = t('patientDetails.serverNotResponding')
         } else {
           errorMessage = err.message
         }
@@ -262,7 +261,7 @@ export const PatientDetailsPage = () => {
       // Since we don't have a direct update method in patientsApi, 
       // we'll need to make a raw API call
       const authToken = localStorage.getItem(TOKEN_STORAGE_KEY)
-      if (!authToken) throw new Error('Требуется авторизация')
+      if (!authToken) throw new Error(t('patientDetails.authRequired'))
       
       await apiClient.patch(
         `/patients/${id}`,
@@ -289,15 +288,15 @@ export const PatientDetailsPage = () => {
       setFinanceSummary(newSummary)
       
       toast({
-        title: 'План лечения обновлен',
+        title: t('patientDetails.planUpdated'),
         status: 'success',
         duration: 3000,
         isClosable: true,
       })
     } catch (err) {
       toast({
-        title: 'Ошибка',
-        description: err instanceof Error ? err.message : 'Не удалось обновить план',
+        title: t('common.error'),
+        description: err instanceof Error ? err.message : t('patientDetails.updateError'),
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -313,8 +312,8 @@ export const PatientDetailsPage = () => {
     const amount = parseFloat(paymentAmount)
     if (isNaN(amount) || amount <= 0) {
       toast({
-        title: 'Ошибка',
-        description: 'Введите корректную сумму',
+        title: t('common.error'),
+        description: t('patientDetails.invalidAmount'),
         status: 'error',
         duration: 3000,
       })
@@ -342,7 +341,7 @@ export const PatientDetailsPage = () => {
       setFinanceSummary(newSummary)
       
       toast({
-        title: 'Оплата добавлена',
+        title: t('patientDetails.paymentAdded'),
         description: `${amount} ${newSummary.treatmentPlanCurrency}`,
         status: 'success',
         duration: 3000,
@@ -350,8 +349,8 @@ export const PatientDetailsPage = () => {
       })
     } catch (err) {
       toast({
-        title: 'Ошибка',
-        description: err instanceof Error ? err.message : 'Не удалось добавить оплату',
+        title: t('common.error'),
+        description: err instanceof Error ? err.message : t('patientDetails.addPaymentError'),
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -390,14 +389,14 @@ export const PatientDetailsPage = () => {
       setEditPaymentComment('')
       
       toast({
-        title: 'Комментарий сохранен',
+        title: t('patientDetails.commentSaved'),
         status: 'success',
         duration: 2000,
       })
     } catch (err) {
       toast({
-        title: 'Ошибка',
-        description: err instanceof Error ? err.message : 'Не удалось сохранить',
+        title: t('common.error'),
+        description: err instanceof Error ? err.message : t('patientDetails.saveError'),
         status: 'error',
         duration: 3000,
       })
@@ -433,14 +432,14 @@ export const PatientDetailsPage = () => {
       setEditVisitMedications('')
       
       toast({
-        title: 'Медикаменты сохранены',
+        title: t('patientDetails.medicationsSaved'),
         status: 'success',
         duration: 2000,
       })
     } catch (err) {
       toast({
-        title: 'Ошибка',
-        description: err instanceof Error ? err.message : 'Не удалось сохранить',
+        title: t('common.error'),
+        description: err instanceof Error ? err.message : t('patientDetails.saveError'),
         status: 'error',
         duration: 3000,
       })
@@ -457,7 +456,7 @@ export const PatientDetailsPage = () => {
   if (isLoading) {
     return (
       <PremiumLayout 
-        title="Загрузка..." 
+        title={t('common.loading')} 
         showBack={true}
         onBack={() => navigate('/patients')}
         background="gradient"
@@ -466,9 +465,9 @@ export const PatientDetailsPage = () => {
         <PremiumCard variant="elevated">
           <Stack spacing={3} align="center" py={6}>
             <Box fontSize="3xl">⏳</Box>
-            <Heading size="md" color="text.primary">Загружаем данные пациента…</Heading>
+            <Heading size="md" color="text.primary">{t('patientDetails.loading')}</Heading>
             <Text color="text.muted" textAlign="center">
-              Пожалуйста, подождите пару секунд.
+              {t('patientDetails.loadingHint')}
             </Text>
           </Stack>
         </PremiumCard>
@@ -479,7 +478,7 @@ export const PatientDetailsPage = () => {
   if (error || !patient || !id) {
     return (
       <PremiumLayout 
-        title="Ошибка" 
+        title={t('patientDetails.errorTitle')} 
         showBack={true}
         onBack={() => navigate('/patients')}
         background="gradient"
@@ -488,10 +487,10 @@ export const PatientDetailsPage = () => {
         <Stack spacing={4}>
           <Alert status="error" borderRadius="lg" bg="error.500" color="white">
             <AlertIcon color="white" />
-            {error ?? 'Пациент не найден'}
+            {error ?? t('patientDetails.notFound')}
           </Alert>
           <PremiumButton onClick={() => navigate('/patients')}>
-            Вернуться к списку
+            {t('patientDetails.backToList')}
           </PremiumButton>
         </Stack>
       </PremiumLayout>
@@ -543,10 +542,10 @@ export const PatientDetailsPage = () => {
 
         {/* Patient Details Grid */}
         <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-          <InfoCard label="Телефон" value={patient.phone ?? '—'} />
-          <InfoCard label="ID пациента" value={patient.id} />
-          <InfoCard label="Создан" value={formatDateTime(patient.createdAt)} />
-          <InfoCard label="Статус" value={statusMeta?.label ?? '—'} />
+          <InfoCard label={t('patientDetails.phone')} value={patient.phone ?? '—'} />
+          <InfoCard label={t('patientDetails.patientId')} value={patient.id} />
+          <InfoCard label={t('patientDetails.created')} value={formatDateTime(patient.createdAt)} />
+          <InfoCard label={t('patientDetails.status')} value={statusMeta?.label ?? '—'} />
         </SimpleGrid>
 
         {/* Create Visit Section */}
@@ -554,20 +553,20 @@ export const PatientDetailsPage = () => {
           <Stack spacing={4}>
             <Flex justify="space-between" align="center" wrap="wrap" gap={2}>
               <Heading size="md" color="text.primary">
-                Создать визит
+                {t('patientDetails.createVisit')}
               </Heading>
               <VoiceAssistantButton
                 mode="visit"
                 contextPatientId={id}
                 onApply={handleVoiceApply}
-                buttonLabel="🎤 Надиктовать"
+                buttonLabel={t('patientDetails.voiceButton')}
               />
             </Flex>
             
             <Stack spacing={3}>
               <FormControl isRequired>
                 <FormLabel fontWeight="semibold" color="text.primary">
-                  Дата визита
+                  {t('patientDetails.visitDate')}
                 </FormLabel>
                 <Input
                   type="date"
@@ -579,7 +578,7 @@ export const PatientDetailsPage = () => {
               
               <FormControl>
                 <FormLabel fontWeight="semibold" color="text.primary">
-                  Следующий визит
+                  {t('patientDetails.nextVisit')}
                 </FormLabel>
                 <Input
                   type="date"
@@ -591,26 +590,26 @@ export const PatientDetailsPage = () => {
               
               <FormControl>
                 <FormLabel fontWeight="semibold" color="text.primary">
-                  Заметки
+                  {t('patientDetails.notes')}
                 </FormLabel>
                 <Textarea
                   rows={3}
                   value={visitForm.notes}
                   onChange={handleVisitFieldChange('notes')}
-                  placeholder="Опишите рекомендации или прогресс лечения"
+                  placeholder={t('patientDetails.notesPlaceholder')}
                   size="lg"
                 />
               </FormControl>
               
               <FormControl>
                 <FormLabel fontWeight="semibold" color="text.primary">
-                  Медикаменты (названия и схема приёма)
+                  {t('patientDetails.medications')}
                 </FormLabel>
                 <Textarea
                   rows={4}
                   value={visitForm.medications}
                   onChange={handleVisitFieldChange('medications')}
-                  placeholder="Например: Ибупрофен 200мг 2 раза в день после еды"
+                  placeholder={t('patientDetails.medicationsPlaceholder')}
                   size="lg"
                 />
               </FormControl>
@@ -628,7 +627,7 @@ export const PatientDetailsPage = () => {
               isLoading={isCreatingVisit}
               w="full"
             >
-              Добавить визит
+              {t('patientDetails.addVisit')}
             </PremiumButton>
           </Stack>
         </PremiumCard>
@@ -637,7 +636,7 @@ export const PatientDetailsPage = () => {
         <PremiumCard variant="elevated">
           <Stack spacing={4}>
             <Heading size="md" color="text.primary">
-              История визитов
+              {t('patientDetails.visitHistory')}
             </Heading>
             
             {sortedVisits.length ? (
@@ -660,7 +659,7 @@ export const PatientDetailsPage = () => {
               <Box textAlign="center" py={6}>
                 <Text fontSize="3xl" mb={2}>📅</Text>
                 <Text color="text.muted">
-                  Для этого пациента еще нет визитов.
+                  {t('patientDetails.noVisits')}
                 </Text>
               </Box>
             )}
@@ -672,14 +671,14 @@ export const PatientDetailsPage = () => {
           <PremiumCard variant="elevated">
             <Stack spacing={5}>
               <Heading size="md" color="text.primary">
-                💰 Финансы пациента
+                {t('patientDetails.finance')}
               </Heading>
               
               {/* Treatment Plan Input */}
               <Box>
                 <FormControl>
                   <FormLabel fontWeight="semibold" color="text.primary">
-                    План лечения (общая стоимость)
+                    {t('patientDetails.treatmentPlan')}
                   </FormLabel>
                   <HStack>
                     <NumberInput
@@ -689,14 +688,14 @@ export const PatientDetailsPage = () => {
                       size="lg"
                       flex={1}
                     >
-                      <NumberInputField placeholder="Введите сумму" />
+                      <NumberInputField placeholder={t('patientDetails.treatmentPlanPlaceholder')} />
                     </NumberInput>
                     <PremiumButton
                       onClick={handleUpdateTreatmentPlan}
                       isLoading={isUpdatingPlan}
                       size="lg"
                     >
-                      Сохранить план
+                      {t('patientDetails.savePlan')}
                     </PremiumButton>
                   </HStack>
                 </FormControl>
@@ -706,7 +705,7 @@ export const PatientDetailsPage = () => {
               <SimpleGrid columns={{ base: 1, md: 3 }} spacing={3}>
                 <PremiumCard variant="flat" p={4} bg="blue.50">
                   <Text fontSize="xs" color="blue.700" mb={1} fontWeight="semibold">
-                    ПЛАН ЛЕЧЕНИЯ
+                    {t('patientDetails.planTotal')}
                   </Text>
                   <Text fontSize="2xl" fontWeight="bold" color="blue.700">
                     {formatCurrency(financeSummary.treatmentPlanTotal, financeSummary.treatmentPlanCurrency)}
@@ -715,7 +714,7 @@ export const PatientDetailsPage = () => {
 
                 <PremiumCard variant="flat" p={4} bg="green.50">
                   <Text fontSize="xs" color="green.700" mb={1} fontWeight="semibold">
-                    УЖЕ ОПЛАЧЕНО
+                    {t('patientDetails.totalPaid')}
                   </Text>
                   <Text fontSize="2xl" fontWeight="bold" color="green.700">
                     {formatCurrency(financeSummary.totalPaid, financeSummary.treatmentPlanCurrency)}
@@ -724,7 +723,7 @@ export const PatientDetailsPage = () => {
 
                 <PremiumCard variant="flat" p={4} bg="orange.50">
                   <Text fontSize="xs" color="orange.700" mb={1} fontWeight="semibold">
-                    ОСТАЛОСЬ ОПЛАТИТЬ
+                    {t('patientDetails.remaining')}
                   </Text>
                   <Text fontSize="2xl" fontWeight="bold" color="orange.700">
                     {formatCurrency(financeSummary.remaining, financeSummary.treatmentPlanCurrency)}
@@ -737,12 +736,12 @@ export const PatientDetailsPage = () => {
               {/* Add Payment Form */}
               <Box>
                 <Heading size="sm" color="text.primary" mb={3}>
-                  Добавить оплату
+                  {t('patientDetails.addPayment')}
                 </Heading>
                 <Stack spacing={3}>
                   <FormControl isRequired>
                     <FormLabel fontWeight="semibold" color="text.primary" fontSize="sm">
-                      Сумма
+                      {t('patientDetails.amount')}
                     </FormLabel>
                     <NumberInput
                       value={paymentAmount}
@@ -750,18 +749,18 @@ export const PatientDetailsPage = () => {
                       min={0}
                       size="md"
                     >
-                      <NumberInputField placeholder="0" />
+                      <NumberInputField placeholder={t('patientDetails.amountPlaceholder')} />
                     </NumberInput>
                   </FormControl>
 
                   <FormControl>
                     <FormLabel fontWeight="semibold" color="text.primary" fontSize="sm">
-                      Комментарий (необязательно)
+                      {t('patientDetails.commentOptional')}
                     </FormLabel>
                     <Input
                       value={paymentComment}
                       onChange={(e) => setPaymentComment(e.target.value)}
-                      placeholder="Например: Первая оплата"
+                      placeholder={t('patientDetails.commentPlaceholder')}
                       size="md"
                     />
                   </FormControl>
@@ -772,7 +771,7 @@ export const PatientDetailsPage = () => {
                     w="full"
                     size="md"
                   >
-                    Добавить оплату
+                    {t('patientDetails.addPayment')}
                   </PremiumButton>
                 </Stack>
               </Box>
@@ -782,16 +781,16 @@ export const PatientDetailsPage = () => {
               {/* Payments History */}
               <Box>
                 <Heading size="sm" color="text.primary" mb={3}>
-                  История оплат
+                  {t('patientDetails.paymentHistory')}
                 </Heading>
                 {payments.length > 0 ? (
                   <Box overflowX="auto">
                     <Table variant="simple" size="sm">
                       <Thead>
                         <Tr>
-                          <Th>Дата</Th>
-                          <Th isNumeric>Сумма</Th>
-                          <Th>Комментарий</Th>
+                          <Th>{t('patientDetails.date')}</Th>
+                          <Th isNumeric>{t('patientDetails.amount')}</Th>
+                          <Th>{t('patientDetails.comment')}</Th>
                           <Th w="40px"></Th>
                         </Tr>
                       </Thead>
@@ -811,7 +810,7 @@ export const PatientDetailsPage = () => {
                                     size="sm"
                                     value={editPaymentComment}
                                     onChange={(e) => setEditPaymentComment(e.target.value)}
-                                    placeholder="Комментарий"
+                                    placeholder={t('patientDetails.comment')}
                                     autoFocus
                                     onKeyDown={(e) => {
                                       if (e.key === 'Enter') {
@@ -821,7 +820,7 @@ export const PatientDetailsPage = () => {
                                       }
                                     }}
                                   />
-                                  <Tooltip label="Сохранить">
+                                  <Tooltip label={t('common.save')}>
                                     <IconButton
                                       aria-label="Save"
                                       icon={<Text>✓</Text>}
@@ -831,7 +830,7 @@ export const PatientDetailsPage = () => {
                                       onClick={() => handleSavePaymentComment(payment.id)}
                                     />
                                   </Tooltip>
-                                  <Tooltip label="Отмена">
+                                  <Tooltip label={t('common.cancel')}>
                                     <IconButton
                                       aria-label="Cancel"
                                       icon={<Text>✕</Text>}
@@ -849,7 +848,7 @@ export const PatientDetailsPage = () => {
                             </Td>
                             <Td>
                               {editingPaymentId !== payment.id && (
-                                <Tooltip label="Редактировать комментарий">
+                                <Tooltip label={t('common.edit')}>
                                   <IconButton
                                     aria-label="Edit comment"
                                     icon={<Text>✏️</Text>}
@@ -869,7 +868,7 @@ export const PatientDetailsPage = () => {
                   <Box textAlign="center" py={6} bg="bg.gray" borderRadius="md">
                     <Text fontSize="3xl" mb={2}>💳</Text>
                     <Text color="text.muted" fontSize="sm">
-                      Еще нет оплат для этого пациента
+                      {t('patientDetails.noPayments')}
                     </Text>
                   </Box>
                 )}
@@ -921,112 +920,116 @@ const VisitCard = ({
   onCancelEdit, 
   onSaveEdit,
   onMedicationsChange,
-}: VisitCardProps) => (
-  <Box 
-    borderWidth="1px" 
-    borderColor="border.subtle"
-    borderRadius="md" 
-    p={4} 
-    bg="bg.gray"
-    transition="all 0.2s"
-    _hover={{ boxShadow: 'sm' }}
-  >
-    <Flex justify="space-between" align="flex-start" gap={3} wrap="wrap">
-      <Stack spacing={1}>
-        <Text fontWeight="semibold" color="text.primary">
-          📅 {formatDate(visit.visitDate)}
-        </Text>
+}: VisitCardProps) => {
+  const { t } = useLanguage()
+  
+  return (
+    <Box 
+      borderWidth="1px" 
+      borderColor="border.subtle"
+      borderRadius="md" 
+      p={4} 
+      bg="bg.gray"
+      transition="all 0.2s"
+      _hover={{ boxShadow: 'sm' }}
+    >
+      <Flex justify="space-between" align="flex-start" gap={3} wrap="wrap">
+        <Stack spacing={1}>
+          <Text fontWeight="semibold" color="text.primary">
+            📅 {formatDate(visit.visitDate)}
+          </Text>
+          <Text fontSize="xs" color="text.muted">
+            {t('patientDetails.visitId')}: {visit.id}
+          </Text>
+        </Stack>
         <Text fontSize="xs" color="text.muted">
-          ID визита: {visit.id}
+          {formatDateTime(visit.createdAt)}
         </Text>
-      </Stack>
-      <Text fontSize="xs" color="text.muted">
-        {formatDateTime(visit.createdAt)}
-      </Text>
-    </Flex>
-    {visit.notes && (
+      </Flex>
+      {visit.notes && (
+        <Box 
+          mt={3} 
+          p={3} 
+          bg="white" 
+          borderRadius="base"
+          borderWidth="1px"
+          borderColor="border.subtle"
+        >
+          <Text fontSize="xs" color="text.muted" mb={1} fontWeight="semibold">
+            {t('patientDetails.visitNotes')}
+          </Text>
+          <Text whiteSpace="pre-wrap" fontSize="sm" color="text.primary">
+            {visit.notes}
+          </Text>
+        </Box>
+      )}
+      
+      {/* Medications section with edit capability */}
       <Box 
         mt={3} 
         p={3} 
-        bg="white" 
+        bg={visit.medications ? 'blue.50' : 'gray.50'}
         borderRadius="base"
         borderWidth="1px"
-        borderColor="border.subtle"
+        borderColor={visit.medications ? 'blue.200' : 'gray.200'}
       >
-        <Text fontSize="xs" color="text.muted" mb={1} fontWeight="semibold">
-          Заметки:
-        </Text>
-        <Text whiteSpace="pre-wrap" fontSize="sm" color="text.primary">
-          {visit.notes}
-        </Text>
-      </Box>
-    )}
-    
-    {/* Medications section with edit capability */}
-    <Box 
-      mt={3} 
-      p={3} 
-      bg={visit.medications ? 'blue.50' : 'gray.50'}
-      borderRadius="base"
-      borderWidth="1px"
-      borderColor={visit.medications ? 'blue.200' : 'gray.200'}
-    >
-      <Flex justify="space-between" align="center" mb={2}>
-        <Text fontSize="xs" color={visit.medications ? 'blue.700' : 'gray.500'} fontWeight="semibold">
-          💊 Медикаменты:
-        </Text>
-        {!isEditing && (
-          <Tooltip label="Редактировать медикаменты">
-            <IconButton
-              aria-label="Edit medications"
-              icon={<Text>✏️</Text>}
-              size="xs"
-              variant="ghost"
-              onClick={onStartEdit}
+        <Flex justify="space-between" align="center" mb={2}>
+          <Text fontSize="xs" color={visit.medications ? 'blue.700' : 'gray.500'} fontWeight="semibold">
+            {t('patientDetails.medicationsLabel')}
+          </Text>
+          {!isEditing && (
+            <Tooltip label={t('common.edit')}>
+              <IconButton
+                aria-label="Edit medications"
+                icon={<Text>✏️</Text>}
+                size="xs"
+                variant="ghost"
+                onClick={onStartEdit}
+              />
+            </Tooltip>
+          )}
+        </Flex>
+        
+        {isEditing ? (
+          <Stack spacing={2}>
+            <Textarea
+              value={editMedications}
+              onChange={(e) => onMedicationsChange(e.target.value)}
+              placeholder={t('patientDetails.medicationsPlaceholder')}
+              size="sm"
+              rows={3}
+              autoFocus
             />
-          </Tooltip>
+            <HStack justify="flex-end" spacing={2}>
+              <PremiumButton
+                size="sm"
+                onClick={onSaveEdit}
+                isLoading={isSaving}
+              >
+                💾 {t('common.save')}
+              </PremiumButton>
+              <PremiumButton
+                size="sm"
+                variant="secondary"
+                onClick={onCancelEdit}
+              >
+                {t('common.cancel')}
+              </PremiumButton>
+            </HStack>
+          </Stack>
+        ) : (
+          <Text whiteSpace="pre-wrap" fontSize="sm" color={visit.medications ? 'text.main' : 'text.muted'}>
+            {visit.medications || t('patientDetails.medicationsEmpty')}
+          </Text>
         )}
-      </Flex>
+      </Box>
       
-      {isEditing ? (
-        <Stack spacing={2}>
-          <Textarea
-            value={editMedications}
-            onChange={(e) => onMedicationsChange(e.target.value)}
-            placeholder="Например: Ибупрофен 200мг 2 раза в день после еды"
-            size="sm"
-            rows={3}
-            autoFocus
-          />
-          <HStack justify="flex-end" spacing={2}>
-            <PremiumButton
-              size="sm"
-              onClick={onSaveEdit}
-              isLoading={isSaving}
-            >
-              💾 Сохранить
-            </PremiumButton>
-            <PremiumButton
-              size="sm"
-              variant="secondary"
-              onClick={onCancelEdit}
-            >
-              Отмена
-            </PremiumButton>
-          </HStack>
-        </Stack>
-      ) : (
-        <Text whiteSpace="pre-wrap" fontSize="sm" color={visit.medications ? 'text.main' : 'text.muted'}>
-          {visit.medications || 'Не указаны — нажмите ✏️ чтобы добавить'}
-        </Text>
-      )}
+      <Text mt={3} fontSize="sm" color="text.muted">
+        {t('patientDetails.nextVisitLabel')} {formatDate(visit.nextVisitDate)}
+      </Text>
     </Box>
-    
-    <Text mt={3} fontSize="sm" color="text.muted">
-      ⏭️ Следующий визит: {formatDate(visit.nextVisitDate)}
-    </Text>
-  </Box>
-)
+  )
+}
 
 const formatDate = (input?: string) => {
   if (!input) {
