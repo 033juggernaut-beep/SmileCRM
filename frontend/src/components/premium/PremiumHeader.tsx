@@ -44,6 +44,7 @@ export const PremiumHeader = ({
         bottom: 0,
         bg: 'linear-gradient(180deg, rgba(17, 26, 46, 0.95) 0%, rgba(17, 26, 46, 0.9) 100%)',
         zIndex: -1,
+        pointerEvents: 'none',
       }}
     >
       <Flex

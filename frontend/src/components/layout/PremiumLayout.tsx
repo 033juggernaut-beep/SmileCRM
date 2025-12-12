@@ -60,6 +60,9 @@ export const PremiumLayout = ({
         pb={safeAreaBottom ? '100px' : 6}
         overflowY="auto"
         overflowX="hidden"
+        position="relative"
+        zIndex={1}
+        pointerEvents="auto"
         css={{
           '&::-webkit-scrollbar': {
             width: '6px',

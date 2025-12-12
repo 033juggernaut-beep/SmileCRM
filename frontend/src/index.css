@@ -58,11 +58,14 @@ body {
   overflow: hidden;
 }
 
-/* Ensure all content fills the viewport */
+/* Chakra portal container - must not block clicks! */
 .chakra-portal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  /* pointer-events: none allows clicks to pass through the portal container */
+  /* Child elements (modals, tooltips) will set pointer-events: auto when needed */
+  pointer-events: none;
+}
+
+/* Portal children (actual modals, overlays) should capture events */
+.chakra-portal > * {
+  pointer-events: auto;
 }
