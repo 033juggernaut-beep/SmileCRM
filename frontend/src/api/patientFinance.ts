@@ -1,5 +1,5 @@
 import { apiClient, buildAuthHeaders } from './client'
-import { TOKEN_STORAGE_KEY } from '../constants/storage'
+import { getAuthToken } from './auth'
 
 export type PatientPayment = {
   id: string
@@ -50,17 +50,6 @@ type ApiPatientFinanceSummary = {
   remaining: number | null
 }
 
-const getAuthTokenOrThrow = () => {
-  if (typeof window === 'undefined') {
-    throw new Error('Окружение браузера недоступно')
-  }
-  const token = localStorage.getItem(TOKEN_STORAGE_KEY)
-  if (!token) {
-    throw new Error('Требуется повторная авторизация в Mini App')
-  }
-  return token
-}
-
 const mapPayment = (data: ApiPatientPayment): PatientPayment => ({
   id: data.id,
   patientId: data.patient_id,
@@ -100,7 +89,7 @@ const buildPaymentPayload = (payload: CreatePatientPaymentInput) => {
 
 export const patientFinanceApi = {
   async listPayments(patientId: string): Promise<PatientPayment[]> {
-    const authToken = getAuthTokenOrThrow()
+    const authToken = getAuthToken()
     const { data } = await apiClient.get<ApiPatientPayment[]>(
       `/patients/${patientId}/payments`,
       { headers: buildAuthHeaders(authToken) },
@@ -112,7 +101,7 @@ export const patientFinanceApi = {
     patientId: string,
     payload: CreatePatientPaymentInput,
   ): Promise<PatientPayment> {
-    const authToken = getAuthTokenOrThrow()
+    const authToken = getAuthToken()
     const { data } = await apiClient.post<ApiPatientPayment>(
       `/patients/${patientId}/payments`,
       buildPaymentPayload(payload),
@@ -122,7 +111,7 @@ export const patientFinanceApi = {
   },
 
   async getFinanceSummary(patientId: string): Promise<PatientFinanceSummary> {
-    const authToken = getAuthTokenOrThrow()
+    const authToken = getAuthToken()
     const { data } = await apiClient.get<ApiPatientFinanceSummary>(
       `/patients/${patientId}/finance-summary`,
       { headers: buildAuthHeaders(authToken) },
@@ -135,7 +124,7 @@ export const patientFinanceApi = {
     paymentId: string,
     payload: UpdatePatientPaymentInput,
   ): Promise<PatientPayment> {
-    const authToken = getAuthTokenOrThrow()
+    const authToken = getAuthToken()
     
     // Build payload with only defined values
     const body: Record<string, unknown> = {}
@@ -155,10 +144,9 @@ export const patientFinanceApi = {
   },
 
   async deletePayment(patientId: string, paymentId: string): Promise<void> {
-    const authToken = getAuthTokenOrThrow()
+    const authToken = getAuthToken()
     await apiClient.delete(`/patients/${patientId}/payments/${paymentId}`, {
       headers: buildAuthHeaders(authToken),
     })
   },
 }
-

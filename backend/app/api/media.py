@@ -2,9 +2,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
-from app.api.deps import AuthenticatedDoctor, get_current_doctor
+from app.api.deps import AuthenticatedDoctor, get_current_doctor, verify_patient_ownership
 from app.models.dto import MediaFileResponse
-from app.services import media_service, patients_service
+from app.services import media_service
 
 router = APIRouter(tags=["media"])
 
@@ -41,19 +41,7 @@ async def upload_patient_media(
     Returns the created media file record with public URL.
     """
     # Verify patient belongs to current doctor
-    patient = patients_service.get_patient(patient_id)
-    if not patient:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Patient not found.",
-        )
-    
-    patient_doctor_id = patient.get("doctor_id")
-    if patient_doctor_id and patient_doctor_id != current_doctor.doctor_id:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Patient not found.",
-        )
+    verify_patient_ownership(patient_id, current_doctor)
     
     # Validate file type
     if file.content_type not in ALLOWED_MIME_TYPES:
@@ -114,19 +102,7 @@ async def list_patient_media(
     Returns list of media files with public URLs.
     """
     # Verify patient belongs to current doctor
-    patient = patients_service.get_patient(patient_id)
-    if not patient:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Patient not found.",
-        )
-    
-    patient_doctor_id = patient.get("doctor_id")
-    if patient_doctor_id and patient_doctor_id != current_doctor.doctor_id:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Patient not found.",
-        )
+    verify_patient_ownership(patient_id, current_doctor)
     
     # Get media files
     media_files = media_service.list_patient_media(patient_id)
@@ -152,19 +128,7 @@ async def delete_patient_media(
     Returns 204 No Content on success.
     """
     # Verify patient belongs to current doctor
-    patient = patients_service.get_patient(patient_id)
-    if not patient:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Patient not found.",
-        )
-    
-    patient_doctor_id = patient.get("doctor_id")
-    if patient_doctor_id and patient_doctor_id != current_doctor.doctor_id:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Patient not found.",
-        )
+    verify_patient_ownership(patient_id, current_doctor)
     
     # Delete media file
     success = media_service.delete_media_file(media_id, current_doctor.doctor_id)

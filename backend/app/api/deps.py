@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from typing import Any
 
 from fastapi import Header, HTTPException, status
 
 from app.config import get_settings
-from app.services import doctors_service
+from app.services import doctors_service, patients_service
 from app.services.jwt_service import JWTError, verify_doctor_token
 
 
@@ -129,3 +130,39 @@ def _check_subscription_status(doctor: dict) -> None:
       status_code=status.HTTP_402_PAYMENT_REQUIRED,
       detail="No active subscription. Please subscribe to continue using the app."
     )
+
+
+def verify_patient_ownership(patient_id: str, current_doctor: AuthenticatedDoctor) -> dict[str, Any]:
+    """
+    Verify that a patient exists and belongs to the current doctor.
+    
+    This is a shared helper to reduce code duplication across patient-related
+    endpoints (patients, visits, media, payments).
+    
+    Args:
+        patient_id: UUID of the patient to verify
+        current_doctor: The authenticated doctor from JWT token
+        
+    Returns:
+        Patient data as dict if verification passes
+        
+    Raises:
+        HTTPException 404: If patient not found or belongs to another doctor
+    """
+    patient = patients_service.get_patient(patient_id)
+    
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient not found."
+        )
+
+    patient_doctor_id = patient.get("doctor_id")
+    if patient_doctor_id and patient_doctor_id != current_doctor.doctor_id:
+        # Return 404 instead of 403 to not leak information about other doctors' patients
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient not found."
+        )
+
+    return patient

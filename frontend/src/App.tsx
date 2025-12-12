@@ -1,14 +1,34 @@
+import { Suspense, lazy } from 'react'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { Spinner, Center } from '@chakra-ui/react'
 import { AppLayout } from './components/AppLayout'
+
+// Eagerly loaded (small, needed immediately)
 import { AuthLoadingPage } from './pages/AuthLoadingPage'
 import { HomePage } from './pages/HomePage'
-import { AddPatientPage } from './pages/AddPatientPage'
-import { PatientDetailsPage } from './pages/PatientDetailsPage'
-import { PatientsListPage } from './pages/PatientsListPage'
 import { RegisterDoctorPage } from './pages/RegisterDoctorPage'
-import { SubscriptionPage } from './pages/SubscriptionPage'
-import { HelpPage } from './pages/HelpPage'
-import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage'
+
+// Lazy loaded (heavier pages, loaded on demand)
+const PatientsListPage = lazy(() => import('./pages/PatientsListPage').then(m => ({ default: m.PatientsListPage })))
+const PatientDetailsPage = lazy(() => import('./pages/PatientDetailsPage').then(m => ({ default: m.PatientDetailsPage })))
+const AddPatientPage = lazy(() => import('./pages/AddPatientPage').then(m => ({ default: m.AddPatientPage })))
+const SubscriptionPage = lazy(() => import('./pages/SubscriptionPage').then(m => ({ default: m.SubscriptionPage })))
+const HelpPage = lazy(() => import('./pages/HelpPage').then(m => ({ default: m.HelpPage })))
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage').then(m => ({ default: m.PrivacyPolicyPage })))
+
+// Loading fallback for lazy routes
+const PageLoader = () => (
+  <Center h="100vh" bg="bg.gray">
+    <Spinner size="xl" color="primary.500" thickness="4px" />
+  </Center>
+)
+
+// Wrap lazy component with Suspense
+const withSuspense = (Component: React.ComponentType) => (
+  <Suspense fallback={<PageLoader />}>
+    <Component />
+  </Suspense>
+)
 
 const router = createBrowserRouter([
   {
@@ -17,12 +37,12 @@ const router = createBrowserRouter([
       { path: '/', element: <AuthLoadingPage /> },
       { path: '/register', element: <RegisterDoctorPage /> },
       { path: '/home', element: <HomePage /> },
-      { path: '/patients', element: <PatientsListPage /> },
-      { path: '/patients/new', element: <AddPatientPage /> },
-      { path: '/patients/:id', element: <PatientDetailsPage /> },
-      { path: '/subscription', element: <SubscriptionPage /> },
-      { path: '/help', element: <HelpPage /> },
-      { path: '/privacy', element: <PrivacyPolicyPage /> },
+      { path: '/patients', element: withSuspense(PatientsListPage) },
+      { path: '/patients/new', element: withSuspense(AddPatientPage) },
+      { path: '/patients/:id', element: withSuspense(PatientDetailsPage) },
+      { path: '/subscription', element: withSuspense(SubscriptionPage) },
+      { path: '/help', element: withSuspense(HelpPage) },
+      { path: '/privacy', element: withSuspense(PrivacyPolicyPage) },
     ],
   },
 ])

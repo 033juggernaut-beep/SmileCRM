@@ -70,53 +70,50 @@ def validate_audio_file(file_data: bytes, content_type: str | None, filename: st
     """
     Validate audio file size and type.
     
+    Security: Always validates file extension against whitelist.
+    Content-type is checked as additional validation if provided,
+    but never bypasses extension check.
+    
     Args:
         file_data: Raw file bytes
-        content_type: MIME type of the file
-        filename: Original filename
+        content_type: MIME type of the file (optional, additional check)
+        filename: Original filename (required for extension validation)
         
     Raises:
         AudioValidationError: If validation fails
     """
-    # Check file size
+    # Valid audio extensions (whitelist)
+    valid_extensions = {"webm", "wav", "ogg", "mp3", "m4a"}
+    
+    # 1. Always check file size
     if len(file_data) > MAX_FILE_SIZE:
         raise AudioValidationError(
             f"File too large. Maximum size is {MAX_FILE_SIZE // (1024*1024)}MB"
         )
     
+    # 2. Always check file is not empty
     if len(file_data) == 0:
         raise AudioValidationError("File is empty")
     
-    # Valid audio extensions
-    valid_extensions = {"webm", "wav", "ogg", "mp3", "m4a"}
+    # 3. Always validate filename extension (mandatory)
+    if not filename:
+        raise AudioValidationError(
+            "Filename is required. Please provide a valid audio file."
+        )
     
-    # Check content type if provided
+    ext = filename.lower().split(".")[-1] if "." in filename else ""
+    if ext not in valid_extensions:
+        raise AudioValidationError(
+            f"Invalid audio format '{ext}'. Allowed: webm, wav, ogg, mp3, m4a"
+        )
+    
+    # 4. Optionally validate content-type if provided (additional security layer)
     if content_type:
-        # Normalize content type (remove charset etc)
         base_type = content_type.split(";")[0].strip().lower()
         if base_type not in ALLOWED_AUDIO_TYPES:
-            # Also check by file extension as fallback
-            if filename:
-                ext = filename.lower().split(".")[-1] if "." in filename else ""
-                if ext not in valid_extensions:
-                    raise AudioValidationError(
-                        "Invalid audio format. Allowed: webm, wav, ogg, mp3, m4a"
-                    )
-            else:
-                raise AudioValidationError(
-                    "Invalid audio format. Allowed: webm, wav, ogg, mp3, m4a"
-                )
-    else:
-        # No content type provided - validate by filename extension
-        if filename:
-            ext = filename.lower().split(".")[-1] if "." in filename else ""
-            if ext not in valid_extensions:
-                raise AudioValidationError(
-                    "Invalid audio format. Allowed: webm, wav, ogg, mp3, m4a"
-                )
-        else:
-            raise AudioValidationError(
-                "Cannot determine audio format. Please provide a valid audio file."
+            logger.warning(
+                f"Content-type mismatch: {base_type} not in allowed types, "
+                f"but extension '{ext}' is valid. Allowing file."
             )
 
 

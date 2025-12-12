@@ -10,6 +10,7 @@ import {
 } from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 import { apiClient } from '../api/client'
 import {
   TELEGRAM_INIT_DATA_STORAGE_KEY,
@@ -93,12 +94,9 @@ export const AuthLoadingPage = () => {
         console.error('[AUTH] Request failed:', err)
         let errorMessage = 'Не удалось связаться с сервером авторизации'
         
-        if (err && typeof err === 'object' && 'response' in err) {
-          const response = (err as any).response
-          if (response?.data?.detail) {
-            errorMessage = `${errorMessage}: ${response.data.detail}`
-            console.error('[AUTH] Server error detail:', response.data.detail)
-          }
+        if (axios.isAxiosError(err) && err.response?.data?.detail) {
+          errorMessage = `${errorMessage}: ${err.response.data.detail}`
+          console.error('[AUTH] Server error detail:', err.response.data.detail)
         }
 
         setError(

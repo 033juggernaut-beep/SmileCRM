@@ -1,5 +1,5 @@
 import { apiClient, buildAuthHeaders } from './client'
-import { TOKEN_STORAGE_KEY } from '../constants/storage'
+import { getAuthToken } from './auth'
 
 export type MediaFile = {
   id: string
@@ -27,17 +27,6 @@ type ApiMediaFile = {
   created_at?: string
 }
 
-const getAuthTokenOrThrow = () => {
-  if (typeof window === 'undefined') {
-    throw new Error('Окружение браузера недоступно')
-  }
-  const token = localStorage.getItem(TOKEN_STORAGE_KEY)
-  if (!token) {
-    throw new Error('Требуется повторная авторизация в Mini App')
-  }
-  return token
-}
-
 const mapMediaFile = (data: ApiMediaFile): MediaFile => ({
   id: data.id,
   patientId: data.patient_id,
@@ -56,7 +45,7 @@ export const mediaApi = {
     patientId: string,
     file: File,
   ): Promise<MediaFile> {
-    const authToken = getAuthTokenOrThrow()
+    const authToken = getAuthToken()
 
     // Create FormData for multipart/form-data upload
     const formData = new FormData()
@@ -77,7 +66,7 @@ export const mediaApi = {
   },
 
   async getPatientMedia(patientId: string): Promise<MediaFile[]> {
-    const authToken = getAuthTokenOrThrow()
+    const authToken = getAuthToken()
 
     const { data } = await apiClient.get<ApiMediaFile[]>(
       `/patients/${patientId}/media`,
@@ -93,11 +82,10 @@ export const mediaApi = {
     patientId: string,
     mediaId: string,
   ): Promise<void> {
-    const authToken = getAuthTokenOrThrow()
+    const authToken = getAuthToken()
 
     await apiClient.delete(`/patients/${patientId}/media/${mediaId}`, {
       headers: buildAuthHeaders(authToken),
     })
   },
 }
-

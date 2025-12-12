@@ -1,5 +1,5 @@
-import { TOKEN_STORAGE_KEY } from '../constants/storage'
 import { apiClient, buildAuthHeaders } from './client'
+import { getAuthToken } from './auth'
 
 export type SubscriptionStatus = 'trial' | 'active' | 'expired'
 
@@ -24,21 +24,8 @@ type CreatePaymentApiResponse = {
 const DEFAULT_PAYMENT_AMOUNT_AMD = 15000
 const DEFAULT_PAYMENT_CURRENCY = 'AMD'
 
-const getAuthTokenOrThrow = () => {
-  if (typeof window === 'undefined') {
-    throw new Error('Բրաուզերի միջավայրը հասանելի չէ')
-  }
-
-  const token = localStorage.getItem(TOKEN_STORAGE_KEY)
-  if (!token) {
-    throw new Error('Պահանջվում է նորից մուտք գործել Mini App')
-  }
-
-  return token
-}
-
 export const getSubscription = async (): Promise<SubscriptionSnapshot> => {
-  const authToken = getAuthTokenOrThrow()
+  const authToken = getAuthToken()
   const { data } = await apiClient.get<SubscriptionApiResponse>('/subscription', {
     headers: buildAuthHeaders(authToken),
   })
@@ -52,7 +39,7 @@ export const getSubscription = async (): Promise<SubscriptionSnapshot> => {
 export const createPayment = async (
   provider: PaymentProvider = 'idram',
 ): Promise<CreatePaymentApiResponse> => {
-  const authToken = getAuthTokenOrThrow()
+  const authToken = getAuthToken()
 
   const { data } = await apiClient.post<CreatePaymentApiResponse>(
     '/subscription/create-payment',
@@ -65,5 +52,3 @@ export const createPayment = async (
   )
   return data
 }
-
-

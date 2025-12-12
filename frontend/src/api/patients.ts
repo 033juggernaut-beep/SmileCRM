@@ -1,5 +1,5 @@
 import { apiClient, buildAuthHeaders } from './client'
-import { TOKEN_STORAGE_KEY } from '../constants/storage'
+import { getAuthToken } from './auth'
 
 export const PATIENT_STATUSES = [
   { value: 'in_progress', label: 'Վերաբերման մեջ' },
@@ -80,17 +80,6 @@ type ApiVisit = {
   created_at?: string
 }
 
-const getAuthTokenOrThrow = () => {
-  if (typeof window === 'undefined') {
-    throw new Error('Окружение браузера недоступно')
-  }
-  const token = localStorage.getItem(TOKEN_STORAGE_KEY)
-  if (!token) {
-    throw new Error('Требуется повторная авторизация в Mini App')
-  }
-  return token
-}
-
 const isKnownStatus = (value: string | null | undefined): value is PatientStatus =>
   Boolean(value && PATIENT_STATUSES.some((option) => option.value === value))
 
@@ -143,7 +132,7 @@ const buildVisitPayload = (payload: CreateVisitInput | UpdateVisitInput) => {
 
 export const patientsApi = {
   async list(): Promise<Patient[]> {
-    const authToken = getAuthTokenOrThrow()
+    const authToken = getAuthToken()
     const { data } = await apiClient.get<ApiPatient[]>('/patients', {
       headers: buildAuthHeaders(authToken),
     })
@@ -151,7 +140,7 @@ export const patientsApi = {
   },
 
   async create(payload: CreatePatientInput): Promise<Patient> {
-    const authToken = getAuthTokenOrThrow()
+    const authToken = getAuthToken()
     const { data } = await apiClient.post<ApiPatient>(
       '/patients',
       buildPatientPayload(payload),
@@ -161,7 +150,7 @@ export const patientsApi = {
   },
 
   async getById(patientId: string): Promise<Patient> {
-    const authToken = getAuthTokenOrThrow()
+    const authToken = getAuthToken()
     const { data } = await apiClient.get<ApiPatient>(`/patients/${patientId}`, {
       headers: buildAuthHeaders(authToken),
     })
@@ -169,7 +158,7 @@ export const patientsApi = {
   },
 
   async getVisits(patientId: string): Promise<Visit[]> {
-    const authToken = getAuthTokenOrThrow()
+    const authToken = getAuthToken()
     const { data } = await apiClient.get<ApiVisit[]>(
       `/patients/${patientId}/visits`,
       { headers: buildAuthHeaders(authToken) },
@@ -178,7 +167,7 @@ export const patientsApi = {
   },
 
   async createVisit(patientId: string, payload: CreateVisitInput): Promise<Visit> {
-    const authToken = getAuthTokenOrThrow()
+    const authToken = getAuthToken()
     const { data } = await apiClient.post<ApiVisit>(
       `/patients/${patientId}/visits`,
       buildVisitPayload(payload),
@@ -188,7 +177,7 @@ export const patientsApi = {
   },
 
   async updateVisit(visitId: string, payload: UpdateVisitInput): Promise<Visit> {
-    const authToken = getAuthTokenOrThrow()
+    const authToken = getAuthToken()
     const { data } = await apiClient.patch<ApiVisit>(
       `/visits/${visitId}`,
       buildVisitPayload(payload),

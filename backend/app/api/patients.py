@@ -7,7 +7,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, condecimal
 
-from app.api.deps import AuthenticatedDoctor, get_current_doctor
+from app.api.deps import AuthenticatedDoctor, get_current_doctor, verify_patient_ownership
 from app.models.dto import (
   PatientCreateRequest,
   PatientResponse,
@@ -15,6 +15,9 @@ from app.models.dto import (
   VisitResponse,
 )
 from app.services import patients_service, visits_service
+
+# Alias for backward compatibility within this module
+_get_patient_for_doctor = verify_patient_ownership
 
 router = APIRouter(prefix="/patients", tags=["patients"])
 
@@ -40,7 +43,7 @@ async def list_patients(current_doctor: CurrentDoctor) -> list[PatientResponse]:
 
 @router.post("/", response_model=PatientResponse, status_code=status.HTTP_201_CREATED)
 async def create_patient(payload: PatientCreateRequest, current_doctor: CurrentDoctor) -> PatientResponse:
-  patient = patients_service.create_patient(current_doctor.doctor_id, payload.dict())
+  patient = patients_service.create_patient(current_doctor.doctor_id, payload.model_dump())
   return PatientResponse(**patient)
 
 
@@ -104,19 +107,9 @@ async def create_patient_visit(
   visit = visits_service.create_visit(
     doctor_id=current_doctor.doctor_id,
     patient_id=patient_id,
-    payload=payload.dict(),
+    payload=payload.model_dump(),
   )
   return VisitResponse(**visit)
 
 
-def _get_patient_for_doctor(patient_id: str, current_doctor: AuthenticatedDoctor) -> dict[str, Any]:
-  patient = patients_service.get_patient(patient_id)
-  if not patient:
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found.")
-
-  patient_doctor_id = patient.get("doctor_id")
-  if patient_doctor_id and patient_doctor_id != current_doctor.doctor_id:
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found.")
-
-  return patient
 
