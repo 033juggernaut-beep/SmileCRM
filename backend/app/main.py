@@ -1,46 +1,81 @@
-﻿import os
+import logging
+import os
+from contextlib import asynccontextmanager
+from typing import AsyncIterator
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.logger import logger as fastapi_logger
 import uvicorn
 
-from app.api import auth, doctors, media, patient_finance, patients, payments, subscription, test_supabase, visits
+from app.api import ai, auth, doctors, media, patient_finance, patients, payments, subscription, test_supabase, visits
 from app.bot.bot import get_bot, is_bot_configured, process_update
 from app.config import get_settings
 
 settings = get_settings()
 
-logger = fastapi_logger
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger("smilecrm")
 
-app = FastAPI(title="SmileCRM Backend")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """
+    Lifespan context manager for application startup/shutdown events.
+    Replaces deprecated @app.on_event("startup") pattern.
+    """
+    # Startup
+    logger.info("SmileCRM Backend starting up...")
+    
+    if settings.WEBHOOK_URL and is_bot_configured():
+        webhook_url = settings.WEBHOOK_URL.rstrip("/")
+        bot = get_bot()
+        try:
+            await bot.set_webhook(f"{webhook_url}/bot/webhook")
+            logger.info("Telegram webhook configured: %s/bot/webhook", webhook_url)
+        except Exception as e:
+            logger.error("Failed to set Telegram webhook: %s", e)
+    else:
+        logger.info("Telegram webhook not configured (missing WEBHOOK_URL or bot token)")
+    
+    yield  # Application runs here
+    
+    # Shutdown
+    logger.info("SmileCRM Backend shutting down...")
+
+
+app = FastAPI(title="SmileCRM Backend", lifespan=lifespan)
 
 # CORS configuration for Vercel frontend
 # Allow both production and dev origins
 allowed_origins = [
-  "https://smilecrm-miniapp.vercel.app",  # Production Vercel deployment (no trailing slash)
-  "https://smilecrm-miniapp-r93fzn29z-maxs-projects-a5ae79fe.vercel.app",  # Vercel preview URL
-  "http://localhost:5173",  # Local Vite dev server
-  "http://localhost:5174",  # Alternative local port
-  "http://localhost:3000",  # Alternative local port
+    "https://smilecrm-miniapp.vercel.app",  # Production Vercel deployment (no trailing slash)
+    "https://smilecrm-miniapp-r93fzn29z-maxs-projects-a5ae79fe.vercel.app",  # Vercel preview URL
+    "http://localhost:5173",  # Local Vite dev server
+    "http://localhost:5174",  # Alternative local port
+    "http://localhost:3000",  # Alternative local port
 ]
 
 # If FRONTEND_WEBAPP_URL is set in env, add it to allowed origins
 if settings.FRONTEND_WEBAPP_URL:
-  allowed_origins.append(settings.FRONTEND_WEBAPP_URL)
+    allowed_origins.append(settings.FRONTEND_WEBAPP_URL)
 
 app.add_middleware(
-  CORSMiddleware,
-  allow_origins=allowed_origins,
-  allow_credentials=True,
-  allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
 )
 
 
 @app.get("/health")
 async def health_check() -> dict[str, str]:
-  return {"status": "ok"}
+    """Health check endpoint for monitoring."""
+    return {"status": "ok"}
 
 
 app.include_router(auth.router, prefix="/api")
@@ -52,41 +87,55 @@ app.include_router(visits.router, prefix="/api")
 app.include_router(subscription.router, prefix="/api")
 app.include_router(media.router, prefix="/api")
 app.include_router(payments.router, prefix="/api")
+app.include_router(ai.router, prefix="/api")
 
 
 @app.post("/bot/webhook")
 async def telegram_webhook(request: Request) -> dict[str, bool]:
-  if not is_bot_configured():
-    raise HTTPException(status_code=503, detail="Telegram bot is not configured.")
-  data = await request.json()
-  await process_update(data)
-  return {"ok": True}
+    """
+    Telegram bot webhook endpoint.
+    Receives updates from Telegram and processes them via aiogram.
+    """
+    if not is_bot_configured():
+        logger.warning("Telegram webhook called but bot is not configured")
+        raise HTTPException(status_code=503, detail="Telegram bot is not configured.")
+    
+    try:
+        data = await request.json()
+        logger.debug("Telegram webhook received update: %s", data.get("update_id", "unknown"))
+        await process_update(data)
+        return {"ok": True}
+    except Exception as e:
+        logger.error("Error processing Telegram webhook: %s", e)
+        raise HTTPException(status_code=500, detail="Failed to process webhook") from e
 
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-  body_bytes = await request.body()
-  truncated_body = body_bytes[:512].decode("utf-8", errors="replace") if body_bytes else ""
-  logger.info("Incoming request %s %s", request.method, request.url.path)
-  if truncated_body:
-    logger.info("Request body preview: %s", truncated_body)
-  elif request.method in {"POST", "PUT", "PATCH"}:
-    logger.error("Request %s %s arrived without payload", request.method, request.url.path)
-
-  response = await call_next(request)
-  return response
-
-
-@app.on_event("startup")
-async def on_startup() -> None:
-  if settings.WEBHOOK_URL and is_bot_configured():
-    webhook_url = settings.WEBHOOK_URL.rstrip("/")
-    bot = get_bot()
-    await bot.set_webhook(f"{webhook_url}/bot/webhook")
+    """
+    Middleware to log incoming requests.
+    Helps with debugging and monitoring.
+    """
+    # Skip logging for health checks to reduce noise
+    if request.url.path == "/health":
+        return await call_next(request)
+    
+    body_bytes = await request.body()
+    truncated_body = body_bytes[:512].decode("utf-8", errors="replace") if body_bytes else ""
+    
+    logger.info("Request: %s %s", request.method, request.url.path)
+    
+    if truncated_body and request.method in {"POST", "PUT", "PATCH"}:
+        # Don't log sensitive data (passwords, tokens)
+        if "/auth/" not in request.url.path:
+            logger.debug("Request body preview: %s...", truncated_body[:200])
+    
+    response = await call_next(request)
+    return response
 
 
 if __name__ == "__main__":
-  for route in app.routes:
-    print(route.path, route.methods)
-  port = int(os.environ.get("PORT", "8000"))
-  uvicorn.run("app.main:app", host="0.0.0.0", port=port)
+    for route in app.routes:
+        print(route.path, getattr(route, 'methods', None))
+    port = int(os.environ.get("PORT", "8000"))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port)

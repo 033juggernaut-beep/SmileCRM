@@ -18,6 +18,19 @@ class Settings(BaseSettings):
   
   # Skip subscription/trial check for development
   SKIP_SUBSCRIPTION_CHECK: bool = False
+  
+  # AI Configuration for Voice Assistant
+  AI_PROVIDER: str = "openai"  # Provider: openai (can be extended)
+  OPENAI_API_KEY: Optional[str] = None  # OpenAI API key
+  AI_MODEL_STT: str = "whisper-1"  # Speech-to-text model
+  AI_MODEL_TEXT: str = "gpt-4o-mini"  # Text model for JSON parsing
+  
+  @property
+  def is_ai_configured(self) -> bool:
+    """Check if AI is properly configured."""
+    if self.AI_PROVIDER == "openai":
+      return bool(self.OPENAI_API_KEY)
+    return False
 
 
 @lru_cache

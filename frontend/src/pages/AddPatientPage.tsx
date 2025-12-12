@@ -1,6 +1,7 @@
 import {
   Alert,
   AlertIcon,
+  Flex,
   FormControl,
   FormLabel,
   Input,
@@ -11,7 +12,7 @@ import {
   chakra,
   useToast,
 } from '@chakra-ui/react'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -19,9 +20,11 @@ import {
   patientsApi,
 } from '../api/patients'
 import type { PatientStatus } from '../api/patients'
+import { type VoiceParseStructured, isPatientStructured } from '../api/ai'
 import { PremiumLayout } from '../components/layout/PremiumLayout'
 import { PremiumCard } from '../components/premium/PremiumCard'
 import { PremiumButton } from '../components/premium/PremiumButton'
+import { VoiceAssistantButton } from '../components/VoiceAssistantButton'
 
 type FormFields = {
   firstName: string
@@ -61,6 +64,23 @@ export const AddPatientPage = () => {
       status: event.target.value as PatientStatus,
     }))
   }
+
+  // Handle voice assistant result
+  const handleVoiceApply = useCallback((structured: VoiceParseStructured, transcript: string) => {
+    console.log('[AddPatientPage] Voice apply:', { structured, transcript })
+    
+    if (isPatientStructured(structured)) {
+      const { patient } = structured
+      
+      setForm((prev) => ({
+        firstName: patient.first_name || prev.firstName,
+        lastName: patient.last_name || prev.lastName,
+        diagnosis: patient.diagnosis || prev.diagnosis,
+        phone: patient.phone || prev.phone,
+        status: patient.status || prev.status,
+      }))
+    }
+  }, [])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -111,11 +131,18 @@ export const AddPatientPage = () => {
     >
       <chakra.form onSubmit={handleSubmit} w="full">
         <Stack spacing={5}>
-          {/* Info Card */}
+          {/* Info Card with Voice Button */}
           <PremiumCard variant="elevated" p={4}>
-            <Text fontSize="sm" color="text.muted" textAlign="center">
-              После сохранения пациент станет доступен в общем списке.
-            </Text>
+            <Flex justify="space-between" align="center" wrap="wrap" gap={2}>
+              <Text fontSize="sm" color="text.muted">
+                После сохранения пациент станет доступен в общем списке.
+              </Text>
+              <VoiceAssistantButton
+                mode="patient"
+                onApply={handleVoiceApply}
+                buttonLabel="🎤 Голос"
+              />
+            </Flex>
           </PremiumCard>
 
           {/* Form Card */}

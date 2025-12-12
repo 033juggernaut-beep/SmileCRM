@@ -27,8 +27,9 @@ import {
   Tooltip,
 } from '@chakra-ui/react'
 // Using emoji instead of @chakra-ui/icons for better compatibility
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import axios from 'axios'
 import {
   PATIENT_STATUSES,
   type Patient,
@@ -41,12 +42,14 @@ import {
   type PatientFinanceSummary,
   type PatientPayment,
 } from '../api/patientFinance'
+import { type VoiceParseStructured, isVisitStructured } from '../api/ai'
 import { apiClient } from '../api/client'
 import { TOKEN_STORAGE_KEY } from '../constants/storage'
 import { PremiumLayout } from '../components/layout/PremiumLayout'
 import { PremiumCard } from '../components/premium/PremiumCard'
 import { PremiumButton } from '../components/premium/PremiumButton'
 import { MediaGallery } from '../components/MediaGallery'
+import { VoiceAssistantButton } from '../components/VoiceAssistantButton'
 
 type VisitFormFields = {
   visitDate: string
@@ -165,6 +168,36 @@ export const PatientDetailsPage = () => {
       setVisitForm((prev) => ({ ...prev, [field]: event.target.value }))
     }
 
+  // Handle voice assistant result for visit
+  const handleVoiceApply = useCallback((structured: VoiceParseStructured, transcript: string) => {
+    console.log('[PatientDetailsPage] Voice apply:', { structured, transcript })
+    
+    if (isVisitStructured(structured)) {
+      const { visit, medications } = structured
+      
+      // Format medications into text
+      let medicationsText = ''
+      if (medications && medications.length > 0) {
+        medicationsText = medications
+          .map(m => {
+            const parts = [m.name]
+            if (m.dose) parts.push(m.dose)
+            if (m.frequency) parts.push(m.frequency)
+            if (m.duration) parts.push(`(${m.duration})`)
+            return parts.join(' ')
+          })
+          .join('\n')
+      }
+      
+      setVisitForm((prev) => ({
+        visitDate: visit.visit_date || prev.visitDate,
+        nextVisitDate: visit.next_visit_date || prev.nextVisitDate,
+        notes: visit.notes || visit.diagnosis || prev.notes,
+        medications: medicationsText || prev.medications,
+      }))
+    }
+  }, [])
+
   const handleCreateVisit = async () => {
     if (!patient || !id) {
       return
@@ -191,18 +224,22 @@ export const PatientDetailsPage = () => {
         duration: 3000,
         isClosable: true,
       })
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to create visit:', err)
       let errorMessage = 'Network Error'
       
       // Check if it's an axios error with response
-      if (err.response) {
-        // Server responded with error status
-        const detail = err.response.data?.detail
-        errorMessage = detail || `Ошибка сервера: ${err.response.status}`
-      } else if (err.request) {
-        // Request was made but no response received
-        errorMessage = 'Сервер не отвечает. Проверьте подключение к интернету.'
+      if (axios.isAxiosError(err)) {
+        if (err.response) {
+          // Server responded with error status
+          const detail = err.response.data?.detail
+          errorMessage = detail || `Ошибка сервера: ${err.response.status}`
+        } else if (err.request) {
+          // Request was made but no response received
+          errorMessage = 'Сервер не отвечает. Проверьте подключение к интернету.'
+        } else {
+          errorMessage = err.message
+        }
       } else if (err instanceof Error) {
         // Something else happened
         errorMessage = err.message
@@ -509,9 +546,17 @@ export const PatientDetailsPage = () => {
         {/* Create Visit Section */}
         <PremiumCard variant="elevated">
           <Stack spacing={4}>
-            <Heading size="md" color="text.main">
-              Создать визит
-            </Heading>
+            <Flex justify="space-between" align="center" wrap="wrap" gap={2}>
+              <Heading size="md" color="text.main">
+                Создать визит
+              </Heading>
+              <VoiceAssistantButton
+                mode="visit"
+                contextPatientId={id}
+                onApply={handleVoiceApply}
+                buttonLabel="🎤 Надиктовать"
+              />
+            </Flex>
             
             <Stack spacing={3}>
               <FormControl isRequired>
