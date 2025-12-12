@@ -51,10 +51,10 @@ const SUPPORTED_MIME_TYPES = [
 
 // Language options
 const LANGUAGE_OPTIONS: { value: VoiceLanguage; label: string }[] = [
-  { value: 'auto', label: '🌐 Auto-detect' },
-  { value: 'hy', label: '🇦🇲 Հdelays:րdelays:delays:' },
-  { value: 'ru', label: '🇷🇺 Русский' },
-  { value: 'en', label: '🇬🇧 English' },
+  { value: 'auto', label: '\u{1F310} Auto-detect' },
+  { value: 'hy', label: '\u{1F1E6}\u{1F1F2} \u0540\u0561\u0575\u0565\u0580\u0565\u0576' },
+  { value: 'ru', label: '\u{1F1F7}\u{1F1FA} \u0420\u0443\u0441\u0441\u043A\u0438\u0439' },
+  { value: 'en', label: '\u{1F1EC}\u{1F1E7} English' },
 ]
 
 // Recording pulse animation

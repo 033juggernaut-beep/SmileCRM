@@ -159,7 +159,7 @@ export const AddPatientPage = () => {
                   Имя
                 </FormLabel>
                 <Input
-                  placeholder="Անdelays:"
+                  placeholder="First name"
                   value={form.firstName}
                   onChange={handleChange('firstName')}
                   size="lg"
@@ -171,7 +171,7 @@ export const AddPatientPage = () => {
                   Фамилия
                 </FormLabel>
                 <Input
-                  placeholder="Սdelays:delays:delays:delays:delays:delays:"
+                  placeholder="Last name"
                   value={form.lastName}
                   onChange={handleChange('lastName')}
                   size="lg"

@@ -14,37 +14,37 @@ type MenuItem = {
 
 const MENU_ITEMS: MenuItem[] = [
   { 
-    icon: '📋',
-    label: 'Իdelays: delays:delays:իdelays:delays:delays:delays:', 
-    helper: 'Посмотреть всех пациентов', 
+    icon: '\u{1F4CB}',
+    label: '\u0053\u006D\u0079 \u0070\u0061\u0074\u0069\u0065\u006E\u0074\u0073',
+    helper: '\u041F\u043E\u0441\u043C\u043E\u0442\u0440\u0435\u0442\u044C \u0432\u0441\u0435\u0445 \u043F\u0430\u0446\u0438\u0435\u043D\u0442\u043E\u0432', 
     to: '/patients',
     variant: 'primary',
   },
   {
-    icon: '➕',
-    label: 'Ադdelays:delays:delays:delays: delays:delays:delays: delays:delays:delays:իdelays:delays:delays:',
-    helper: 'Добавить нового пациента',
+    icon: '\u2795',
+    label: '\u0041\u0064\u0064 \u0070\u0061\u0074\u0069\u0065\u006E\u0074',
+    helper: '\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u043D\u043E\u0432\u043E\u0433\u043E \u043F\u0430\u0446\u0438\u0435\u043D\u0442\u0430',
     to: '/patients/new',
     variant: 'secondary',
   },
   {
-    icon: '💳',
-    label: 'Բdelays:delays:delays:delays:delays:delays:delays:գdelays:delays:delays:',
-    helper: 'Управление подпиской',
+    icon: '\u{1F4B3}',
+    label: '\u0053\u0075\u0062\u0073\u0063\u0072\u0069\u0070\u0074\u0069\u006F\u006E',
+    helper: '\u0423\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435 \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u043E\u0439',
     to: '/subscription',
     variant: 'secondary',
   },
   { 
-    icon: 'ℹ️',
-    label: 'Օգdelays:delays:delays:', 
-    helper: 'Часто задаваемые вопросы', 
+    icon: '\u2139\uFE0F',
+    label: '\u0048\u0065\u006C\u0070', 
+    helper: '\u0427\u0430\u0441\u0442\u043E \u0437\u0430\u0434\u0430\u0432\u0430\u0435\u043C\u044B\u0435 \u0432\u043E\u043F\u0440\u043E\u0441\u044B', 
     to: '/help',
     variant: 'ghost',
   },
   {
-    icon: '🔒',
-    label: 'Գdelays:delays:delays:delays:delays:delays:delays:',
-    helper: 'Политика конфиденциальности',
+    icon: '\u{1F512}',
+    label: '\u0050\u0072\u0069\u0076\u0061\u0063\u0079 \u0050\u006F\u006C\u0069\u0063\u0079',
+    helper: '\u041F\u043E\u043B\u0438\u0442\u0438\u043A\u0430 \u043A\u043E\u043D\u0444\u0438\u0434\u0435\u043D\u0446\u0438\u0430\u043B\u044C\u043D\u043E\u0441\u0442\u0438',
     to: '/privacy',
     variant: 'ghost',
   },
@@ -52,6 +52,11 @@ const MENU_ITEMS: MenuItem[] = [
 
 export const HomePage = () => {
   const navigate = useNavigate()
+
+  const handleNavigate = (path: string) => {
+    console.log('[HomePage] Navigating to:', path)
+    navigate(path)
+  }
 
   return (
     <PremiumLayout 
@@ -63,21 +68,21 @@ export const HomePage = () => {
       <Stack spacing={6}>
         {/* Hero Section */}
         <Box textAlign="center" py={4}>
-          <Text fontSize="4xl" mb={2}>🦷</Text>
+          <Text fontSize="4xl" mb={2}>{'\u{1F9B7}'}</Text>
           <Heading 
             size="xl" 
             color="text.primary"
             fontWeight="bold"
             letterSpacing="-0.02em"
           >
-            Բdelays:delays: delays: delays:delays:delays:delays:delays:delays:
+            {'\u0414\u043E\u0431\u0440\u043E \u043F\u043E\u0436\u0430\u043B\u043E\u0432\u0430\u0442\u044C'}
           </Heading>
           <Text 
             fontSize="lg" 
             color="text.secondary"
             mt={2}
           >
-            SmileCRM — клиническая система
+            SmileCRM — dental practice management
           </Text>
         </Box>
 
@@ -92,7 +97,7 @@ export const HomePage = () => {
             py={2}
             fontWeight="semibold"
           >
-            ✓ Trial активен
+            {'\u2713'} Trial {'\u0430\u043A\u0442\u0438\u0432\u0435\u043D'}
           </Tag>
         </Flex>
 
@@ -103,7 +108,7 @@ export const HomePage = () => {
               <PremiumButton
                 key={item.to}
                 variant={item.variant}
-                onClick={() => navigate(item.to)}
+                onClick={() => handleNavigate(item.to)}
                 leftIcon={<Text fontSize="xl">{item.icon}</Text>}
                 fullWidth
                 justifyContent="flex-start"
@@ -131,14 +136,14 @@ export const HomePage = () => {
             mb={3}
             fontWeight="semibold"
           >
-            Другие разделы
+            {'\u0414\u0440\u0443\u0433\u0438\u0435 \u0440\u0430\u0437\u0434\u0435\u043B\u044B'}
           </Text>
           <Stack spacing={2}>
             {MENU_ITEMS.slice(2).map((item) => (
               <PremiumButton
                 key={item.to}
                 variant="ghost"
-                onClick={() => navigate(item.to)}
+                onClick={() => handleNavigate(item.to)}
                 leftIcon={<Text fontSize="lg">{item.icon}</Text>}
                 fullWidth
                 justifyContent="flex-start"
@@ -164,7 +169,7 @@ export const HomePage = () => {
           color="text.muted"
           mt={4}
         >
-          SmileCRM v1.0 • Dental Practice Management
+          SmileCRM v1.0 {'\u2022'} Dental Practice Management
         </Text>
       </Stack>
     </PremiumLayout>
