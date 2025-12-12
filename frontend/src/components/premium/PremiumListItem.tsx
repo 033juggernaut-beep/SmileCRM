@@ -7,6 +7,7 @@ interface PremiumListItemProps extends FlexProps {
   subtitle?: string
   rightElement?: ReactNode
   showBorder?: boolean
+  isActive?: boolean
 }
 
 export const PremiumListItem = ({
@@ -15,23 +16,31 @@ export const PremiumListItem = ({
   subtitle,
   rightElement,
   showBorder = true,
+  isActive = false,
   ...props
 }: PremiumListItemProps) => {
   return (
     <Flex
       align="center"
-      gap={3}
-      py={3}
+      gap={4}
+      py={4}
       px={4}
-      bg="white"
+      bg={isActive ? 'bg.hover' : 'transparent'}
       borderBottomWidth={showBorder ? '1px' : '0'}
-      borderColor="border.light"
-      transition="all 0.2s"
+      borderColor="border.subtle"
+      transition="all 0.15s ease"
       cursor={props.onClick ? 'pointer' : 'default'}
       _hover={
         props.onClick
           ? {
-              bg: 'bg.gray',
+              bg: 'bg.hover',
+            }
+          : undefined
+      }
+      _active={
+        props.onClick
+          ? {
+              bg: 'bg.active',
             }
           : undefined
       }
@@ -39,9 +48,18 @@ export const PremiumListItem = ({
     >
       {/* Left Icon */}
       {icon && (
-        <Box flexShrink={0}>
+        <Box 
+          flexShrink={0}
+          w="44px"
+          h="44px"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          bg="bg.tertiary"
+          borderRadius="lg"
+        >
           {typeof icon === 'string' ? (
-            <Text fontSize="2xl" lineHeight="1">
+            <Text fontSize="xl" lineHeight="1">
               {icon}
             </Text>
           ) : (
@@ -55,7 +73,7 @@ export const PremiumListItem = ({
         <Text
           fontWeight="semibold"
           fontSize="md"
-          color="text.main"
+          color="text.primary"
           noOfLines={1}
         >
           {title}
@@ -74,11 +92,10 @@ export const PremiumListItem = ({
 
       {/* Right Element */}
       {rightElement && (
-        <Box flexShrink={0}>
+        <Box flexShrink={0} color="text.muted">
           {rightElement}
         </Box>
       )}
     </Flex>
   )
 }
-

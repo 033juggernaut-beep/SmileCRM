@@ -1,14 +1,19 @@
 import { Box, Flex, Heading, IconButton, Text } from '@chakra-ui/react'
 import { useNavigate } from 'react-router-dom'
-import { gradients } from '../../theme/premiumTheme'
 
 interface PremiumHeaderProps {
   title: string
   showBack?: boolean
   onBack?: () => void
+  rightElement?: React.ReactNode
 }
 
-export const PremiumHeader = ({ title, showBack = false, onBack }: PremiumHeaderProps) => {
+export const PremiumHeader = ({ 
+  title, 
+  showBack = false, 
+  onBack,
+  rightElement,
+}: PremiumHeaderProps) => {
   const navigate = useNavigate()
 
   const handleBack = () => {
@@ -25,35 +30,48 @@ export const PremiumHeader = ({ title, showBack = false, onBack }: PremiumHeader
       top={0}
       left={0}
       right={0}
-      zIndex={10}
-      background={gradients.navy}
-      boxShadow="premium"
+      zIndex={100}
+      bg="bg.secondary"
+      borderBottom="1px solid"
+      borderColor="border.subtle"
+      backdropFilter="blur(12px)"
+      _before={{
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        bg: 'linear-gradient(180deg, rgba(17, 26, 46, 0.95) 0%, rgba(17, 26, 46, 0.9) 100%)',
+        zIndex: -1,
+      }}
     >
       <Flex
         align="center"
         justify="space-between"
         px={4}
         py={3}
-        maxW="600px"
+        maxW="420px"
         mx="auto"
         minH="56px"
       >
         {/* Left side - Back button or logo */}
-        <Flex align="center" gap={2} minW="40px">
+        <Flex align="center" gap={2} minW="44px">
           {showBack ? (
             <IconButton
               aria-label="Back"
               icon={<Text fontSize="xl">←</Text>}
               variant="ghost"
-              color="white"
+              color="text.primary"
               size="sm"
               onClick={handleBack}
+              borderRadius="lg"
               _hover={{
-                bg: 'whiteAlpha.200',
+                bg: 'bg.hover',
               }}
             />
           ) : (
-            <Text fontSize="2xl" role="img" aria-label="tooth">
+            <Text fontSize="2xl" role="img" aria-label="SmileCRM">
               🦷
             </Text>
           )}
@@ -62,18 +80,20 @@ export const PremiumHeader = ({ title, showBack = false, onBack }: PremiumHeader
         {/* Center - Title */}
         <Heading
           size="md"
-          color="white"
-          fontWeight="semibold"
+          color="text.primary"
+          fontWeight="bold"
           textAlign="center"
           flex={1}
+          letterSpacing="-0.01em"
         >
           {title}
         </Heading>
 
-        {/* Right side - Spacer for balance */}
-        <Box minW="40px" />
+        {/* Right side */}
+        <Box minW="44px" display="flex" justifyContent="flex-end">
+          {rightElement}
+        </Box>
       </Flex>
     </Box>
   )
 }
-

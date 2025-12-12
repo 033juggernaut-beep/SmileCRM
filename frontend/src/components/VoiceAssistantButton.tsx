@@ -21,11 +21,13 @@ import {
   Progress,
   Select,
   Stack,
+  Tag,
   Text,
   Textarea,
   useDisclosure,
   useToast,
 } from '@chakra-ui/react'
+import { keyframes } from '@emotion/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import axios from 'axios'
 import {
@@ -49,11 +51,18 @@ const SUPPORTED_MIME_TYPES = [
 
 // Language options
 const LANGUAGE_OPTIONS: { value: VoiceLanguage; label: string }[] = [
-  { value: 'auto', label: 'Auto-detect' },
-  { value: 'hy', label: 'Հdelays:րdelays:delays:' },
-  { value: 'ru', label: 'Русский' },
-  { value: 'en', label: 'English' },
+  { value: 'auto', label: '🌐 Auto-detect' },
+  { value: 'hy', label: '🇦🇲 Հdelays:րdelays:delays:' },
+  { value: 'ru', label: '🇷🇺 Русский' },
+  { value: 'en', label: '🇬🇧 English' },
 ]
+
+// Recording pulse animation
+const pulseAnimation = keyframes`
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
+`
 
 type RecordingState = 'idle' | 'recording' | 'processing' | 'done' | 'error'
 
@@ -68,7 +77,7 @@ export const VoiceAssistantButton = ({
   mode,
   contextPatientId,
   onApply,
-  buttonLabel = '🎤 Голосовой ввод',
+  buttonLabel = '🎤 Голос',
 }: VoiceAssistantButtonProps) => {
   const { isOpen, onOpen, onClose } = useDisclosure()
   const toast = useToast()
@@ -339,35 +348,59 @@ export const VoiceAssistantButton = ({
     <>
       <Button
         onClick={onOpen}
-        leftIcon={<Text>🎤</Text>}
+        leftIcon={<Text fontSize="lg">🎤</Text>}
         variant="outline"
         size="sm"
-        colorScheme="blue"
+        borderRadius="lg"
+        borderColor="primary.500"
+        color="primary.400"
+        bg="transparent"
+        _hover={{
+          bg: 'primary.500',
+          color: 'white',
+        }}
         isDisabled={!isMediaRecorderSupported}
         title={!isMediaRecorderSupported ? 'Запись не поддерживается в вашем браузере' : undefined}
       >
         {buttonLabel}
       </Button>
       
-      <Modal isOpen={isOpen} onClose={handleClose} size="lg" isCentered>
-        <ModalOverlay />
-        <ModalContent mx={4}>
-          <ModalHeader>
-            🎤 Голосовой ввод {getModeLabel()}
+      <Modal isOpen={isOpen} onClose={handleClose} size="md" isCentered>
+        <ModalOverlay bg="blackAlpha.800" backdropFilter="blur(8px)" />
+        <ModalContent 
+          mx={4} 
+          bg="bg.secondary" 
+          borderRadius="xl"
+          border="1px solid"
+          borderColor="border.subtle"
+        >
+          <ModalHeader color="text.primary" borderBottom="1px solid" borderColor="border.subtle">
+            <Flex align="center" gap={2}>
+              <Text fontSize="xl">🎤</Text>
+              <Text>Голосовой ввод {getModeLabel()}</Text>
+            </Flex>
           </ModalHeader>
-          <ModalCloseButton />
+          <ModalCloseButton color="text.secondary" />
           
-          <ModalBody>
-            <Stack spacing={4}>
+          <ModalBody py={6}>
+            <Stack spacing={5}>
               {/* Language selector */}
               <Box>
-                <Text fontSize="sm" fontWeight="semibold" mb={2}>
+                <Text fontSize="sm" fontWeight="medium" mb={2} color="text.secondary">
                   Язык записи
                 </Text>
                 <Select
                   value={language}
                   onChange={(e) => setLanguage(e.target.value as VoiceLanguage)}
                   isDisabled={recordingState === 'recording' || recordingState === 'processing'}
+                  bg="bg.tertiary"
+                  borderColor="border.subtle"
+                  sx={{
+                    option: {
+                      bg: 'bg.secondary',
+                      color: 'text.primary',
+                    },
+                  }}
                 >
                   {LANGUAGE_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>
@@ -380,7 +413,7 @@ export const VoiceAssistantButton = ({
               {/* Recording controls */}
               {recordingState !== 'done' && (
                 <Box>
-                  <Flex justify="center" align="center" py={4} gap={4}>
+                  <Flex justify="center" align="center" py={6} direction="column" gap={4}>
                     {recordingState === 'idle' && !audioBlob && (
                       <PremiumButton onClick={startRecording} size="lg">
                         🎙 Начать запись
@@ -389,11 +422,28 @@ export const VoiceAssistantButton = ({
                     
                     {recordingState === 'recording' && (
                       <>
-                        <Box textAlign="center">
-                          <Text fontSize="3xl" color="red.500" fontWeight="bold">
-                            ⏺ {formatTime(recordingSeconds)}
+                        <Box 
+                          textAlign="center"
+                          animation={`${pulseAnimation} 1.5s ease-in-out infinite`}
+                        >
+                          <Box
+                            w="80px"
+                            h="80px"
+                            borderRadius="full"
+                            bg="error.500"
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="center"
+                            mx="auto"
+                            mb={3}
+                            boxShadow="0 0 30px rgba(255, 10, 45, 0.4)"
+                          >
+                            <Text fontSize="3xl">🎙</Text>
+                          </Box>
+                          <Text fontSize="2xl" color="text.primary" fontWeight="bold">
+                            {formatTime(recordingSeconds)}
                           </Text>
-                          <Text fontSize="sm" color="text.muted">
+                          <Text fontSize="sm" color="text.muted" mt={1}>
                             Макс. {MAX_RECORDING_SECONDS} сек
                           </Text>
                         </Box>
@@ -402,30 +452,42 @@ export const VoiceAssistantButton = ({
                           variant="secondary"
                           size="lg"
                         >
-                          ⏹ Стоп
+                          ⏹ Остановить
                         </PremiumButton>
                       </>
                     )}
                     
                     {recordingState === 'idle' && audioBlob && (
-                      <HStack spacing={3}>
-                        <PremiumButton onClick={sendAudio} size="lg">
-                          📤 Отправить
-                        </PremiumButton>
-                        <PremiumButton
-                          onClick={resetState}
-                          variant="secondary"
-                          size="lg"
-                        >
-                          🔄 Заново
-                        </PremiumButton>
-                      </HStack>
+                      <Stack spacing={3} w="full" align="center">
+                        <Tag size="lg" bg="success.500" color="white" borderRadius="full">
+                          ✓ Запись готова ({formatTime(recordingSeconds)})
+                        </Tag>
+                        <HStack spacing={3}>
+                          <PremiumButton onClick={sendAudio}>
+                            📤 Обработать
+                          </PremiumButton>
+                          <PremiumButton
+                            onClick={resetState}
+                            variant="ghost"
+                          >
+                            🔄
+                          </PremiumButton>
+                        </HStack>
+                      </Stack>
                     )}
                     
                     {recordingState === 'processing' && (
                       <Box textAlign="center" w="full">
-                        <Text mb={2}>Обработка...</Text>
-                        <Progress size="sm" isIndeterminate colorScheme="blue" />
+                        <Text mb={3} color="text.primary" fontWeight="medium">
+                          Обработка записи...
+                        </Text>
+                        <Progress 
+                          size="sm" 
+                          isIndeterminate 
+                          colorScheme="blue"
+                          bg="bg.tertiary"
+                          borderRadius="full"
+                        />
                       </Box>
                     )}
                   </Flex>
@@ -434,17 +496,14 @@ export const VoiceAssistantButton = ({
               
               {/* Error message */}
               {error && (
-                <Alert status="error" borderRadius="md">
-                  <AlertIcon />
-                  {error}
-                </Alert>
-              )}
-              
-              {/* Recording info when we have audio but haven't processed yet */}
-              {recordingState === 'idle' && audioBlob && !parseResult && (
-                <Alert status="info" borderRadius="md">
-                  <AlertIcon />
-                  Запись готова ({formatTime(recordingSeconds)}). Нажмите "Отправить" для распознавания.
+                <Alert 
+                  status="error" 
+                  borderRadius="lg"
+                  bg="error.500"
+                  color="white"
+                >
+                  <AlertIcon color="white" />
+                  <Text fontSize="sm">{error}</Text>
                 </Alert>
               )}
               
@@ -453,7 +512,7 @@ export const VoiceAssistantButton = ({
                 <Stack spacing={4}>
                   {/* Transcript */}
                   <Box>
-                    <Text fontSize="sm" fontWeight="semibold" mb={2}>
+                    <Text fontSize="sm" fontWeight="medium" mb={2} color="text.secondary">
                       Распознанный текст
                     </Text>
                     <Textarea
@@ -461,46 +520,64 @@ export const VoiceAssistantButton = ({
                       isReadOnly
                       rows={3}
                       fontSize="sm"
-                      bg="bg.gray"
+                      bg="bg.tertiary"
+                      borderColor="border.subtle"
+                      color="text.primary"
                     />
                   </Box>
                   
                   {/* Warnings */}
                   {parseResult.warnings.length > 0 && (
-                    <Alert status="warning" borderRadius="md">
-                      <AlertIcon />
-                      <Box>
-                        <Text fontWeight="semibold">Обратите внимание:</Text>
+                    <Box>
+                      <HStack spacing={2} flexWrap="wrap">
                         {parseResult.warnings.map((w, i) => (
-                          <Text key={i} fontSize="sm">• {w}</Text>
+                          <Tag 
+                            key={i} 
+                            size="sm" 
+                            bg="warning.500" 
+                            color="black"
+                            borderRadius="full"
+                          >
+                            ⚠️ {w}
+                          </Tag>
                         ))}
-                      </Box>
-                    </Alert>
+                      </HStack>
+                    </Box>
                   )}
                   
                   {/* Empty result warning */}
                   {isStructuredEmpty(parseResult) && (
-                    <Alert status="error" borderRadius="md">
-                      <AlertIcon />
-                      Не удалось распознать данные. Попробуйте записать ещё раз, более чётко.
+                    <Alert 
+                      status="warning" 
+                      borderRadius="lg"
+                      bg="warning.500"
+                      color="black"
+                    >
+                      <AlertIcon color="black" />
+                      <Text fontSize="sm">
+                        Не удалось распознать данные. Попробуйте записать ещё раз.
+                      </Text>
                     </Alert>
                   )}
                   
                   {/* Extracted data preview */}
                   {!isStructuredEmpty(parseResult) && (
                     <Box>
-                      <Text fontSize="sm" fontWeight="semibold" mb={2}>
+                      <Text fontSize="sm" fontWeight="medium" mb={2} color="text.secondary">
                         Извлечённые данные
                       </Text>
                       <Box
-                        bg="bg.gray"
+                        bg="bg.tertiary"
                         p={3}
-                        borderRadius="md"
-                        fontSize="sm"
+                        borderRadius="lg"
+                        fontSize="xs"
                         fontFamily="mono"
                         whiteSpace="pre-wrap"
-                        maxH="200px"
+                        maxH="150px"
                         overflowY="auto"
+                        color="text.secondary"
+                        border="1px solid"
+                        borderColor="border.subtle"
                       >
                         {JSON.stringify(parseResult.structured, null, 2)}
                       </Box>
@@ -511,18 +588,26 @@ export const VoiceAssistantButton = ({
             </Stack>
           </ModalBody>
           
-          <ModalFooter>
+          <ModalFooter borderTop="1px solid" borderColor="border.subtle">
             {recordingState === 'done' && parseResult && !isStructuredEmpty(parseResult) ? (
-              <HStack spacing={3}>
-                <Button onClick={handleDiscard} variant="outline">
+              <HStack spacing={3} w="full" justify="flex-end">
+                <Button 
+                  onClick={handleDiscard} 
+                  variant="ghost"
+                  color="text.secondary"
+                >
                   🔄 Заново
                 </Button>
-                <PremiumButton onClick={handleApply}>
+                <PremiumButton onClick={handleApply} variant="success">
                   ✓ Применить
                 </PremiumButton>
               </HStack>
             ) : (
-              <Button onClick={handleClose} variant="ghost">
+              <Button 
+                onClick={handleClose} 
+                variant="ghost"
+                color="text.secondary"
+              >
                 Закрыть
               </Button>
             )}

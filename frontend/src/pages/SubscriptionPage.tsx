@@ -144,7 +144,7 @@ export const SubscriptionPage = () => {
       title="Բաժանորդագրություն" 
       showBack={true}
       onBack={() => navigate('/home')}
-      background="light"
+      background="gradient"
     >
       <Stack spacing={5}>
         {/* Premium Banner */}

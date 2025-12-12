@@ -116,7 +116,7 @@ export const RegisterDoctorPage = () => {
     <PremiumLayout 
       title="Регистрация" 
       showBack={false}
-      background="light"
+      background="gradient"
     >
       <chakra.form onSubmit={handleSubmit} w="full">
         <Stack spacing={5}>

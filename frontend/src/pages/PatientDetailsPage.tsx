@@ -66,9 +66,9 @@ const statusLabels = PATIENT_STATUSES.reduce(
   {} as Record<PatientStatus, string>,
 )
 
-const statusColors: Record<PatientStatus, string> = {
-  in_progress: 'orange',
-  completed: 'green',
+const statusColors: Record<PatientStatus, { bg: string; color: string }> = {
+  in_progress: { bg: 'warning.500', color: 'black' },
+  completed: { bg: 'success.500', color: 'white' },
 }
 
 export const PatientDetailsPage = () => {
@@ -460,12 +460,13 @@ export const PatientDetailsPage = () => {
         title="Загрузка..." 
         showBack={true}
         onBack={() => navigate('/patients')}
-        background="light"
+        background="gradient"
+        safeAreaBottom
       >
         <PremiumCard variant="elevated">
           <Stack spacing={3} align="center" py={6}>
             <Box fontSize="3xl">⏳</Box>
-            <Heading size="md">Загружаем данные пациента…</Heading>
+            <Heading size="md" color="text.primary">Загружаем данные пациента…</Heading>
             <Text color="text.muted" textAlign="center">
               Пожалуйста, подождите пару секунд.
             </Text>
@@ -481,11 +482,12 @@ export const PatientDetailsPage = () => {
         title="Ошибка" 
         showBack={true}
         onBack={() => navigate('/patients')}
-        background="light"
+        background="gradient"
+        safeAreaBottom
       >
         <Stack spacing={4}>
-          <Alert status="error" borderRadius="md">
-            <AlertIcon />
+          <Alert status="error" borderRadius="lg" bg="error.500" color="white">
+            <AlertIcon color="white" />
             {error ?? 'Пациент не найден'}
           </Alert>
           <PremiumButton onClick={() => navigate('/patients')}>
@@ -499,7 +501,8 @@ export const PatientDetailsPage = () => {
   const statusMeta = patient.status
     ? {
         label: statusLabels[patient.status] ?? patient.status,
-        color: statusColors[patient.status] ?? 'teal',
+        bg: statusColors[patient.status]?.bg ?? 'bg.tertiary',
+        color: statusColors[patient.status]?.color ?? 'text.secondary',
       }
     : null
 
@@ -508,7 +511,8 @@ export const PatientDetailsPage = () => {
       title={`${patient.firstName} ${patient.lastName}`}
       showBack={true}
       onBack={() => navigate('/patients')}
-      background="light"
+      background="gradient"
+      safeAreaBottom
     >
       <Stack spacing={5}>
         {/* Patient Info Card */}
@@ -516,14 +520,16 @@ export const PatientDetailsPage = () => {
           <Stack spacing={3}>
             <Flex align="center" gap={2} wrap="wrap">
               <Text fontSize="2xl">👤</Text>
-              <Heading size="lg" color="text.main">
+              <Heading size="lg" color="text.primary">
                 {patient.firstName} {patient.lastName}
               </Heading>
               {statusMeta && (
                 <Tag 
-                  colorScheme={statusMeta.color}
+                  bg={statusMeta.bg}
+                  color={statusMeta.color}
                   size="md"
-                  borderRadius="base"
+                  borderRadius="full"
+                  fontWeight="medium"
                 >
                   {statusMeta.label}
                 </Tag>
@@ -547,7 +553,7 @@ export const PatientDetailsPage = () => {
         <PremiumCard variant="elevated">
           <Stack spacing={4}>
             <Flex justify="space-between" align="center" wrap="wrap" gap={2}>
-              <Heading size="md" color="text.main">
+              <Heading size="md" color="text.primary">
                 Создать визит
               </Heading>
               <VoiceAssistantButton
@@ -560,7 +566,7 @@ export const PatientDetailsPage = () => {
             
             <Stack spacing={3}>
               <FormControl isRequired>
-                <FormLabel fontWeight="semibold" color="text.main">
+                <FormLabel fontWeight="semibold" color="text.primary">
                   Дата визита
                 </FormLabel>
                 <Input
@@ -572,7 +578,7 @@ export const PatientDetailsPage = () => {
               </FormControl>
               
               <FormControl>
-                <FormLabel fontWeight="semibold" color="text.main">
+                <FormLabel fontWeight="semibold" color="text.primary">
                   Следующий визит
                 </FormLabel>
                 <Input
@@ -584,7 +590,7 @@ export const PatientDetailsPage = () => {
               </FormControl>
               
               <FormControl>
-                <FormLabel fontWeight="semibold" color="text.main">
+                <FormLabel fontWeight="semibold" color="text.primary">
                   Заметки
                 </FormLabel>
                 <Textarea
@@ -597,7 +603,7 @@ export const PatientDetailsPage = () => {
               </FormControl>
               
               <FormControl>
-                <FormLabel fontWeight="semibold" color="text.main">
+                <FormLabel fontWeight="semibold" color="text.primary">
                   Медикаменты (названия и схема приёма)
                 </FormLabel>
                 <Textarea
@@ -630,7 +636,7 @@ export const PatientDetailsPage = () => {
         {/* Visit History Section */}
         <PremiumCard variant="elevated">
           <Stack spacing={4}>
-            <Heading size="md" color="text.main">
+            <Heading size="md" color="text.primary">
               История визитов
             </Heading>
             
@@ -665,14 +671,14 @@ export const PatientDetailsPage = () => {
         {financeSummary && (
           <PremiumCard variant="elevated">
             <Stack spacing={5}>
-              <Heading size="md" color="text.main">
+              <Heading size="md" color="text.primary">
                 💰 Финансы пациента
               </Heading>
               
               {/* Treatment Plan Input */}
               <Box>
                 <FormControl>
-                  <FormLabel fontWeight="semibold" color="text.main">
+                  <FormLabel fontWeight="semibold" color="text.primary">
                     План лечения (общая стоимость)
                   </FormLabel>
                   <HStack>
@@ -730,12 +736,12 @@ export const PatientDetailsPage = () => {
 
               {/* Add Payment Form */}
               <Box>
-                <Heading size="sm" color="text.main" mb={3}>
+                <Heading size="sm" color="text.primary" mb={3}>
                   Добавить оплату
                 </Heading>
                 <Stack spacing={3}>
                   <FormControl isRequired>
-                    <FormLabel fontWeight="semibold" color="text.main" fontSize="sm">
+                    <FormLabel fontWeight="semibold" color="text.primary" fontSize="sm">
                       Сумма
                     </FormLabel>
                     <NumberInput
@@ -749,7 +755,7 @@ export const PatientDetailsPage = () => {
                   </FormControl>
 
                   <FormControl>
-                    <FormLabel fontWeight="semibold" color="text.main" fontSize="sm">
+                    <FormLabel fontWeight="semibold" color="text.primary" fontSize="sm">
                       Комментарий (необязательно)
                     </FormLabel>
                     <Input
@@ -775,7 +781,7 @@ export const PatientDetailsPage = () => {
 
               {/* Payments History */}
               <Box>
-                <Heading size="sm" color="text.main" mb={3}>
+                <Heading size="sm" color="text.primary" mb={3}>
                   История оплат
                 </Heading>
                 {payments.length > 0 ? (
@@ -889,7 +895,7 @@ const InfoCard = ({ label, value }: InfoCardProps) => (
     <Text fontSize="xs" textTransform="uppercase" color="text.muted" mb={1}>
       {label}
     </Text>
-    <Text fontWeight="semibold" color="text.main">
+    <Text fontWeight="semibold" color="text.primary">
       {value || '—'}
     </Text>
   </PremiumCard>
@@ -918,7 +924,7 @@ const VisitCard = ({
 }: VisitCardProps) => (
   <Box 
     borderWidth="1px" 
-    borderColor="border.light"
+    borderColor="border.subtle"
     borderRadius="md" 
     p={4} 
     bg="bg.gray"
@@ -927,7 +933,7 @@ const VisitCard = ({
   >
     <Flex justify="space-between" align="flex-start" gap={3} wrap="wrap">
       <Stack spacing={1}>
-        <Text fontWeight="semibold" color="text.main">
+        <Text fontWeight="semibold" color="text.primary">
           📅 {formatDate(visit.visitDate)}
         </Text>
         <Text fontSize="xs" color="text.muted">
@@ -945,12 +951,12 @@ const VisitCard = ({
         bg="white" 
         borderRadius="base"
         borderWidth="1px"
-        borderColor="border.light"
+        borderColor="border.subtle"
       >
         <Text fontSize="xs" color="text.muted" mb={1} fontWeight="semibold">
           Заметки:
         </Text>
-        <Text whiteSpace="pre-wrap" fontSize="sm" color="text.main">
+        <Text whiteSpace="pre-wrap" fontSize="sm" color="text.primary">
           {visit.notes}
         </Text>
       </Box>

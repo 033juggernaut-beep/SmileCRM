@@ -1,9 +1,11 @@
 import {
   Alert,
   AlertIcon,
+  Box,
   Flex,
   FormControl,
   FormLabel,
+  Heading,
   Input,
   Select,
   Stack,
@@ -124,36 +126,40 @@ export const AddPatientPage = () => {
 
   return (
     <PremiumLayout 
-      title="Добавить пациента" 
+      title="Новый пациент" 
       showBack={true}
       onBack={() => navigate('/patients')}
-      background="light"
+      background="gradient"
+      safeAreaBottom
     >
       <chakra.form onSubmit={handleSubmit} w="full">
         <Stack spacing={5}>
-          {/* Info Card with Voice Button */}
-          <PremiumCard variant="elevated" p={4}>
-            <Flex justify="space-between" align="center" wrap="wrap" gap={2}>
-              <Text fontSize="sm" color="text.muted">
-                После сохранения пациент станет доступен в общем списке.
+          {/* Header with Voice Button */}
+          <Flex justify="space-between" align="center">
+            <Box>
+              <Heading size="md" color="text.primary">
+                Данные пациента
+              </Heading>
+              <Text fontSize="sm" color="text.muted" mt={1}>
+                Заполните информацию о пациенте
               </Text>
-              <VoiceAssistantButton
-                mode="patient"
-                onApply={handleVoiceApply}
-                buttonLabel="🎤 Голос"
-              />
-            </Flex>
-          </PremiumCard>
+            </Box>
+            <VoiceAssistantButton
+              mode="patient"
+              onApply={handleVoiceApply}
+              buttonLabel="🎤"
+            />
+          </Flex>
 
           {/* Form Card */}
           <PremiumCard variant="elevated">
-            <Stack spacing={4}>
+            <Stack spacing={5}>
               <FormControl isRequired>
-                <FormLabel fontWeight="semibold" color="text.main">
+                <FormLabel color="text.secondary" fontSize="sm">
                   Имя
                 </FormLabel>
                 <Input
-                  placeholder="Например, Անի"
+                  placeholder="Անdelays:"
                   value={form.firstName}
                   onChange={handleChange('firstName')}
                   size="lg"
@@ -161,11 +167,11 @@ export const AddPatientPage = () => {
               </FormControl>
 
               <FormControl isRequired>
-                <FormLabel fontWeight="semibold" color="text.main">
+                <FormLabel color="text.secondary" fontSize="sm">
                   Фамилия
                 </FormLabel>
                 <Input
-                  placeholder="Например, Սարգսյան"
+                  placeholder="Սdelays:delays:delays:delays:delays:delays:"
                   value={form.lastName}
                   onChange={handleChange('lastName')}
                   size="lg"
@@ -173,38 +179,32 @@ export const AddPatientPage = () => {
               </FormControl>
 
               <FormControl>
-                <FormLabel fontWeight="semibold" color="text.main">
-                  Диагноз
-                </FormLabel>
-                <Textarea
-                  placeholder="Короткое описание диагноза (необязательно)"
-                  rows={3}
-                  value={form.diagnosis}
-                  onChange={handleChange('diagnosis')}
-                  size="lg"
-                />
-              </FormControl>
-
-              <FormControl>
-                <FormLabel fontWeight="semibold" color="text.main">
+                <FormLabel color="text.secondary" fontSize="sm">
                   Телефон
                 </FormLabel>
                 <Input
-                  placeholder="+374 ..."
+                  placeholder="+374 XX XXX XXX"
                   value={form.phone}
                   onChange={handleChange('phone')}
                   size="lg"
+                  type="tel"
                 />
               </FormControl>
 
               <FormControl>
-                <FormLabel fontWeight="semibold" color="text.main">
+                <FormLabel color="text.secondary" fontSize="sm">
                   Статус
                 </FormLabel>
                 <Select 
                   value={form.status} 
                   onChange={handleStatusChange}
                   size="lg"
+                  sx={{
+                    option: {
+                      bg: 'bg.secondary',
+                      color: 'text.primary',
+                    },
+                  }}
                 >
                   {PATIENT_STATUSES.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -213,29 +213,47 @@ export const AddPatientPage = () => {
                   ))}
                 </Select>
               </FormControl>
+
+              <FormControl>
+                <FormLabel color="text.secondary" fontSize="sm">
+                  Диагноз / Заметки
+                </FormLabel>
+                <Textarea
+                  placeholder="Описание диагноза или заметки..."
+                  rows={4}
+                  value={form.diagnosis}
+                  onChange={handleChange('diagnosis')}
+                  size="lg"
+                />
+              </FormControl>
             </Stack>
           </PremiumCard>
 
           {/* Error Alert */}
-          {error ? (
-            <Alert status="error" borderRadius="md">
-              <AlertIcon />
+          {error && (
+            <Alert 
+              status="error" 
+              borderRadius="lg"
+              bg="error.500"
+              color="white"
+            >
+              <AlertIcon color="white" />
               {error}
             </Alert>
-          ) : null}
+          )}
 
           {/* Submit Button */}
           <PremiumButton
             type="submit"
             size="lg"
             isLoading={isSubmitting}
-            w="full"
+            loadingText="Сохранение..."
+            fullWidth
           >
-            Сохранить данные
+            ✓ Сохранить пациента
           </PremiumButton>
         </Stack>
       </chakra.form>
     </PremiumLayout>
   )
 }
-

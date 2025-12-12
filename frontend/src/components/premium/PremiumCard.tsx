@@ -3,44 +3,64 @@ import { type ReactNode } from 'react'
 
 interface PremiumCardProps extends BoxProps {
   children: ReactNode
-  variant?: 'default' | 'elevated' | 'flat'
+  variant?: 'default' | 'elevated' | 'flat' | 'glass'
+  isHoverable?: boolean
 }
 
 export const PremiumCard = ({ 
   children, 
   variant = 'default',
+  isHoverable = false,
   ...props 
 }: PremiumCardProps) => {
   const variants = {
     default: {
-      bg: 'white',
+      bg: 'bg.secondary',
       borderWidth: '1px',
-      borderColor: 'border.light',
-      boxShadow: 'sm',
+      borderColor: 'border.subtle',
+      boxShadow: 'card',
     },
     elevated: {
-      bg: 'white',
-      borderWidth: '0',
-      boxShadow: 'premium',
+      bg: 'bg.secondary',
+      borderWidth: '1px',
+      borderColor: 'border.subtle',
+      boxShadow: 'lg',
     },
     flat: {
-      bg: 'bg.gray',
+      bg: 'bg.tertiary',
       borderWidth: '1px',
-      borderColor: 'border.light',
+      borderColor: 'border.subtle',
       boxShadow: 'none',
+    },
+    glass: {
+      bg: 'rgba(17, 26, 46, 0.7)',
+      borderWidth: '1px',
+      borderColor: 'border.subtle',
+      backdropFilter: 'blur(12px)',
+      boxShadow: 'card',
     },
   }
 
+  const hoverStyles = isHoverable ? {
+    _hover: {
+      bg: 'bg.hover',
+      borderColor: 'border.default',
+      boxShadow: 'cardHover',
+      transform: 'translateY(-2px)',
+    },
+    cursor: 'pointer',
+  } : {}
+
   return (
     <Box
-      borderRadius="md"
+      borderRadius="xl"
       p={4}
-      transition="all 0.2s"
+      transition="all 0.2s ease"
       {...variants[variant]}
+      {...hoverStyles}
       {...props}
     >
       {children}
     </Box>
   )
 }
-

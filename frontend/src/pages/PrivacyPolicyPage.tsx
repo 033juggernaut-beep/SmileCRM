@@ -32,7 +32,7 @@ export const PrivacyPolicyPage = () => {
       title="Գաղտնիություն" 
       showBack={true}
       onBack={() => navigate('/home')}
-      background="light"
+      background="gradient"
     >
       <Stack spacing={5}>
         {/* Header Card */}

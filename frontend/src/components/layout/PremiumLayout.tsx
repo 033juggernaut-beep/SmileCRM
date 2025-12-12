@@ -1,7 +1,6 @@
 import { Box, Flex } from '@chakra-ui/react'
 import { type ReactNode } from 'react'
 import { PremiumHeader } from '../premium/PremiumHeader'
-import { gradients } from '../../theme/premiumTheme'
 
 interface PremiumLayoutProps {
   children: ReactNode
@@ -9,7 +8,9 @@ interface PremiumLayoutProps {
   showHeader?: boolean
   showBack?: boolean
   onBack?: () => void
-  background?: 'gradient' | 'light' | 'white'
+  background?: 'gradient' | 'solid' | 'light' | 'white'
+  /** Add extra bottom padding for fixed buttons (Telegram safe area) */
+  safeAreaBottom?: boolean
 }
 
 export const PremiumLayout = ({
@@ -18,12 +19,14 @@ export const PremiumLayout = ({
   showHeader = true,
   showBack = false,
   onBack,
-  background = 'light',
+  background = 'gradient',
+  safeAreaBottom = false,
 }: PremiumLayoutProps) => {
   const backgrounds = {
-    gradient: gradients.navy,
-    light: 'bg.gray',
-    white: 'white',
+    gradient: 'linear-gradient(180deg, #0F1829 0%, #0B1220 100%)',
+    solid: 'bg.primary',
+    light: 'bg.primary',
+    white: 'bg.primary',
   }
 
   return (
@@ -50,17 +53,25 @@ export const PremiumLayout = ({
         as="main"
         flex="1"
         w="full"
-        maxW={{ base: '100%', md: '800px', lg: '1000px' }}
+        maxW="420px"
         mx="auto"
-        px={{ base: 4, md: 6, lg: 8 }}
-        py={6}
-        pb={8}
+        px={4}
+        py={5}
+        pb={safeAreaBottom ? '100px' : 6}
         overflowY="auto"
         overflowX="hidden"
+        css={{
+          '&::-webkit-scrollbar': {
+            width: '4px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: 'rgba(255,255,255,0.1)',
+            borderRadius: '4px',
+          },
+        }}
       >
         {children}
       </Box>
     </Flex>
   )
 }
-
