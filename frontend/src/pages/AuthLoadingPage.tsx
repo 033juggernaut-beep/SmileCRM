@@ -95,8 +95,18 @@ export const AuthLoadingPage = () => {
         let errorMessage = 'Не удалось связаться с сервером авторизации'
         
         if (axios.isAxiosError(err) && err.response?.data?.detail) {
-          errorMessage = `${errorMessage}: ${err.response.data.detail}`
-          console.error('[AUTH] Server error detail:', err.response.data.detail)
+          const detail = err.response.data.detail
+          // Handle FastAPI validation errors (array of objects)
+          let detailStr: string
+          if (Array.isArray(detail)) {
+            detailStr = detail.map((e: { msg?: string }) => e.msg || 'Error').join(', ')
+          } else if (typeof detail === 'string') {
+            detailStr = detail
+          } else {
+            detailStr = JSON.stringify(detail)
+          }
+          errorMessage = `${errorMessage}: ${detailStr}`
+          console.error('[AUTH] Server error detail:', detail)
         }
 
         setError(

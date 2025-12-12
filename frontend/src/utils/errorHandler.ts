@@ -16,7 +16,14 @@ export const getErrorMessage = (error: unknown): string => {
 
     // Check if server provided a detail message
     if (error.response?.data?.detail) {
-      return error.response.data.detail
+      const detail = error.response.data.detail
+      // Handle FastAPI validation errors (array of objects)
+      if (Array.isArray(detail)) {
+        return detail.map((e: { msg?: string }) => e.msg || 'Validation error').join(', ')
+      }
+      if (typeof detail === 'string') {
+        return detail
+      }
     }
 
     // Check if server provided a message

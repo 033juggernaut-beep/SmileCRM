@@ -251,7 +251,13 @@ export const VoiceAssistantButton = ({
         if (err.response?.status === 501) {
           errorMessage = 'AI не настроен. Обратитесь к администратору.'
         } else if (err.response?.data?.detail) {
-          errorMessage = err.response.data.detail
+          const detail = err.response.data.detail
+          // Handle FastAPI validation errors (array of objects)
+          if (Array.isArray(detail)) {
+            errorMessage = detail.map((e: { msg?: string }) => e.msg || 'Validation error').join(', ')
+          } else if (typeof detail === 'string') {
+            errorMessage = detail
+          }
         }
       }
       
