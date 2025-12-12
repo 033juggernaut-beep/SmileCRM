@@ -114,7 +114,8 @@ export const parseVoice = async (params: ParseVoiceParams): Promise<VoiceParseRe
     {
       headers: {
         Authorization: `Bearer ${authToken}`,
-        'Content-Type': 'multipart/form-data',
+        // Note: Don't set Content-Type manually for FormData
+        // axios will set it automatically with the correct boundary
       },
       timeout: 60000, // 60 seconds for voice processing
     }

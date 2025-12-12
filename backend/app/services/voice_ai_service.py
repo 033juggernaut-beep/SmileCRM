@@ -87,7 +87,10 @@ def validate_audio_file(file_data: bytes, content_type: str | None, filename: st
     if len(file_data) == 0:
         raise AudioValidationError("File is empty")
     
-    # Check content type
+    # Valid audio extensions
+    valid_extensions = {"webm", "wav", "ogg", "mp3", "m4a"}
+    
+    # Check content type if provided
     if content_type:
         # Normalize content type (remove charset etc)
         base_type = content_type.split(";")[0].strip().lower()
@@ -95,15 +98,26 @@ def validate_audio_file(file_data: bytes, content_type: str | None, filename: st
             # Also check by file extension as fallback
             if filename:
                 ext = filename.lower().split(".")[-1] if "." in filename else ""
-                valid_extensions = {"webm", "wav", "ogg", "mp3", "m4a"}
                 if ext not in valid_extensions:
                     raise AudioValidationError(
-                        f"Invalid audio format. Allowed: webm, wav, ogg, mp3, m4a"
+                        "Invalid audio format. Allowed: webm, wav, ogg, mp3, m4a"
                     )
             else:
                 raise AudioValidationError(
-                    f"Invalid audio format. Allowed: webm, wav, ogg, mp3, m4a"
+                    "Invalid audio format. Allowed: webm, wav, ogg, mp3, m4a"
                 )
+    else:
+        # No content type provided - validate by filename extension
+        if filename:
+            ext = filename.lower().split(".")[-1] if "." in filename else ""
+            if ext not in valid_extensions:
+                raise AudioValidationError(
+                    "Invalid audio format. Allowed: webm, wav, ogg, mp3, m4a"
+                )
+        else:
+            raise AudioValidationError(
+                "Cannot determine audio format. Please provide a valid audio file."
+            )
 
 
 def get_language_hint(language: Language) -> str | None:

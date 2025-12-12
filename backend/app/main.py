@@ -115,20 +115,15 @@ async def log_requests(request: Request, call_next):
     """
     Middleware to log incoming requests.
     Helps with debugging and monitoring.
+    
+    Note: We avoid reading the request body here because it would
+    consume the stream and break file uploads (multipart/form-data).
     """
     # Skip logging for health checks to reduce noise
     if request.url.path == "/health":
         return await call_next(request)
     
-    body_bytes = await request.body()
-    truncated_body = body_bytes[:512].decode("utf-8", errors="replace") if body_bytes else ""
-    
     logger.info("Request: %s %s", request.method, request.url.path)
-    
-    if truncated_body and request.method in {"POST", "PUT", "PATCH"}:
-        # Don't log sensitive data (passwords, tokens)
-        if "/auth/" not in request.url.path:
-            logger.debug("Request body preview: %s...", truncated_body[:200])
     
     response = await call_next(request)
     return response

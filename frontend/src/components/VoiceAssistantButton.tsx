@@ -50,7 +50,7 @@ const SUPPORTED_MIME_TYPES = [
 // Language options
 const LANGUAGE_OPTIONS: { value: VoiceLanguage; label: string }[] = [
   { value: 'auto', label: 'Auto-detect' },
-  { value: 'hy', label: 'Հայdelays:' },
+  { value: 'hy', label: 'Հdelays:րdelays:delays:' },
   { value: 'ru', label: 'Русский' },
   { value: 'en', label: 'English' },
 ]
