@@ -29,6 +29,11 @@ interface TelegramWebApp {
   enableClosingConfirmation?: () => void
   disableClosingConfirmation?: () => void
   
+  // Swipe control
+  disableVerticalSwipes?: () => void
+  enableVerticalSwipes?: () => void
+  isVerticalSwipesEnabled?: boolean
+  
   // Orientation control (mobile)
   lockOrientation?: () => void
   unlockOrientation?: () => void

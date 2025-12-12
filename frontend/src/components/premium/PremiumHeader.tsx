@@ -49,9 +49,9 @@ export const PremiumHeader = ({
       <Flex
         align="center"
         justify="space-between"
-        px={4}
+        px={{ base: 4, md: 6, lg: 8 }}
         py={3}
-        maxW="420px"
+        maxW={{ base: '100%', md: '720px', lg: '960px', xl: '1200px' }}
         mx="auto"
         minH="56px"
       >

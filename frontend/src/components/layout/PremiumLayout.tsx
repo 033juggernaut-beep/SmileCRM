@@ -48,25 +48,31 @@ export const PremiumLayout = ({
         />
       )}
 
-      {/* Main Content - Scrollable */}
+      {/* Main Content - Scrollable, full width on desktop */}
       <Box
         as="main"
         flex="1"
         w="full"
-        maxW="420px"
+        maxW={{ base: '100%', md: '720px', lg: '960px', xl: '1200px' }}
         mx="auto"
-        px={4}
+        px={{ base: 4, md: 6, lg: 8 }}
         py={5}
         pb={safeAreaBottom ? '100px' : 6}
         overflowY="auto"
         overflowX="hidden"
         css={{
           '&::-webkit-scrollbar': {
-            width: '4px',
+            width: '6px',
+          },
+          '&::-webkit-scrollbar-track': {
+            background: 'transparent',
           },
           '&::-webkit-scrollbar-thumb': {
-            background: 'rgba(255,255,255,0.1)',
+            background: 'rgba(255,255,255,0.15)',
             borderRadius: '4px',
+          },
+          '&::-webkit-scrollbar-thumb:hover': {
+            background: 'rgba(255,255,255,0.25)',
           },
         }}
       >

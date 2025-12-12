@@ -18,7 +18,7 @@ const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage').then(m 
 
 // Loading fallback for lazy routes
 const PageLoader = () => (
-  <Center h="100vh" bg="bg.gray">
+  <Center h="100vh" bg="bg.primary">
     <Spinner size="xl" color="primary.500" thickness="4px" />
   </Center>
 )

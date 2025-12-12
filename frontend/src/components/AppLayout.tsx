@@ -6,6 +6,38 @@ export const AppLayout = () => {
   useEffect(() => {
     const telegram = window.Telegram?.WebApp
 
+    // Initialize Telegram WebApp
+    if (telegram) {
+      console.log('[AppLayout] Telegram WebApp detected')
+      
+      // Mark as ready
+      if (telegram.ready) {
+        telegram.ready()
+        console.log('[AppLayout] tg.ready() called')
+      }
+      
+      // Expand to fullscreen
+      if (telegram.expand) {
+        telegram.expand()
+        console.log('[AppLayout] tg.expand() called, isExpanded:', telegram.isExpanded)
+      }
+      
+      // Try requestFullscreen for newer versions
+      if (telegram.requestFullscreen) {
+        try {
+          telegram.requestFullscreen()
+          console.log('[AppLayout] tg.requestFullscreen() called')
+        } catch (e) {
+          console.log('[AppLayout] requestFullscreen error:', e)
+        }
+      }
+      
+      // Disable vertical swipes to prevent closing
+      if (telegram.disableVerticalSwipes) {
+        telegram.disableVerticalSwipes()
+      }
+    }
+
     // Set CSS custom property for viewport height
     const updateViewportHeight = () => {
       // Try to use Telegram's viewport height first
@@ -45,4 +77,3 @@ export const AppLayout = () => {
     </Box>
   )
 }
-
