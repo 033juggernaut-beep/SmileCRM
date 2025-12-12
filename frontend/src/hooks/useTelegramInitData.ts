@@ -102,11 +102,15 @@ export const useTelegramInitData = (): TelegramInitData | null => {
           }, delay)
         })
         
-        // Set header color to match app theme (after expand)
+        // Set header and background color to match navy theme
         setTimeout(() => {
           if (telegram.setHeaderColor) {
-            telegram.setHeaderColor('#319795') // teal.600 from Chakra UI
-            console.log('[Telegram WebApp] Header color set to #319795')
+            telegram.setHeaderColor('#060C3F') // navy.900 - dark navy
+            console.log('[Telegram WebApp] Header color set to #060C3F')
+          }
+          if (telegram.setBackgroundColor) {
+            telegram.setBackgroundColor('#f6f8fa') // bg.gray
+            console.log('[Telegram WebApp] Background color set to #f6f8fa')
           }
         }, 100)
         

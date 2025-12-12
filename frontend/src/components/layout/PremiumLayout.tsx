@@ -29,7 +29,8 @@ export const PremiumLayout = ({
   return (
     <Flex
       direction="column"
-      h="100vh"
+      h="var(--app-height, 100vh)"
+      minH="var(--app-height, 100vh)"
       w="100%"
       bg={backgrounds[background]}
       position="relative"
