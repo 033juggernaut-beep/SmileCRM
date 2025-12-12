@@ -227,8 +227,19 @@ export const VoiceAssistantButton = ({
   
   // Send audio for processing
   const sendAudio = async () => {
+    // Client-side validation
     if (!audioBlob) {
-      setError('Нет записи для отправки')
+      setError('Нет записи для отправки. Запишите голосовое сообщение.')
+      return
+    }
+    
+    if (audioBlob.size < 100) {
+      setError('Запись слишком короткая. Попробуйте записать ещё раз.')
+      return
+    }
+    
+    if (audioBlob.size > 10 * 1024 * 1024) { // 10MB limit
+      setError('Запись слишком длинная (макс. 10 МБ). Попробуйте короче.')
       return
     }
     
@@ -259,12 +270,36 @@ export const VoiceAssistantButton = ({
       if (axios.isAxiosError(err)) {
         if (err.response?.status === 501) {
           errorMessage = 'AI не настроен. Обратитесь к администратору.'
+        } else if (err.response?.status === 401) {
+          errorMessage = 'Сессия истекла. Перезапустите приложение.'
+        } else if (err.response?.status === 422) {
+          // Handle FastAPI validation errors (422 Unprocessable Entity)
+          const detail = err.response.data?.detail
+          if (Array.isArray(detail)) {
+            // Translate field names to user-friendly messages
+            const fieldTranslations: Record<string, string> = {
+              mode: 'Режим',
+              language: 'Язык',
+              audio: 'Аудиозапись',
+              contextPatientId: 'ID пациента',
+            }
+            const messages = detail.map((e: { loc?: string[]; msg?: string }) => {
+              const fieldName = e.loc?.[e.loc.length - 1] || 'поле'
+              const translated = fieldTranslations[fieldName] || fieldName
+              if (e.msg === 'Field required') {
+                return `${translated} обязателен`
+              }
+              return `${translated}: ${e.msg || 'ошибка'}`
+            })
+            errorMessage = messages.join('. ')
+          } else if (typeof detail === 'string') {
+            errorMessage = detail
+          } else {
+            errorMessage = 'Ошибка валидации запроса'
+          }
         } else if (err.response?.data?.detail) {
           const detail = err.response.data.detail
-          // Handle FastAPI validation errors (array of objects)
-          if (Array.isArray(detail)) {
-            errorMessage = detail.map((e: { msg?: string }) => e.msg || 'Validation error').join(', ')
-          } else if (typeof detail === 'string') {
+          if (typeof detail === 'string') {
             errorMessage = detail
           }
         }
