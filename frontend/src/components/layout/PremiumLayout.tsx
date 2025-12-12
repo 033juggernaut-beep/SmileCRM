@@ -11,6 +11,8 @@ interface PremiumLayoutProps {
   background?: 'gradient' | 'solid' | 'light' | 'white'
   /** Add extra bottom padding for fixed buttons (Telegram safe area) */
   safeAreaBottom?: boolean
+  /** Element to show on the right side of the header */
+  headerRightElement?: ReactNode
 }
 
 export const PremiumLayout = ({
@@ -21,6 +23,7 @@ export const PremiumLayout = ({
   onBack,
   background = 'gradient',
   safeAreaBottom = false,
+  headerRightElement,
 }: PremiumLayoutProps) => {
   const backgrounds = {
     gradient: 'linear-gradient(180deg, #0F1829 0%, #0B1220 100%)',
@@ -45,6 +48,7 @@ export const PremiumLayout = ({
           title={title}
           showBack={showBack}
           onBack={onBack}
+          rightElement={headerRightElement}
         />
       )}
 

@@ -2,49 +2,52 @@ import { Box, Button, Heading, Stack, Text, Tag, Flex } from '@chakra-ui/react'
 import { useNavigate } from 'react-router-dom'
 import { PremiumLayout } from '../components/layout/PremiumLayout'
 import { PremiumCard } from '../components/premium/PremiumCard'
+import { LanguageSwitcher } from '../components/LanguageSwitcher'
+import { useLanguage } from '../context/LanguageContext'
 
 type MenuItem = {
   icon: string
-  label: string
-  helper: string
+  labelKey: string
+  helperKey: string
   to: string
 }
 
 const MENU_ITEMS: MenuItem[] = [
   { 
     icon: '📋',
-    label: 'My patients', 
-    helper: 'View all patients', 
+    labelKey: 'home.patients', 
+    helperKey: 'home.patientsHelper', 
     to: '/patients',
   },
   {
     icon: '➕',
-    label: 'Add patient',
-    helper: 'Create new patient',
+    labelKey: 'home.addPatient',
+    helperKey: 'home.addPatientHelper',
     to: '/patients/new',
   },
   {
     icon: '💳',
-    label: 'Subscription',
-    helper: 'Manage subscription',
+    labelKey: 'home.subscription',
+    helperKey: 'home.subscriptionHelper',
     to: '/subscription',
   },
   { 
     icon: 'ℹ️',
-    label: 'Help', 
-    helper: 'FAQ and support', 
+    labelKey: 'home.help', 
+    helperKey: 'home.helpHelper', 
     to: '/help',
   },
   {
     icon: '🔒',
-    label: 'Privacy Policy',
-    helper: 'Privacy information',
+    labelKey: 'home.privacy',
+    helperKey: 'home.privacyHelper',
     to: '/privacy',
   },
 ]
 
 export const HomePage = () => {
   const navigate = useNavigate()
+  const { t } = useLanguage()
 
   return (
     <PremiumLayout 
@@ -52,6 +55,7 @@ export const HomePage = () => {
       showBack={false}
       background="gradient"
       safeAreaBottom
+      headerRightElement={<LanguageSwitcher />}
     >
       <Stack spacing={6}>
         {/* Hero Section */}
@@ -62,14 +66,14 @@ export const HomePage = () => {
             color="text.primary"
             fontWeight="bold"
           >
-            Welcome
+            {t('home.welcome')}
           </Heading>
           <Text 
             fontSize="lg" 
             color="text.secondary"
             mt={2}
           >
-            SmileCRM — dental practice management
+            {t('home.subtitle')}
           </Text>
         </Box>
 
@@ -84,7 +88,7 @@ export const HomePage = () => {
             py={2}
             fontWeight="semibold"
           >
-            ✓ Trial active
+            {t('home.trialActive')}
           </Tag>
         </Flex>
 
@@ -110,8 +114,8 @@ export const HomePage = () => {
               >
                 <Text fontSize="xl" mr={3}>{item.icon}</Text>
                 <Box textAlign="left">
-                  <Text fontWeight="semibold">{item.label}</Text>
-                  <Text fontSize="xs" opacity={0.8}>{item.helper}</Text>
+                  <Text fontWeight="semibold">{t(item.labelKey)}</Text>
+                  <Text fontSize="xs" opacity={0.8}>{t(item.helperKey)}</Text>
                 </Box>
               </Button>
             ))}
@@ -128,7 +132,7 @@ export const HomePage = () => {
             mb={3}
             fontWeight="semibold"
           >
-            Other sections
+            {t('home.otherSections')}
           </Text>
           <Stack spacing={2}>
             {MENU_ITEMS.slice(2).map((item) => (
@@ -148,7 +152,7 @@ export const HomePage = () => {
                 _hover={{ bg: 'bg.hover', color: 'text.primary' }}
               >
                 <Text fontSize="lg" mr={3}>{item.icon}</Text>
-                <Text fontWeight="medium">{item.label}</Text>
+                <Text fontWeight="medium">{t(item.labelKey)}</Text>
               </Button>
             ))}
           </Stack>
@@ -161,7 +165,7 @@ export const HomePage = () => {
           color="text.muted"
           mt={4}
         >
-          SmileCRM v1.0 • Dental Practice Management
+          {t('home.version')}
         </Text>
       </Stack>
     </PremiumLayout>
