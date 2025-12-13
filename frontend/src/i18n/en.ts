@@ -19,6 +19,7 @@ const en = {
     search: 'Search...',
     noData: '—',
     tryAgain: 'Try again',
+    copied: '✓ Copied',
   },
 
   // Home page
@@ -38,6 +39,8 @@ const en = {
     privacyHelper: 'Privacy information',
     otherSections: 'Other sections',
     version: 'SmileCRM v1.0',
+    marketing: '📣 Marketing',
+    marketingHelper: 'Greetings and promotions',
   },
 
   // Patients list
@@ -69,6 +72,8 @@ const en = {
     status: 'Status',
     diagnosis: 'Diagnosis / Notes',
     diagnosisPlaceholder: 'Diagnosis description or notes...',
+    birthDate: 'Date of birth',
+    birthDatePlaceholder: 'Select date',
     save: '✓ Save patient',
     saving: 'Saving...',
     validationError: 'Please fill in first name and last name.',
@@ -136,6 +141,18 @@ const en = {
     serverNotResponding: 'Server not responding. Check your internet connection.',
     serverError: 'Server error',
     loadError: 'Failed to load patient',
+    // Birthday & Marketing
+    birthDate: 'Date of birth',
+    sendBirthdayGreeting: '🎉 Send birthday greeting',
+    birthdayGreetingTitle: 'Birthday greeting',
+    birthdayGreetingHint: 'Copy the text and send it to the patient',
+    noBirthDate: 'Date of birth not specified',
+    discountTitle: '🎁 Personal discount',
+    discountPercent: 'Discount %',
+    discountGenerate: 'Generate text',
+    discountCopy: 'Copy',
+    generateGreeting: 'Generate text',
+    copyToClipboard: 'Copy',
   },
 
   // Subscription
@@ -254,6 +271,39 @@ const en = {
     audio: 'Audio recording',
     contextPatientId: 'Patient ID',
     required: 'is required',
+  },
+
+  // Marketing
+  marketing: {
+    title: '📣 Marketing',
+    subtitle: 'Greetings and promotions for patients',
+    cards: {
+      recall: {
+        title: '🔔 Visit reminder',
+        desc: 'Remind patients about follow-up visits',
+        selectPatient: 'Select patient',
+        generate: 'Generate text',
+        copy: 'Copy',
+      },
+      birthday: {
+        title: '🎂 Birthday',
+        desc: 'Congratulate patients on their birthday',
+        todayTitle: 'Today',
+        weekTitle: 'This week',
+        monthTitle: 'This month',
+        noBirthdays: 'Nothing found',
+        daysUntil: 'days',
+      },
+      discount: {
+        title: '🎁 Personal discount',
+        desc: 'Offer special discounts',
+        percentLabel: 'Discount %',
+        generate: 'Generate text',
+        copy: 'Copy',
+      },
+    },
+    eventLogged: 'Action logged',
+    copySuccess: '✓ Copied',
   },
 } as const
 

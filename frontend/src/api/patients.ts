@@ -17,8 +17,10 @@ export type Patient = {
   status?: PatientStatus
   doctorId?: string
   createdAt?: string
+  birthDate?: string | null
   treatmentPlanTotal?: number | null
   treatmentPlanCurrency?: string | null
+  marketingOptIn?: boolean | null
 }
 
 export type Visit = {
@@ -38,6 +40,7 @@ export type CreatePatientInput = {
   diagnosis?: string
   phone?: string
   status?: PatientStatus
+  birthDate?: string
   treatmentPlanTotal?: number
   treatmentPlanCurrency?: string
 }
@@ -65,8 +68,10 @@ type ApiPatient = {
   status?: string | null
   doctor_id?: string | null
   created_at?: string
+  birth_date?: string | null
   treatment_plan_total?: number | null
   treatment_plan_currency?: string | null
+  marketing_opt_in?: boolean | null
 }
 
 type ApiVisit = {
@@ -92,8 +97,10 @@ const mapPatient = (data: ApiPatient): Patient => ({
   status: isKnownStatus(data.status) ? data.status : undefined,
   doctorId: data.doctor_id ?? undefined,
   createdAt: data.created_at,
+  birthDate: data.birth_date ?? undefined,
   treatmentPlanTotal: data.treatment_plan_total ?? undefined,
   treatmentPlanCurrency: data.treatment_plan_currency ?? undefined,
+  marketingOptIn: data.marketing_opt_in ?? undefined,
 })
 
 const mapVisit = (data: ApiVisit): Visit => ({
@@ -113,6 +120,7 @@ const buildPatientPayload = (payload: CreatePatientInput) => ({
   diagnosis: payload.diagnosis,
   phone: payload.phone,
   status: payload.status,
+  birth_date: payload.birthDate,
   treatment_plan_total: payload.treatmentPlanTotal,
   treatment_plan_currency: payload.treatmentPlanCurrency,
 })
