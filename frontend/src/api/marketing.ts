@@ -195,7 +195,7 @@ export const marketingTemplates = {
    */
   birthdayGreeting(patientName: string, lang: 'am' | 'ru' | 'en' = 'am'): string {
     const templates = {
-      am: `🎂 Շdelays shnorհdelays, ${patientName}!\n\nSmileCRM թdelays-delays delays-delays delays-delays ջdelays delays- delays-delays !\n\nԱdelays- delays ժdelays !\n🦷 Ձdelays SmileCRM delays`,
+      am: `🎂 Shnorhavor cnndan, ${patientName}!\n\nSmileCRM-e jer cankanam e lav aroxjutyun, gexxecik jpit ev hianali tram!\n\nAroxj ekeq!\n🦷 Jer SmileCRM`,
       ru: `🎂 С днём рождения, ${patientName}!\n\nОт всего сердца желаем вам крепкого здоровья, красивой улыбки и отличного настроения!\n\nБудьте здоровы!\n🦷 Ваш SmileCRM`,
       en: `🎂 Happy Birthday, ${patientName}!\n\nWishing you good health, a beautiful smile, and wonderful moments!\n\nStay healthy!\n🦷 Your SmileCRM`,
     }
@@ -207,7 +207,7 @@ export const marketingTemplates = {
    */
   recallReminder(patientName: string, lang: 'am' | 'ru' | 'en' = 'am'): string {
     const templates = {
-      am: `👋 Բdelays, ${patientName}!\n\ndelays-delays delays- delays-delays delays-delays delays-delays! delays-ается ратный в!\n\n📞 Зdelete запdelays Visits у нас!\n🦷 SmileCRM`,
+      am: `👋 Barev, ${patientName}!\n\nHishecnum enq, vor jam e grancvel planayin znnum. Kanonavor vizitner ognum en pahpanel atamneri aroxjutyune!\n\n📞 Granceq viziti!\n🦷 SmileCRM`,
       ru: `👋 Здравствуйте, ${patientName}!\n\nНапоминаем, что пора записаться на плановый осмотр. Регулярные визиты помогают сохранить здоровье зубов!\n\n📞 Запишитесь на приём!\n🦷 SmileCRM`,
       en: `👋 Hello, ${patientName}!\n\nJust a friendly reminder that it's time for your regular checkup. Regular visits help maintain your dental health!\n\n📞 Book your appointment!\n🦷 SmileCRM`,
     }
@@ -219,7 +219,7 @@ export const marketingTemplates = {
    */
   discountOffer(patientName: string, discountPercent: number, lang: 'am' | 'ru' | 'en' = 'am'): string {
     const templates = {
-      am: `🎁 ${patientName}, ունdelays անhat շնdelays!\n\nМdelay delays-delays ${discountPercent}% ելdelay մdelay-delays!\n\nШdelay delays-delays!\n🦷 SmileCRM`,
+      am: `🎁 ${patientName}, unecek anhatakan arajark!\n\nUrax enq arajarkelu jer anhatakan ${discountPercent}% zexche hajord viziti hamar!\n\nSpanum enq jer!\n🦷 SmileCRM`,
       ru: `🎁 ${patientName}, специальное предложение для вас!\n\nМы рады предложить вам персональную скидку ${discountPercent}% на следующее посещение!\n\nЖдём вас!\n🦷 SmileCRM`,
       en: `🎁 ${patientName}, special offer for you!\n\nWe're happy to offer you a personal ${discountPercent}% discount on your next visit!\n\nLooking forward to seeing you!\n🦷 SmileCRM`,
     }

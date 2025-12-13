@@ -35,7 +35,7 @@ export const LANGUAGE_STORAGE_KEY = 'smilecrm_language'
 
 /**
  * Get translation value by dot-notation path
- * Example: getNestedValue(translations.am, 'home.patients') => 'Իdelays delays'
+ * Example: getNestedValue(translations.am, 'home.patients') => 'Im pacientnere'
  */
 export function getNestedValue(obj: Record<string, unknown>, path: string): string {
   const keys = path.split('.')
