@@ -24,6 +24,7 @@ class PatientBase(BaseModel):
   diagnosis: str | None = None
   phone: str | None = None
   status: str | None = None
+  birth_date: date | None = None
   treatment_plan_total: condecimal(max_digits=12, decimal_places=2) | None = None  # type: ignore
   treatment_plan_currency: str | None = Field(default="AMD")
 
@@ -36,6 +37,7 @@ class PatientResponse(PatientBase):
   id: str
   doctor_id: str | None = None
   created_at: datetime | None = None
+  marketing_opt_in: bool | None = None
 
 
 class TelegramUserInfo(BaseModel):
@@ -145,4 +147,32 @@ class PatientFinanceSummary(BaseModel):
   treatment_plan_currency: str = Field(default="AMD")
   total_paid: Decimal = Field(description="Total amount paid so far")
   remaining: Decimal | None = Field(description="Remaining balance (null if no plan set)")
+
+
+# Marketing Events Models
+class MarketingEventCreateRequest(BaseModel):
+  patient_id: str = Field(..., description="Patient ID to create marketing event for")
+  type: str = Field(..., description="Event type: birthday_greeting, promo_offer, recall_reminder")
+  channel: str = Field(default="copy", description="Channel used: copy, telegram")
+  payload: dict | None = Field(default=None, description="Additional data: text, discountPercent, etc.")
+
+
+class MarketingEventResponse(BaseModel):
+  id: str
+  doctor_id: str
+  patient_id: str
+  type: str
+  channel: str
+  payload: dict | None = None
+  created_at: datetime | None = None
+
+
+class PatientBirthdayResponse(BaseModel):
+  """Patient with birth date for birthday listings"""
+  id: str
+  first_name: str
+  last_name: str
+  phone: str | None = None
+  birth_date: date | None = None
+  days_until_birthday: int | None = None
 

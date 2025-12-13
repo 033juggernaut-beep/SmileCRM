@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -31,6 +32,7 @@ class PatientUpdateRequest(BaseModel):
   diagnosis: str | None = None
   phone: str | None = None
   status: str | None = None
+  birth_date: date | None = None
   treatment_plan_total: condecimal(max_digits=12, decimal_places=2) | None = None  # type: ignore
   treatment_plan_currency: str | None = None
 
