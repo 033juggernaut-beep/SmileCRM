@@ -591,7 +591,7 @@ export const PatientDetailsPage = () => {
         {/* Patient Details Grid */}
         <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
           <InfoCard label={t('patientDetails.phone')} value={patient.phone ?? '—'} />
-          <InfoCard label={t('patientDetails.birthDate')} value={formatDate(patient.birthDate)} />
+          <InfoCard label={t('patientDetails.birthDate')} value={formatDate(patient.birthDate ?? undefined)} />
           <InfoCard label={t('patientDetails.patientId')} value={patient.id} />
           <InfoCard label={t('patientDetails.created')} value={formatDateTime(patient.createdAt)} />
           <InfoCard label={t('patientDetails.status')} value={statusMeta?.label ?? '—'} />
