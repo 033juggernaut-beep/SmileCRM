@@ -34,6 +34,7 @@ type FormFields = {
   diagnosis: string
   phone: string
   status: PatientStatus
+  birthDate: string
 }
 
 const initialFormState: FormFields = {
@@ -42,6 +43,7 @@ const initialFormState: FormFields = {
   diagnosis: '',
   phone: '',
   status: 'in_progress',
+  birthDate: '',
 }
 
 export const AddPatientPage = () => {
@@ -87,6 +89,7 @@ export const AddPatientPage = () => {
         diagnosis: patient.diagnosis || prev.diagnosis,
         phone: patient.phone || prev.phone,
         status: patient.status || prev.status,
+        birthDate: prev.birthDate, // Keep existing birth date from form
       }))
     }
   }, [])
@@ -109,6 +112,7 @@ export const AddPatientPage = () => {
         diagnosis: form.diagnosis.trim() || undefined,
         phone: form.phone.trim() || undefined,
         status: form.status,
+        birthDate: form.birthDate || undefined,
       })
 
       toast({
@@ -219,6 +223,18 @@ export const AddPatientPage = () => {
                     </option>
                   ))}
                 </Select>
+              </FormControl>
+
+              <FormControl>
+                <FormLabel color="text.secondary" fontSize="sm">
+                  {t('addPatient.birthDate')}
+                </FormLabel>
+                <Input
+                  type="date"
+                  value={form.birthDate}
+                  onChange={handleChange('birthDate')}
+                  size="lg"
+                />
               </FormControl>
 
               <FormControl>

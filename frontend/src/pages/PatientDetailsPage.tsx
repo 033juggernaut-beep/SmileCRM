@@ -41,6 +41,8 @@ import {
   type PatientFinanceSummary,
   type PatientPayment,
 } from '../api/patientFinance'
+import { marketingApi, marketingTemplates } from '../api/marketing'
+import type { Language } from '../i18n'
 import { type VoiceParseStructured, isVisitStructured } from '../api/ai'
 import { apiClient } from '../api/client'
 import { TOKEN_STORAGE_KEY } from '../constants/storage'
@@ -64,7 +66,7 @@ const statusColors: Record<PatientStatus, { bg: string; color: string }> = {
 }
 
 export const PatientDetailsPage = () => {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const toast = useToast()
@@ -106,6 +108,11 @@ export const PatientDetailsPage = () => {
   const [editingVisitId, setEditingVisitId] = useState<string | null>(null)
   const [editVisitMedications, setEditVisitMedications] = useState<string>('')
   const [isSavingVisit, setIsSavingVisit] = useState(false)
+
+  // Marketing state
+  const [discountPercent, setDiscountPercent] = useState<number>(10)
+  const [generatedGreeting, setGeneratedGreeting] = useState<string>('')
+  const [generatedDiscount, setGeneratedDiscount] = useState<string>('')
 
   const sortedVisits = useMemo(
     () =>
@@ -453,6 +460,47 @@ export const PatientDetailsPage = () => {
     return `${amount.toLocaleString('ru-RU')} ${currency}`
   }
 
+  // Generate birthday greeting
+  const handleGenerateGreeting = useCallback(() => {
+    if (!patient) return
+    const patientName = `${patient.firstName} ${patient.lastName}`
+    const text = marketingTemplates.birthdayGreeting(patientName, language as Language)
+    setGeneratedGreeting(text)
+  }, [patient, language])
+
+  // Generate discount offer
+  const handleGenerateDiscount = useCallback(() => {
+    if (!patient) return
+    const patientName = `${patient.firstName} ${patient.lastName}`
+    const text = marketingTemplates.discountOffer(patientName, discountPercent, language as Language)
+    setGeneratedDiscount(text)
+  }, [patient, discountPercent, language])
+
+  // Copy to clipboard and log event
+  const handleCopyToClipboard = useCallback(async (text: string, type: 'birthday_greeting' | 'promo_offer') => {
+    if (!patient || !id) return
+    
+    try {
+      await navigator.clipboard.writeText(text)
+      
+      // Log marketing event (fire and forget)
+      marketingApi.createEvent({
+        patientId: id,
+        type,
+        channel: 'copy',
+        payload: { text, discountPercent: type === 'promo_offer' ? discountPercent : undefined },
+      }).catch(console.error)
+      
+      toast({
+        title: t('common.copied'),
+        status: 'success',
+        duration: 2000,
+      })
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
+  }, [patient, id, discountPercent, t, toast])
+
   if (isLoading) {
     return (
       <PremiumLayout 
@@ -543,10 +591,113 @@ export const PatientDetailsPage = () => {
         {/* Patient Details Grid */}
         <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
           <InfoCard label={t('patientDetails.phone')} value={patient.phone ?? '—'} />
+          <InfoCard label={t('patientDetails.birthDate')} value={formatDate(patient.birthDate)} />
           <InfoCard label={t('patientDetails.patientId')} value={patient.id} />
           <InfoCard label={t('patientDetails.created')} value={formatDateTime(patient.createdAt)} />
           <InfoCard label={t('patientDetails.status')} value={statusMeta?.label ?? '—'} />
         </SimpleGrid>
+
+        {/* Birthday Greeting Section */}
+        <PremiumCard variant="elevated">
+          <Stack spacing={4}>
+            <Heading size="md" color="text.primary">
+              {t('patientDetails.birthdayGreetingTitle')}
+            </Heading>
+            
+            {patient.birthDate ? (
+              <Stack spacing={3}>
+                <Text fontSize="sm" color="text.muted">
+                  {t('patientDetails.birthdayGreetingHint')}
+                </Text>
+                
+                <PremiumButton onClick={handleGenerateGreeting} size="md">
+                  {t('patientDetails.generateGreeting')}
+                </PremiumButton>
+                
+                {generatedGreeting && (
+                  <Box 
+                    p={4} 
+                    bg="blue.50" 
+                    borderRadius="md" 
+                    borderWidth="1px"
+                    borderColor="blue.200"
+                  >
+                    <Text whiteSpace="pre-wrap" fontSize="sm" color="blue.900">
+                      {generatedGreeting}
+                    </Text>
+                    <PremiumButton 
+                      size="sm" 
+                      mt={3}
+                      onClick={() => handleCopyToClipboard(generatedGreeting, 'birthday_greeting')}
+                    >
+                      {t('patientDetails.copyToClipboard')}
+                    </PremiumButton>
+                  </Box>
+                )}
+              </Stack>
+            ) : (
+              <Box textAlign="center" py={4}>
+                <Text color="text.muted" fontSize="sm">
+                  {t('patientDetails.noBirthDate')}
+                </Text>
+              </Box>
+            )}
+          </Stack>
+        </PremiumCard>
+
+        {/* Personal Discount Section */}
+        <PremiumCard variant="elevated">
+          <Stack spacing={4}>
+            <Heading size="md" color="text.primary">
+              {t('patientDetails.discountTitle')}
+            </Heading>
+            
+            <Stack spacing={3}>
+              <FormControl>
+                <FormLabel fontWeight="semibold" color="text.primary" fontSize="sm">
+                  {t('patientDetails.discountPercent')}
+                </FormLabel>
+                <HStack spacing={2}>
+                  {[5, 10, 15, 20].map((percent) => (
+                    <PremiumButton
+                      key={percent}
+                      size="sm"
+                      variant={discountPercent === percent ? 'primary' : 'secondary'}
+                      onClick={() => setDiscountPercent(percent)}
+                    >
+                      {percent}%
+                    </PremiumButton>
+                  ))}
+                </HStack>
+              </FormControl>
+              
+              <PremiumButton onClick={handleGenerateDiscount} size="md">
+                {t('patientDetails.discountGenerate')}
+              </PremiumButton>
+              
+              {generatedDiscount && (
+                <Box 
+                  p={4} 
+                  bg="green.50" 
+                  borderRadius="md" 
+                  borderWidth="1px"
+                  borderColor="green.200"
+                >
+                  <Text whiteSpace="pre-wrap" fontSize="sm" color="green.900">
+                    {generatedDiscount}
+                  </Text>
+                  <PremiumButton 
+                    size="sm" 
+                    mt={3}
+                    onClick={() => handleCopyToClipboard(generatedDiscount, 'promo_offer')}
+                  >
+                    {t('patientDetails.discountCopy')}
+                  </PremiumButton>
+                </Box>
+              )}
+            </Stack>
+          </Stack>
+        </PremiumCard>
 
         {/* Create Visit Section */}
         <PremiumCard variant="elevated">

@@ -26,6 +26,12 @@ const MENU_ITEMS: MenuItem[] = [
     to: '/patients/new',
   },
   {
+    icon: '📣',
+    labelKey: 'home.marketing',
+    helperKey: 'home.marketingHelper',
+    to: '/marketing',
+  },
+  {
     icon: '💳',
     labelKey: 'home.subscription',
     helperKey: 'home.subscriptionHelper',
@@ -95,7 +101,7 @@ export const HomePage = () => {
         {/* Quick Actions - Using simple Button */}
         <PremiumCard variant="elevated">
           <Stack spacing={3}>
-            {MENU_ITEMS.slice(0, 2).map((item) => (
+            {MENU_ITEMS.slice(0, 3).map((item) => (
               <Button
                 key={item.to}
                 onClick={() => {
@@ -135,7 +141,7 @@ export const HomePage = () => {
             {t('home.otherSections')}
           </Text>
           <Stack spacing={2}>
-            {MENU_ITEMS.slice(2).map((item) => (
+            {MENU_ITEMS.slice(3).map((item) => (
               <Button
                 key={item.to}
                 onClick={() => {

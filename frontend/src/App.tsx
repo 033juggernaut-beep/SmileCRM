@@ -15,6 +15,7 @@ const AddPatientPage = lazy(() => import('./pages/AddPatientPage').then(m => ({ 
 const SubscriptionPage = lazy(() => import('./pages/SubscriptionPage').then(m => ({ default: m.SubscriptionPage })))
 const HelpPage = lazy(() => import('./pages/HelpPage').then(m => ({ default: m.HelpPage })))
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage').then(m => ({ default: m.PrivacyPolicyPage })))
+const MarketingPage = lazy(() => import('./pages/MarketingPage').then(m => ({ default: m.MarketingPage })))
 
 // Loading fallback for lazy routes
 const PageLoader = () => (
@@ -41,6 +42,7 @@ const router = createBrowserRouter([
       { path: '/patients/new', element: withSuspense(AddPatientPage) },
       { path: '/patients/:id', element: withSuspense(PatientDetailsPage) },
       { path: '/subscription', element: withSuspense(SubscriptionPage) },
+      { path: '/marketing', element: withSuspense(MarketingPage) },
       { path: '/help', element: withSuspense(HelpPage) },
       { path: '/privacy', element: withSuspense(PrivacyPolicyPage) },
     ],
