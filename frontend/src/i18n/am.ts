@@ -302,8 +302,33 @@ const am = {
         copy: 'Պatчenel',
       },
     },
-    eventLogged: 'Гorцoxutyunə grансvaц э',
-    copySuccess: '✓ Պatчenvaц э',
+    eventLogged: 'Gorcoxutyunə grancvац э',
+    copySuccess: '✓ Patчenvац э',
+    ai: {
+      generate: '🤖 AI-generacia',
+      preview: 'Haxordagrutyan naxaditum',
+      language: 'Haxordagrutyan lezu',
+      languageAm: '🇦🇲 Hayeren',
+      languageRu: '🇷🇺 Ruseren',
+      languageEn: '🇬🇧 Angleren',
+      segmentHint: 'VIP-pacientnerə stanum en aveli anhatakan ton',
+      smsLength: 'nisher',
+      smsOk: '📱 SMS-i hamar harmar',
+      smsLong: '⚠️ Chapazanc erkar SMS-i hamar',
+      copy: '📋 Patчenel',
+      cancel: 'Chexarkel',
+      edit: '✏️ Xmbagrel',
+      generating: 'Generacvum э...',
+      error: 'Generaciayi sxal',
+    },
+  },
+
+  // Patient segment
+  segment: {
+    label: 'Pacienti segment',
+    regular: 'Sovorakan',
+    vip: '🔥 VIP',
+    vipBadge: '🔥 VIP',
   },
 } as const
 

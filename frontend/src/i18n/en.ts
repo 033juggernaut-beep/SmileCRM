@@ -304,6 +304,31 @@ const en = {
     },
     eventLogged: 'Action logged',
     copySuccess: '✓ Copied',
+    ai: {
+      generate: '🤖 AI Generate',
+      preview: 'Message preview',
+      language: 'Message language',
+      languageAm: '🇦🇲 Armenian',
+      languageRu: '🇷🇺 Russian',
+      languageEn: '🇬🇧 English',
+      segmentHint: 'VIP patients get a more personal tone',
+      smsLength: 'characters',
+      smsOk: '📱 SMS-ready',
+      smsLong: '⚠️ Too long for SMS',
+      copy: '📋 Copy',
+      cancel: 'Cancel',
+      edit: '✏️ Edit',
+      generating: 'Generating...',
+      error: 'Generation failed',
+    },
+  },
+
+  // Patient segment
+  segment: {
+    label: 'Patient segment',
+    regular: 'Regular',
+    vip: '🔥 VIP',
+    vipBadge: '🔥 VIP',
   },
 } as const
 

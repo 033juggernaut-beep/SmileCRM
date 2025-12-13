@@ -7,11 +7,14 @@ from fastapi import APIRouter, Depends, Query
 
 from app.api.deps import AuthenticatedDoctor, get_current_doctor, verify_patient_ownership
 from app.models.dto import (
+    AIGenerateRequest,
+    AIGenerateResponse,
     MarketingEventCreateRequest,
     MarketingEventResponse,
     PatientBirthdayResponse,
 )
-from app.services import marketing_service
+from app.services import marketing_service, patients_service
+from app.services import ai_marketing_service
 
 router = APIRouter(prefix="/marketing", tags=["marketing"])
 
@@ -81,3 +84,57 @@ async def get_upcoming_birthdays(
     )
     
     return [PatientBirthdayResponse(**patient) for patient in patients]
+
+
+@router.post("/ai-generate", response_model=AIGenerateResponse)
+async def generate_ai_marketing_text(
+    payload: AIGenerateRequest,
+    current_doctor: CurrentDoctor,
+) -> AIGenerateResponse:
+    """
+    Generate AI-powered marketing text for a patient.
+    
+    The doctor can then review, edit, and copy the text.
+    No automatic sending - copy only.
+    """
+    # Verify patient belongs to this doctor and get patient data
+    patient = verify_patient_ownership(payload.patient_id, current_doctor)
+    
+    patient_name = f"{patient.get('first_name', '')} {patient.get('last_name', '')}".strip()
+    segment = patient.get("segment", "regular")
+    
+    # Build context
+    context = {
+        "discount_percent": payload.discount_percent,
+        "birth_date": patient.get("birth_date"),
+    }
+    
+    # Generate text
+    generated_text = await ai_marketing_service.generate_marketing_text(
+        msg_type=payload.type,
+        language=payload.language,
+        segment=segment,
+        patient_name=patient_name,
+        context=context,
+    )
+    
+    # Log the generation event
+    marketing_service.create_marketing_event(
+        doctor_id=current_doctor.doctor_id,
+        patient_id=payload.patient_id,
+        event_type=f"ai_{payload.type}_generated",
+        channel="ai",
+        payload={
+            "language": payload.language,
+            "segment": segment,
+            "discount_percent": payload.discount_percent,
+        },
+    )
+    
+    return AIGenerateResponse(
+        text=generated_text,
+        type=payload.type,
+        language=payload.language,
+        segment=segment,
+        char_count=len(generated_text),
+    )

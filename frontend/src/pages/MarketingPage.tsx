@@ -8,6 +8,7 @@ import {
   Stack,
   Text,
   Badge,
+  useDisclosure,
   useToast,
 } from '@chakra-ui/react'
 import { useCallback, useEffect, useState } from 'react'
@@ -15,9 +16,10 @@ import { useNavigate } from 'react-router-dom'
 import { PremiumLayout } from '../components/layout/PremiumLayout'
 import { PremiumCard } from '../components/premium/PremiumCard'
 import { PremiumButton } from '../components/premium/PremiumButton'
+import { AIPreviewModal } from '../components/AIPreviewModal'
 import { useLanguage } from '../context/LanguageContext'
 import { patientsApi, type Patient } from '../api/patients'
-import { marketingApi, marketingTemplates, type PatientBirthday } from '../api/marketing'
+import { marketingApi, marketingTemplates, type PatientBirthday, type AIMessageType } from '../api/marketing'
 import type { Language } from '../i18n'
 
 export const MarketingPage = () => {
@@ -42,6 +44,12 @@ export const MarketingPage = () => {
   
   // Birthday greeting state
   const [generatedBirthdayGreetings, setGeneratedBirthdayGreetings] = useState<Record<string, string>>({})
+
+  // AI Modal state
+  const aiModal = useDisclosure()
+  const [aiMessageType, setAiMessageType] = useState<AIMessageType>('birthday')
+  const [aiPatientId, setAiPatientId] = useState<string>('')
+  const [aiPatientName, setAiPatientName] = useState<string>('')
 
   // Load patients and birthdays
   useEffect(() => {
@@ -106,6 +114,14 @@ export const MarketingPage = () => {
     const text = marketingTemplates.birthdayGreeting(patientName, language as Language)
     setGeneratedBirthdayGreetings(prev => ({ ...prev, [patientId]: text }))
   }, [language])
+
+  // Open AI modal for a specific patient and message type
+  const openAIModal = useCallback((type: AIMessageType, patientId: string, patientName: string) => {
+    setAiMessageType(type)
+    setAiPatientId(patientId)
+    setAiPatientName(patientName)
+    aiModal.onOpen()
+  }, [aiModal])
 
   // Copy to clipboard and log event
   const handleCopyToClipboard = useCallback(async (
@@ -182,13 +198,30 @@ export const MarketingPage = () => {
               </Select>
             </FormControl>
             
-            <PremiumButton 
-              onClick={handleGenerateRecall} 
-              isDisabled={!selectedRecallPatientId}
-              size="md"
-            >
-              {t('marketing.cards.recall.generate')}
-            </PremiumButton>
+            <HStack spacing={2}>
+              <PremiumButton 
+                onClick={handleGenerateRecall} 
+                isDisabled={!selectedRecallPatientId}
+                size="md"
+                flex={1}
+              >
+                {t('marketing.cards.recall.generate')}
+              </PremiumButton>
+              <PremiumButton 
+                onClick={() => {
+                  const patient = patients.find(p => p.id === selectedRecallPatientId)
+                  if (patient) {
+                    openAIModal('recall', patient.id, `${patient.firstName} ${patient.lastName}`)
+                  }
+                }}
+                isDisabled={!selectedRecallPatientId}
+                size="md"
+                variant="secondary"
+                flex={1}
+              >
+                {t('marketing.ai.generate')}
+              </PremiumButton>
+            </HStack>
             
             {generatedRecall && (
               <Box 
@@ -248,15 +281,28 @@ export const MarketingPage = () => {
                       </Badge>
                     </HStack>
                     
-                    <PremiumButton 
-                      size="sm"
-                      onClick={() => handleGenerateBirthdayGreeting(
-                        birthday.id, 
-                        `${birthday.firstName} ${birthday.lastName}`
-                      )}
-                    >
-                      {t('marketing.cards.recall.generate')}
-                    </PremiumButton>
+                    <HStack spacing={2}>
+                      <PremiumButton 
+                        size="sm"
+                        onClick={() => handleGenerateBirthdayGreeting(
+                          birthday.id, 
+                          `${birthday.firstName} ${birthday.lastName}`
+                        )}
+                      >
+                        {t('marketing.cards.recall.generate')}
+                      </PremiumButton>
+                      <PremiumButton 
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => openAIModal(
+                          'birthday', 
+                          birthday.id, 
+                          `${birthday.firstName} ${birthday.lastName}`
+                        )}
+                      >
+                        {t('marketing.ai.generate')}
+                      </PremiumButton>
+                    </HStack>
                     
                     {generatedBirthdayGreetings[birthday.id] && (
                       <Box mt={3} p={3} bg="white" borderRadius="md">
@@ -336,13 +382,30 @@ export const MarketingPage = () => {
               </HStack>
             </FormControl>
             
-            <PremiumButton 
-              onClick={handleGenerateDiscount} 
-              isDisabled={!selectedDiscountPatientId}
-              size="md"
-            >
-              {t('marketing.cards.discount.generate')}
-            </PremiumButton>
+            <HStack spacing={2}>
+              <PremiumButton 
+                onClick={handleGenerateDiscount} 
+                isDisabled={!selectedDiscountPatientId}
+                size="md"
+                flex={1}
+              >
+                {t('marketing.cards.discount.generate')}
+              </PremiumButton>
+              <PremiumButton 
+                onClick={() => {
+                  const patient = patients.find(p => p.id === selectedDiscountPatientId)
+                  if (patient) {
+                    openAIModal('discount', patient.id, `${patient.firstName} ${patient.lastName}`)
+                  }
+                }}
+                isDisabled={!selectedDiscountPatientId}
+                size="md"
+                variant="secondary"
+                flex={1}
+              >
+                {t('marketing.ai.generate')}
+              </PremiumButton>
+            </HStack>
             
             {generatedDiscount && (
               <Box 
@@ -367,6 +430,16 @@ export const MarketingPage = () => {
           </Stack>
         </PremiumCard>
       </Stack>
+
+      {/* AI Preview Modal */}
+      <AIPreviewModal
+        isOpen={aiModal.isOpen}
+        onClose={aiModal.onClose}
+        patientId={aiPatientId}
+        patientName={aiPatientName}
+        messageType={aiMessageType}
+        discountPercent={discountPercent}
+      />
     </PremiumLayout>
   )
 }

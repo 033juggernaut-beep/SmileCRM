@@ -1,6 +1,7 @@
 import {
   Alert,
   AlertIcon,
+  Badge,
   Box,
   Divider,
   Flex,
@@ -12,6 +13,7 @@ import {
   Input,
   NumberInput,
   NumberInputField,
+  Select,
   SimpleGrid,
   Stack,
   Table,
@@ -23,6 +25,7 @@ import {
   Th,
   Thead,
   Tr,
+  useDisclosure,
   useToast,
   Tooltip,
 } from '@chakra-ui/react'
@@ -32,6 +35,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import axios from 'axios'
 import {
   type Patient,
+  type PatientSegment,
   type PatientStatus,
   type Visit,
   patientsApi,
@@ -51,7 +55,9 @@ import { PremiumCard } from '../components/premium/PremiumCard'
 import { PremiumButton } from '../components/premium/PremiumButton'
 import { MediaGallery } from '../components/MediaGallery'
 import { VoiceAssistantButton } from '../components/VoiceAssistantButton'
+import { AIPreviewModal } from '../components/AIPreviewModal'
 import { useLanguage } from '../context/LanguageContext'
+import type { AIMessageType } from '../api/marketing'
 
 type VisitFormFields = {
   visitDate: string
@@ -113,6 +119,13 @@ export const PatientDetailsPage = () => {
   const [discountPercent, setDiscountPercent] = useState<number>(10)
   const [generatedGreeting, setGeneratedGreeting] = useState<string>('')
   const [generatedDiscount, setGeneratedDiscount] = useState<string>('')
+  
+  // AI Modal state
+  const aiModal = useDisclosure()
+  const [aiMessageType, setAiMessageType] = useState<AIMessageType>('birthday')
+  
+  // Segment update state
+  const [isUpdatingSegment, setIsUpdatingSegment] = useState(false)
 
   const sortedVisits = useMemo(
     () =>
@@ -476,6 +489,41 @@ export const PatientDetailsPage = () => {
     setGeneratedDiscount(text)
   }, [patient, discountPercent, language])
 
+  // Update patient segment
+  const handleSegmentChange = useCallback(async (newSegment: PatientSegment) => {
+    if (!patient || !id) return
+    
+    setIsUpdatingSegment(true)
+    try {
+      const authToken = localStorage.getItem(TOKEN_STORAGE_KEY)
+      if (!authToken) throw new Error(t('patientDetails.authRequired'))
+      
+      await apiClient.patch(
+        `/patients/${id}`,
+        { segment: newSegment },
+        { headers: { Authorization: `Bearer ${authToken}` } }
+      )
+      
+      setPatient({ ...patient, segment: newSegment })
+      
+      toast({
+        title: t('common.saved'),
+        status: 'success',
+        duration: 2000,
+      })
+    } catch (err) {
+      console.error('Failed to update segment:', err)
+    } finally {
+      setIsUpdatingSegment(false)
+    }
+  }, [patient, id, t, toast])
+
+  // Open AI preview modal
+  const openAIModal = useCallback((type: AIMessageType) => {
+    setAiMessageType(type)
+    aiModal.onOpen()
+  }, [aiModal])
+
   // Copy to clipboard and log event
   const handleCopyToClipboard = useCallback(async (text: string, type: 'birthday_greeting' | 'promo_offer') => {
     if (!patient || !id) return
@@ -570,6 +618,11 @@ export const PatientDetailsPage = () => {
               <Heading size="lg" color="text.primary">
                 {patient.firstName} {patient.lastName}
               </Heading>
+              {patient.segment === 'vip' && (
+                <Badge colorScheme="orange" fontSize="sm">
+                  {t('segment.vipBadge')}
+                </Badge>
+              )}
               {statusMeta && (
                 <Tag 
                   bg={statusMeta.bg}
@@ -595,6 +648,22 @@ export const PatientDetailsPage = () => {
           <InfoCard label={t('patientDetails.patientId')} value={patient.id} />
           <InfoCard label={t('patientDetails.created')} value={formatDateTime(patient.createdAt)} />
           <InfoCard label={t('patientDetails.status')} value={statusMeta?.label ?? '—'} />
+          
+          {/* Segment selector */}
+          <PremiumCard variant="flat" p={3}>
+            <Text fontSize="xs" textTransform="uppercase" color="text.muted" mb={1}>
+              {t('segment.label')}
+            </Text>
+            <Select
+              value={patient.segment ?? 'regular'}
+              onChange={(e) => handleSegmentChange(e.target.value as PatientSegment)}
+              size="sm"
+              isDisabled={isUpdatingSegment}
+            >
+              <option value="regular">{t('segment.regular')}</option>
+              <option value="vip">{t('segment.vip')}</option>
+            </Select>
+          </PremiumCard>
         </SimpleGrid>
 
         {/* Birthday Greeting Section */}
@@ -610,9 +679,19 @@ export const PatientDetailsPage = () => {
                   {t('patientDetails.birthdayGreetingHint')}
                 </Text>
                 
-                <PremiumButton onClick={handleGenerateGreeting} size="md">
-                  {t('patientDetails.generateGreeting')}
-                </PremiumButton>
+                <HStack spacing={2}>
+                  <PremiumButton onClick={handleGenerateGreeting} size="md" flex={1}>
+                    {t('patientDetails.generateGreeting')}
+                  </PremiumButton>
+                  <PremiumButton 
+                    onClick={() => openAIModal('birthday')} 
+                    size="md" 
+                    variant="secondary"
+                    flex={1}
+                  >
+                    {t('marketing.ai.generate')}
+                  </PremiumButton>
+                </HStack>
                 
                 {generatedGreeting && (
                   <Box 
@@ -671,9 +750,19 @@ export const PatientDetailsPage = () => {
                 </HStack>
               </FormControl>
               
-              <PremiumButton onClick={handleGenerateDiscount} size="md">
-                {t('patientDetails.discountGenerate')}
-              </PremiumButton>
+              <HStack spacing={2}>
+                <PremiumButton onClick={handleGenerateDiscount} size="md" flex={1}>
+                  {t('patientDetails.discountGenerate')}
+                </PremiumButton>
+                <PremiumButton 
+                  onClick={() => openAIModal('discount')} 
+                  size="md" 
+                  variant="secondary"
+                  flex={1}
+                >
+                  {t('marketing.ai.generate')}
+                </PremiumButton>
+              </HStack>
               
               {generatedDiscount && (
                 <Box 
@@ -1031,6 +1120,18 @@ export const PatientDetailsPage = () => {
         {/* Media Gallery Section */}
         {id && <MediaGallery patientId={id} />}
       </Stack>
+
+      {/* AI Preview Modal */}
+      {id && patient && (
+        <AIPreviewModal
+          isOpen={aiModal.isOpen}
+          onClose={aiModal.onClose}
+          patientId={id}
+          patientName={`${patient.firstName} ${patient.lastName}`}
+          messageType={aiMessageType}
+          discountPercent={discountPercent}
+        />
+      )}
     </PremiumLayout>
   )
 }

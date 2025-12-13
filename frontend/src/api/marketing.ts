@@ -5,7 +5,26 @@ import { apiClient, buildAuthHeaders } from './client'
 import { getAuthToken } from './auth'
 
 // Types
-export type MarketingEventType = 'birthday_greeting' | 'promo_offer' | 'recall_reminder'
+export type MarketingEventType = 'birthday_greeting' | 'promo_offer' | 'recall_reminder' | 'ai_birthday_generated' | 'ai_discount_generated' | 'ai_recall_generated'
+
+export type AIMessageType = 'birthday' | 'discount' | 'recall'
+
+export type AILanguage = 'am' | 'ru' | 'en'
+
+export type AIGenerateInput = {
+  type: AIMessageType
+  language: AILanguage
+  patientId: string
+  discountPercent?: number
+}
+
+export type AIGenerateResponse = {
+  text: string
+  type: AIMessageType
+  language: AILanguage
+  segment: string
+  charCount: number
+}
 
 export type MarketingEventChannel = 'copy' | 'telegram'
 
@@ -38,6 +57,7 @@ export type PatientBirthday = {
   lastName: string
   phone?: string | null
   birthDate?: string | null
+  segment?: string | null
   daysUntilBirthday?: number | null
 }
 
@@ -60,7 +80,16 @@ type ApiPatientBirthday = {
   last_name: string
   phone?: string | null
   birth_date?: string | null
+  segment?: string | null
   days_until_birthday?: number | null
+}
+
+type ApiAIGenerateResponse = {
+  text: string
+  type: string
+  language: string
+  segment: string
+  char_count: number
 }
 
 // Mappers
@@ -80,7 +109,16 @@ const mapPatientBirthday = (data: ApiPatientBirthday): PatientBirthday => ({
   lastName: data.last_name,
   phone: data.phone,
   birthDate: data.birth_date,
+  segment: data.segment,
   daysUntilBirthday: data.days_until_birthday,
+})
+
+const mapAIGenerateResponse = (data: ApiAIGenerateResponse): AIGenerateResponse => ({
+  text: data.text,
+  type: data.type as AIMessageType,
+  language: data.language as AILanguage,
+  segment: data.segment,
+  charCount: data.char_count,
 })
 
 // API functions
@@ -129,6 +167,24 @@ export const marketingApi = {
       { headers: buildAuthHeaders(authToken) }
     )
     return Array.isArray(data) ? data.map(mapPatientBirthday) : []
+  },
+
+  /**
+   * Generate AI-powered marketing text
+   */
+  async generateAIText(input: AIGenerateInput): Promise<AIGenerateResponse> {
+    const authToken = getAuthToken()
+    const { data } = await apiClient.post<ApiAIGenerateResponse>(
+      '/marketing/ai-generate',
+      {
+        type: input.type,
+        language: input.language,
+        patient_id: input.patientId,
+        discount_percent: input.discountPercent,
+      },
+      { headers: buildAuthHeaders(authToken) }
+    )
+    return mapAIGenerateResponse(data)
   },
 }
 

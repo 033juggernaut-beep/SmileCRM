@@ -25,6 +25,7 @@ class PatientBase(BaseModel):
   phone: str | None = None
   status: str | None = None
   birth_date: date | None = None
+  segment: str | None = Field(default="regular", description="Patient segment: regular, vip")
   treatment_plan_total: condecimal(max_digits=12, decimal_places=2) | None = None  # type: ignore
   treatment_plan_currency: str | None = Field(default="AMD")
 
@@ -174,5 +175,24 @@ class PatientBirthdayResponse(BaseModel):
   last_name: str
   phone: str | None = None
   birth_date: date | None = None
+  segment: str | None = None
   days_until_birthday: int | None = None
+
+
+# AI Marketing Models
+class AIGenerateRequest(BaseModel):
+  """Request for AI-generated marketing text"""
+  type: Literal["birthday", "discount", "recall"] = Field(..., description="Type of marketing message")
+  language: Literal["am", "ru", "en"] = Field(default="am", description="Language for generated text")
+  patient_id: str = Field(..., description="Patient ID")
+  discount_percent: int | None = Field(default=None, ge=1, le=50, description="Discount percentage for promo offers")
+
+
+class AIGenerateResponse(BaseModel):
+  """Response with AI-generated marketing text"""
+  text: str = Field(..., description="Generated marketing message")
+  type: str
+  language: str
+  segment: str
+  char_count: int = Field(..., description="Character count for SMS estimation")
 
