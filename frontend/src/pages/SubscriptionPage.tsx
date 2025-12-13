@@ -18,7 +18,7 @@ import type { PaymentProvider, SubscriptionSnapshot } from '../api/subscription'
 import { PremiumLayout } from '../components/layout/PremiumLayout'
 import { PremiumCard } from '../components/premium/PremiumCard'
 import { PremiumButton } from '../components/premium/PremiumButton'
-import { gradients } from '../theme/premiumTheme'
+import { gradients } from '../theme'
 import { useLanguage } from '../context/LanguageContext'
 
 const STATUS_COLORS: Record<SubscriptionSnapshot['status'], string> = {

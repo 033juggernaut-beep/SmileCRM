@@ -55,7 +55,7 @@ export const PremiumListItem = ({
           display="flex"
           alignItems="center"
           justifyContent="center"
-          bg="bg.tertiary"
+          bg="bg.surface2"
           borderRadius="lg"
         >
           {typeof icon === 'string' ? (

@@ -15,25 +15,25 @@ export const PremiumCard = ({
 }: PremiumCardProps) => {
   const variants = {
     default: {
-      bg: 'bg.secondary',
+      bg: 'bg.surface',
       borderWidth: '1px',
       borderColor: 'border.subtle',
       boxShadow: 'card',
     },
     elevated: {
-      bg: 'bg.secondary',
+      bg: 'bg.surface',
       borderWidth: '1px',
       borderColor: 'border.subtle',
       boxShadow: 'lg',
     },
     flat: {
-      bg: 'bg.tertiary',
+      bg: 'bg.surface2',
       borderWidth: '1px',
       borderColor: 'border.subtle',
       boxShadow: 'none',
     },
     glass: {
-      bg: 'rgba(17, 26, 46, 0.7)',
+      bg: 'rgba(19, 19, 22, 0.7)',
       borderWidth: '1px',
       borderColor: 'border.subtle',
       backdropFilter: 'blur(12px)',

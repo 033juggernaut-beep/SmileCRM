@@ -26,7 +26,7 @@ export const PremiumLayout = ({
   headerRightElement,
 }: PremiumLayoutProps) => {
   const backgrounds = {
-    gradient: 'linear-gradient(180deg, #0F1829 0%, #0B1220 100%)',
+    gradient: 'linear-gradient(180deg, #0E0E10 0%, #0B0B0D 100%)',
     solid: 'bg.primary',
     light: 'bg.primary',
     white: 'bg.primary',

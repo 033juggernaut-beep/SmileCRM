@@ -1,9 +1,23 @@
+/* =============================================
+ * 🎨 PREMIUM ONYX — Global CSS
+ * ============================================= */
+
 :root {
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    sans-serif;
+  /* Typography */
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  
+  /* Premium Onyx color variables */
+  --onyx-bg: #0B0B0D;
+  --onyx-surface: #131316;
+  --onyx-surface2: #1A1A1E;
+  --onyx-border: #26262C;
+  --onyx-accent: #B8A060;
+  --onyx-text: #F5F5F7;
+  --onyx-text2: #B0B0B8;
+  --onyx-muted: #707078;
   
   /* Telegram viewport height - will be set by JS */
   --app-height: 100vh;
@@ -33,14 +47,19 @@ html {
 body {
   margin: 0;
   padding: 0;
-  /* Dark theme background */
-  background-color: #0B1220;
-  background: linear-gradient(180deg, #0F1829 0%, #0B1220 100%);
-  color: #FFFFFF;
+  
+  /* Premium Onyx dark background */
+  background-color: var(--onyx-bg);
+  background: linear-gradient(180deg, #0E0E10 0%, #0B0B0D 100%);
+  color: var(--onyx-text);
+  
   width: 100%;
   height: 100%;
   min-height: 100%;
   overflow: hidden;
+  
+  /* Body line height */
+  line-height: 1.55;
   
   /* Prevent pull-to-refresh on mobile */
   overscroll-behavior-y: contain;
@@ -58,7 +77,10 @@ body {
   overflow: hidden;
 }
 
-/* Chakra portal container - must not block clicks! */
+/* =============================================
+ * Chakra portal container
+ * ============================================= */
+
 .chakra-portal {
   /* pointer-events: none allows clicks to pass through the portal container */
   /* Child elements (modals, tooltips) will set pointer-events: auto when needed */
@@ -68,4 +90,44 @@ body {
 /* Portal children (actual modals, overlays) should capture events */
 .chakra-portal > * {
   pointer-events: auto;
+}
+
+/* =============================================
+ * Custom scrollbar styling
+ * ============================================= */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--onyx-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--onyx-border);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #32323A;
+}
+
+/* =============================================
+ * Text selection
+ * ============================================= */
+
+::selection {
+  background: var(--onyx-accent);
+  color: var(--onyx-bg);
+}
+
+/* =============================================
+ * Focus styles
+ * ============================================= */
+
+*:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(184, 160, 96, 0.4);
 }

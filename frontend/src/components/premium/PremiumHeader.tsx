@@ -31,7 +31,7 @@ export const PremiumHeader = ({
       left={0}
       right={0}
       zIndex={100}
-      bg="bg.secondary"
+      bg="bg.surface"
       borderBottom="1px solid"
       borderColor="border.subtle"
       backdropFilter="blur(12px)"
@@ -42,7 +42,7 @@ export const PremiumHeader = ({
         left: 0,
         right: 0,
         bottom: 0,
-        bg: 'linear-gradient(180deg, rgba(17, 26, 46, 0.95) 0%, rgba(17, 26, 46, 0.9) 100%)',
+        bg: 'linear-gradient(180deg, rgba(19, 19, 22, 0.95) 0%, rgba(19, 19, 22, 0.9) 100%)',
         zIndex: -1,
         pointerEvents: 'none',
       }}

@@ -1,7 +1,7 @@
 import { Box, Flex, Heading, Spinner, Text } from '@chakra-ui/react'
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { gradients } from '../theme/premiumTheme'
+import { gradients } from '../theme'
 
 export const SplashScreen = () => {
   const navigate = useNavigate()
