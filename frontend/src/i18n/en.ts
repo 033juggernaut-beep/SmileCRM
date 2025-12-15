@@ -26,6 +26,7 @@ const en = {
   home: {
     welcome: 'Welcome',
     subtitle: 'SmileCRM — dental practice management',
+    quote: 'Every smile is your success',
     trialActive: '✓ Trial active',
     patients: 'My patients',
     patientsHelper: 'View all patients',

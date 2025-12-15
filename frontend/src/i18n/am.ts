@@ -27,6 +27,7 @@ const am = {
   home: {
     welcome: 'Bari galust',
     subtitle: 'SmileCRM — atamnabujakan praktika',
+    quote: 'Yuraqancyur jpit — dzer hajoxutyunn e',
     trialActive: '✓ Porcasterjann aktiv e',
     patients: 'Im pacientnere',
     patientsHelper: 'Ditel bolor pacientnere',
