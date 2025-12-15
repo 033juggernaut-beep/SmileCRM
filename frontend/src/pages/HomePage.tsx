@@ -1,9 +1,8 @@
 import { Box, Flex, Text } from '@chakra-ui/react'
 import { useNavigate } from 'react-router-dom'
-import { Users, UserPlus, Megaphone, TrendingUp, CreditCard, HelpCircle, Shield } from 'lucide-react'
+import { Users, UserPlus, Megaphone, TrendingUp } from 'lucide-react'
 import { PremiumLayout } from '../components/layout/PremiumLayout'
 import { Dashboard, DashboardCard, StatisticsCard } from '../components/dashboard'
-import { LanguageSwitcher } from '../components/LanguageSwitcher'
 import { useLanguage } from '../context/LanguageContext'
 
 export const HomePage = () => {
@@ -16,7 +15,6 @@ export const HomePage = () => {
       showBack={false}
       background="gradient"
       safeAreaBottom
-      headerRightElement={<LanguageSwitcher />}
     >
       <Dashboard
         header={{
@@ -63,7 +61,7 @@ export const HomePage = () => {
         />
       </Dashboard>
 
-      {/* Footer Links */}
+      {/* Footer Links - Text only, no icons */}
       <Flex
         justify="center"
         gap={6}
@@ -72,17 +70,14 @@ export const HomePage = () => {
         flexWrap="wrap"
       >
         <FooterLink
-          icon={<CreditCard size={16} />}
           label={t('home.subscription')}
           onClick={() => navigate('/subscription')}
         />
         <FooterLink
-          icon={<HelpCircle size={16} />}
           label={t('home.help')}
           onClick={() => navigate('/help')}
         />
         <FooterLink
-          icon={<Shield size={16} />}
           label={t('home.privacy')}
           onClick={() => navigate('/privacy')}
         />
@@ -91,13 +86,11 @@ export const HomePage = () => {
   )
 }
 
-/** Footer link component */
+/** Footer link - minimal text only */
 function FooterLink({
-  icon,
   label,
   onClick,
 }: {
-  icon: React.ReactNode
   label: string
   onClick: () => void
 }) {
@@ -105,20 +98,15 @@ function FooterLink({
     <Box
       as="button"
       onClick={onClick}
-      display="flex"
-      alignItems="center"
-      gap={1.5}
       color="text.muted"
       fontSize="sm"
       fontWeight="medium"
       transition="color 150ms ease"
-      _hover={{ color: 'text.secondary' }}
       _active={{ color: 'text.primary' }}
       sx={{
         WebkitTapHighlightColor: 'transparent',
       }}
     >
-      {icon}
       <Text>{label}</Text>
     </Box>
   )
