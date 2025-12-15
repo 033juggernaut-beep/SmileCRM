@@ -1,8 +1,15 @@
 import { Box } from '@chakra-ui/react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
+import { AppHeader } from './layout/AppHeader'
+
+// Pages where AppHeader should be shown
+const PAGES_WITH_APP_HEADER = ['/home']
 
 export const AppLayout = () => {
+  const location = useLocation()
+  const showAppHeader = PAGES_WITH_APP_HEADER.includes(location.pathname)
+
   useEffect(() => {
     const telegram = window.Telegram?.WebApp
 
@@ -73,7 +80,17 @@ export const AppLayout = () => {
       position="relative"
       overflow="hidden"
     >
-      <Outlet />
+      {/* Global AppHeader - only on specific pages */}
+      {showAppHeader && <AppHeader />}
+      
+      {/* Page content with padding for fixed header */}
+      <Box
+        pt={showAppHeader ? '56px' : 0}
+        h="100%"
+        overflow="hidden"
+      >
+        <Outlet />
+      </Box>
     </Box>
   )
 }

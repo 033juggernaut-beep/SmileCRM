@@ -12,7 +12,7 @@ export const HomePage = () => {
   return (
     <PremiumLayout 
       title="SmileCRM" 
-      showBack={false}
+      showHeader={false}
       background="gradient"
       safeAreaBottom
     >
