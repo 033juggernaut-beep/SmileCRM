@@ -1,7 +1,8 @@
+import { Box, Flex, Text } from '@chakra-ui/react'
 import { useNavigate } from 'react-router-dom'
-import { Users, UserPlus, Megaphone, CreditCard, HelpCircle, Shield } from 'lucide-react'
+import { Users, UserPlus, Megaphone, TrendingUp, CreditCard, HelpCircle, Shield } from 'lucide-react'
 import { PremiumLayout } from '../components/layout/PremiumLayout'
-import { Dashboard, DashboardCard } from '../components/dashboard'
+import { Dashboard, DashboardCard, StatisticsCard } from '../components/dashboard'
 import { LanguageSwitcher } from '../components/LanguageSwitcher'
 import { useLanguage } from '../context/LanguageContext'
 
@@ -26,16 +27,15 @@ export const HomePage = () => {
         columns={2}
         gap={3}
       >
-        {/* Primary Card - Patients */}
+        {/* Card 1: My Patients */}
         <DashboardCard
           title={t('home.patients')}
           subtitle={t('home.patientsHelper')}
           icon={<Users />}
-          isPrimary
           onClick={() => navigate('/patients')}
         />
 
-        {/* Add Patient */}
+        {/* Card 2: Add Patient */}
         <DashboardCard
           title={t('home.addPatient')}
           subtitle={t('home.addPatientHelper')}
@@ -43,7 +43,7 @@ export const HomePage = () => {
           onClick={() => navigate('/patients/new')}
         />
 
-        {/* Marketing */}
+        {/* Card 3: Marketing */}
         <DashboardCard
           title={t('home.marketing')}
           subtitle={t('home.marketingHelper')}
@@ -51,30 +51,75 @@ export const HomePage = () => {
           onClick={() => navigate('/marketing')}
         />
 
-        {/* Subscription */}
-        <DashboardCard
-          title={t('home.subscription')}
-          subtitle={t('home.subscriptionHelper')}
-          icon={<CreditCard />}
-          onClick={() => navigate('/subscription')}
-        />
-
-        {/* Help */}
-        <DashboardCard
-          title={t('home.help')}
-          subtitle={t('home.helpHelper')}
-          icon={<HelpCircle />}
-          onClick={() => navigate('/help')}
-        />
-
-        {/* Privacy */}
-        <DashboardCard
-          title={t('home.privacy')}
-          subtitle={t('home.privacyHelper')}
-          icon={<Shield />}
-          onClick={() => navigate('/privacy')}
+        {/* Card 4: Statistics */}
+        <StatisticsCard
+          title={t('home.statistics')}
+          icon={<TrendingUp />}
+          stats={[
+            { value: '247', label: t('home.totalPatients') },
+            { value: '8', label: t('home.todayVisits') },
+          ]}
+          onClick={() => navigate('/patients')}
         />
       </Dashboard>
+
+      {/* Footer Links */}
+      <Flex
+        justify="center"
+        gap={6}
+        mt={6}
+        pb={4}
+        flexWrap="wrap"
+      >
+        <FooterLink
+          icon={<CreditCard size={16} />}
+          label={t('home.subscription')}
+          onClick={() => navigate('/subscription')}
+        />
+        <FooterLink
+          icon={<HelpCircle size={16} />}
+          label={t('home.help')}
+          onClick={() => navigate('/help')}
+        />
+        <FooterLink
+          icon={<Shield size={16} />}
+          label={t('home.privacy')}
+          onClick={() => navigate('/privacy')}
+        />
+      </Flex>
     </PremiumLayout>
+  )
+}
+
+/** Footer link component */
+function FooterLink({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: React.ReactNode
+  label: string
+  onClick: () => void
+}) {
+  return (
+    <Box
+      as="button"
+      onClick={onClick}
+      display="flex"
+      alignItems="center"
+      gap={1.5}
+      color="text.muted"
+      fontSize="sm"
+      fontWeight="medium"
+      transition="color 150ms ease"
+      _hover={{ color: 'text.secondary' }}
+      _active={{ color: 'text.primary' }}
+      sx={{
+        WebkitTapHighlightColor: 'transparent',
+      }}
+    >
+      {icon}
+      <Text>{label}</Text>
+    </Box>
   )
 }
