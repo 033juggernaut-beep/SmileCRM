@@ -3,7 +3,6 @@ import {
   Box,
   Flex,
   Text,
-  useColorModeValue,
 } from '@chakra-ui/react';
 
 export interface DashboardCardProps {
@@ -20,22 +19,13 @@ export interface DashboardCardProps {
 }
 
 /**
- * DashboardCard - A square, pressable card component for dashboard grids.
+ * DashboardCard - A square, pressable card for Premium Onyx dark theme.
  *
  * Features:
  * - Equal 1:1 aspect ratio
- * - Press/tap feedback with scale and glow
- * - Theme-aware (light/dark mode)
+ * - Subtle press feedback (scale + inner shadow)
+ * - Dark theme only (Telegram Mini App)
  * - Primary variant for emphasis
- *
- * @example
- * <DashboardCard
- *   title="My Patients"
- *   subtitle="View all patients"
- *   icon={<Users />}
- *   isPrimary
- *   onClick={() => navigate('/patients')}
- * />
  */
 export function DashboardCard({
   title,
@@ -44,22 +34,6 @@ export function DashboardCard({
   isPrimary = false,
   onClick,
 }: DashboardCardProps) {
-  // Theme colors - Premium Onyx with gold accent
-  const surface = useColorModeValue('white', 'bg.surface');
-  const surfacePressed = useColorModeValue('#F5F5F7', 'bg.surface2');
-  const border = useColorModeValue('#E2E4E8', 'border.subtle');
-  const borderLight = useColorModeValue('#D0D2D8', 'border.default');
-  const textColor = useColorModeValue('#1A1A1C', 'text.primary');
-  const textMuted = useColorModeValue('#8A8A92', 'text.muted');
-  // Accent color (gold in dark mode)
-  const accent = useColorModeValue('#2D8A7C', 'accent.500');
-  const accentAlpha = useColorModeValue('rgba(45, 138, 124, 0.08)', 'rgba(184, 160, 96, 0.1)');
-  // Subtle press shadow - soft inner glow effect
-  const pressShadow = useColorModeValue(
-    'inset 0 1px 3px rgba(0, 0, 0, 0.08)',
-    'inset 0 1px 3px rgba(0, 0, 0, 0.2)'
-  );
-
   // Icon sizing based on variant
   const iconBoxSize = isPrimary ? '48px' : '40px';
   const iconFontSize = isPrimary ? '24px' : '20px';
@@ -72,9 +46,9 @@ export function DashboardCard({
       w="100%"
       aspectRatio="1 / 1"
       p={4}
-      bg={surface}
+      bg="bg.surface"
       border="1px solid"
-      borderColor={border}
+      borderColor="border.subtle"
       borderRadius="2xl"
       textAlign="left"
       display="flex"
@@ -83,12 +57,12 @@ export function DashboardCard({
       transition="transform 120ms ease-out, box-shadow 120ms ease-out, background-color 120ms ease-out"
       _active={{
         transform: 'scale(0.985)',
-        boxShadow: pressShadow,
-        bg: surfacePressed,
+        boxShadow: 'inset 0 1px 4px rgba(0, 0, 0, 0.25)',
+        bg: 'bg.surface2',
       }}
       _focusVisible={{
         outline: 'none',
-        boxShadow: `0 0 0 2px ${accent}`,
+        boxShadow: '0 0 0 2px var(--chakra-colors-accent-500)',
       }}
       sx={{
         WebkitTapHighlightColor: 'transparent',
@@ -101,13 +75,13 @@ export function DashboardCard({
         justify="center"
         w={iconBoxSize}
         h={iconBoxSize}
-        bg={isPrimary ? accentAlpha : surfacePressed}
+        bg={isPrimary ? 'rgba(184, 160, 96, 0.12)' : 'bg.surface2'}
         border="1px solid"
-        borderColor={isPrimary ? 'transparent' : borderLight}
+        borderColor={isPrimary ? 'transparent' : 'border.default'}
         borderRadius="xl"
         mb={3}
         flexShrink={0}
-        color={accent}
+        color="accent.500"
         fontSize={iconFontSize}
         sx={{
           '& svg': {
@@ -125,7 +99,7 @@ export function DashboardCard({
         <Text
           fontSize={isPrimary ? 'md' : 'sm'}
           fontWeight={isPrimary ? 'bold' : 'semibold'}
-          color={textColor}
+          color="text.primary"
           mb={0.5}
           lineHeight="short"
         >
@@ -134,7 +108,7 @@ export function DashboardCard({
 
         <Text
           fontSize="xs"
-          color={textMuted}
+          color="text.muted"
           lineHeight="short"
         >
           {subtitle}
