@@ -2,15 +2,25 @@ import type { ReactElement, ReactNode } from 'react';
 import { Box, Flex, Text } from '@chakra-ui/react';
 
 // =============================================
-// 🎨 SUPER DASHBOARD CARD
-// Medical blue theme action card with hover effects
-// Based on superdesign-dashboard reference
+// 🎨 SUPER DASHBOARD CARD — LIGHT THEME (Superdesign)
+// White cards with blue accent icons
 // =============================================
 
-// Blue accent colors (medical theme)
-const BLUE_400 = '#60A5FA';
-const BLUE_100 = 'rgba(59, 130, 246, 0.15)';
-const BLUE_200 = 'rgba(59, 130, 246, 0.25)';
+// Light theme colors (forced, no theme tokens)
+const LIGHT = {
+  cardBg: '#FFFFFF',
+  cardBorder: '#E6EEFF',
+  cardShadow: '0 2px 12px rgba(47, 107, 255, 0.06)',
+  cardHoverShadow: '0 8px 24px rgba(47, 107, 255, 0.12)',
+  cardHoverBorder: '#C7D9FF',
+  iconBg: '#EAF2FF',
+  iconBgHover: '#DCE8FF',
+  iconColor: '#2F6BFF',
+  titleColor: '#0F172A',
+  descriptionColor: '#64748B',
+  statValueColor: '#2F6BFF',
+  statLabelColor: '#94A3B8',
+};
 
 export interface SuperDashboardCardProps {
   /** Card title */
@@ -28,22 +38,14 @@ export interface SuperDashboardCardProps {
 }
 
 /**
- * SuperDashboardCard - A modern card with medical blue theme.
+ * SuperDashboardCard - White card matching Superdesign light theme.
  *
  * Features:
- * - Fixed height (180px) for uniform grid alignment
- * - Blue accent icons with subtle background
- * - Hover effect: slight lift, blue border glow
- * - Active/press state with scale effect
- * - Theme-aware (works on dark background)
- *
- * @example
- * <SuperDashboardCard
- *   icon={<Users />}
- *   title="Мои пациенты"
- *   description="Список всех пациентов"
- *   onClick={() => navigate('/patients')}
- * />
+ * - White background #FFFFFF
+ * - Border #E6EEFF, radius 18px
+ * - Icon box with #EAF2FF background, #2F6BFF icon
+ * - Title #0F172A, description #64748B
+ * - Soft hover effect with blue shadow
  */
 export function SuperDashboardCard({
   title,
@@ -60,36 +62,35 @@ export function SuperDashboardCard({
       as="button"
       onClick={onClick}
       w="100%"
-      h="180px"
-      p={5}
-      bg="bg.surface"
+      minH="150px"
+      p={6}
+      bg={LIGHT.cardBg}
       border="1px solid"
-      borderColor="border.subtle"
-      borderRadius="xl"
+      borderColor={LIGHT.cardBorder}
+      borderRadius="18px"
+      boxShadow={LIGHT.cardShadow}
       textAlign="left"
       display="flex"
       flexDirection="column"
       cursor="pointer"
       transition="all 0.2s ease"
       _hover={{
-        borderColor: 'rgba(59, 130, 246, 0.5)',
-        boxShadow: '0 8px 24px rgba(59, 130, 246, 0.15)',
-        transform: 'translateY(-3px)',
+        borderColor: LIGHT.cardHoverBorder,
+        boxShadow: LIGHT.cardHoverShadow,
+        transform: 'translateY(-2px)',
       }}
       _active={{
         transform: 'scale(0.98)',
-        bg: 'bg.surface2',
       }}
       _focusVisible={{
         outline: 'none',
-        boxShadow: `0 0 0 3px ${BLUE_400}`,
+        boxShadow: `0 0 0 3px ${LIGHT.iconColor}40`,
       }}
       sx={{
         WebkitTapHighlightColor: 'transparent',
         touchAction: 'manipulation',
-        // Blue icon hover state
         '&:hover .icon-box': {
-          bg: BLUE_200,
+          bg: LIGHT.iconBgHover,
         },
       }}
     >
@@ -98,17 +99,17 @@ export function SuperDashboardCard({
         className="icon-box"
         align="center"
         justify="center"
-        w="40px"
-        h="40px"
-        bg={BLUE_100}
-        borderRadius="lg"
+        w="44px"
+        h="44px"
+        bg={LIGHT.iconBg}
+        borderRadius="12px"
         flexShrink={0}
-        color={BLUE_400}
+        color={LIGHT.iconColor}
         transition="background-color 0.2s ease"
         sx={{
           '& svg': {
-            width: '24px',
-            height: '24px',
+            width: '22px',
+            height: '22px',
             strokeWidth: 2,
           },
         }}
@@ -120,16 +121,16 @@ export function SuperDashboardCard({
       <Text
         fontSize="md"
         fontWeight="semibold"
-        color="text.primary"
-        mt={3}
-        lineHeight="short"
+        color={LIGHT.titleColor}
+        mt={4}
+        lineHeight="1.3"
       >
         {title}
       </Text>
 
       {/* Description or Stats */}
       {hasStats ? (
-        <Box mt="auto" pt={2}>
+        <Box mt="auto" pt={3}>
           {stats.map((stat, index) => (
             <Flex
               key={index}
@@ -137,16 +138,13 @@ export function SuperDashboardCard({
               align="center"
               mb={index < stats.length - 1 ? 1 : 0}
             >
-              <Text
-                fontSize="xs"
-                color="text.muted"
-              >
+              <Text fontSize="xs" color={LIGHT.statLabelColor}>
                 {stat.label}
               </Text>
               <Text
                 fontSize="sm"
                 fontWeight="semibold"
-                color={BLUE_400}
+                color={LIGHT.statValueColor}
               >
                 {stat.value}
               </Text>
@@ -157,24 +155,21 @@ export function SuperDashboardCard({
         <Text
           fontSize="sm"
           fontWeight="normal"
-          color="text.secondary"
+          color={LIGHT.descriptionColor}
           mt={1}
-          lineHeight="short"
+          lineHeight="1.4"
         >
           {description}
         </Text>
       ) : null}
 
-      {/* Custom children */}
       {children}
     </Box>
   );
 }
 
 /**
- * SuperStatisticsCard - A card variant for displaying statistics.
- *
- * Similar to SuperDashboardCard but with larger stat numbers.
+ * SuperStatisticsCard - Card variant for displaying statistics with large numbers.
  */
 export interface SuperStatisticsCardProps {
   title: string;
@@ -194,35 +189,35 @@ export function SuperStatisticsCard({
       as="button"
       onClick={onClick}
       w="100%"
-      h="180px"
-      p={5}
-      bg="bg.surface"
+      minH="150px"
+      p={6}
+      bg={LIGHT.cardBg}
       border="1px solid"
-      borderColor="border.subtle"
-      borderRadius="xl"
+      borderColor={LIGHT.cardBorder}
+      borderRadius="18px"
+      boxShadow={LIGHT.cardShadow}
       textAlign="left"
       display="flex"
       flexDirection="column"
       cursor="pointer"
       transition="all 0.2s ease"
       _hover={{
-        borderColor: 'rgba(59, 130, 246, 0.5)',
-        boxShadow: '0 8px 24px rgba(59, 130, 246, 0.15)',
-        transform: 'translateY(-3px)',
+        borderColor: LIGHT.cardHoverBorder,
+        boxShadow: LIGHT.cardHoverShadow,
+        transform: 'translateY(-2px)',
       }}
       _active={{
         transform: 'scale(0.98)',
-        bg: 'bg.surface2',
       }}
       _focusVisible={{
         outline: 'none',
-        boxShadow: `0 0 0 3px ${BLUE_400}`,
+        boxShadow: `0 0 0 3px ${LIGHT.iconColor}40`,
       }}
       sx={{
         WebkitTapHighlightColor: 'transparent',
         touchAction: 'manipulation',
         '&:hover .icon-box': {
-          bg: BLUE_200,
+          bg: LIGHT.iconBgHover,
         },
       }}
     >
@@ -231,17 +226,17 @@ export function SuperStatisticsCard({
         className="icon-box"
         align="center"
         justify="center"
-        w="40px"
-        h="40px"
-        bg={BLUE_100}
-        borderRadius="lg"
+        w="44px"
+        h="44px"
+        bg={LIGHT.iconBg}
+        borderRadius="12px"
         flexShrink={0}
-        color={BLUE_400}
+        color={LIGHT.iconColor}
         transition="background-color 0.2s ease"
         sx={{
           '& svg': {
-            width: '24px',
-            height: '24px',
+            width: '22px',
+            height: '22px',
             strokeWidth: 2,
           },
         }}
@@ -254,29 +249,29 @@ export function SuperStatisticsCard({
         <Text
           fontSize="md"
           fontWeight="semibold"
-          color="text.primary"
+          color={LIGHT.titleColor}
           mb={2}
-          lineHeight="short"
+          lineHeight="1.3"
         >
           {title}
         </Text>
 
         {/* Stats row with large numbers */}
-        <Flex gap={4}>
+        <Flex gap={5}>
           {stats.map((stat, index) => (
             <Box key={index}>
               <Text
                 fontSize="2xl"
                 fontWeight="bold"
-                color={index === 0 ? 'text.primary' : BLUE_400}
+                color={index === 0 ? LIGHT.titleColor : LIGHT.statValueColor}
                 lineHeight="1"
               >
                 {stat.value}
               </Text>
               <Text
                 fontSize="xs"
-                color="text.muted"
-                lineHeight="short"
+                color={LIGHT.statLabelColor}
+                lineHeight="1.3"
                 mt={0.5}
               >
                 {stat.label}

@@ -1,15 +1,11 @@
 import type { ReactNode } from 'react';
-import { Box, Container, SimpleGrid } from '@chakra-ui/react';
+import { Box, SimpleGrid } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
 
 // =============================================
-// 🎨 DASHBOARD GRID
+// 🎨 DASHBOARD GRID — LIGHT THEME (Superdesign)
 // Responsive 2x2 grid with staggered animation
-// Based on superdesign-dashboard reference
 // =============================================
-
-// Motion wrapper for SimpleGrid
-const MotionSimpleGrid = motion.create(SimpleGrid);
 
 // Motion wrapper for grid items
 const MotionBox = motion.create(Box);
@@ -20,8 +16,8 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2,
+      staggerChildren: 0.08,
+      delayChildren: 0.15,
     },
   },
 };
@@ -29,57 +25,48 @@ const containerVariants = {
 const itemVariants = {
   hidden: {
     opacity: 0,
-    y: 20,
+    y: 16,
   },
   visible: {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.4,
-      ease: [0.25, 0.1, 0.25, 1] as const, // easeOut cubic-bezier
+      duration: 0.35,
+      ease: [0.25, 0.1, 0.25, 1] as const,
     },
   },
 };
+
+// Motion wrapper for SimpleGrid
+const MotionSimpleGrid = motion.create(SimpleGrid);
 
 export interface DashboardGridProps {
   /** Dashboard card children */
   children: ReactNode;
   /** Number of columns (default: 2) */
   columns?: number | { base?: number; sm?: number; md?: number };
-  /** Grid gap in Chakra spacing units (default: 4) */
-  gap?: number | { base?: number; md?: number };
-  /** Max width of the grid container */
-  maxW?: string;
+  /** Grid gap in pixels (default: 16) */
+  gap?: number;
   /** Enable stagger animation (default: true) */
   animated?: boolean;
 }
 
 /**
- * DashboardGrid - A responsive grid container with staggered animation.
+ * DashboardGrid - Responsive grid container for Superdesign layout.
  *
  * Features:
- * - Responsive 2-column grid (configurable)
- * - Staggered fade-in animation for cards
- * - Centered container with max-width
- * - Works with SuperDashboardCard components
- *
- * @example
- * <DashboardGrid columns={2} gap={4}>
- *   <SuperDashboardCard title="Patients" ... />
- *   <SuperDashboardCard title="Add Patient" ... />
- *   <SuperDashboardCard title="Marketing" ... />
- *   <SuperStatisticsCard title="Statistics" ... />
- * </DashboardGrid>
+ * - 2-column responsive grid
+ * - 16px gap between cards
+ * - Staggered fade-in animation
  */
 export function DashboardGrid({
   children,
   columns = { base: 1, sm: 2 },
-  gap = { base: 3, md: 4 },
-  maxW = '3xl',
+  gap = 16,
   animated = true,
 }: DashboardGridProps) {
-  // Wrap each child in a motion div for animation
-  const animatedChildren = animated
+  // Wrap each child in motion div for animation
+  const wrappedChildren = animated
     ? Array.isArray(children)
       ? children.map((child, index) => (
           <MotionBox key={index} variants={itemVariants}>
@@ -95,30 +82,22 @@ export function DashboardGrid({
 
   if (animated) {
     return (
-      <Box w="100%" py={4}>
-        <Container maxW={maxW} px={4}>
-          <MotionSimpleGrid
-            columns={columns}
-            spacing={gap}
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {animatedChildren}
-          </MotionSimpleGrid>
-        </Container>
-      </Box>
+      <MotionSimpleGrid
+        columns={columns}
+        spacing={`${gap}px`}
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {wrappedChildren}
+      </MotionSimpleGrid>
     );
   }
 
   return (
-    <Box w="100%" py={4}>
-      <Container maxW={maxW} px={4}>
-        <SimpleGrid columns={columns} spacing={gap}>
-          {children}
-        </SimpleGrid>
-      </Container>
-    </Box>
+    <SimpleGrid columns={columns} spacing={`${gap}px`}>
+      {children}
+    </SimpleGrid>
   );
 }
 

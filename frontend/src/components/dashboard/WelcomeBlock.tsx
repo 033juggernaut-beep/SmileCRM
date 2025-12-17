@@ -2,16 +2,24 @@ import { Box, Text } from '@chakra-ui/react';
 import { keyframes } from '@emotion/react';
 
 // =============================================
-// 🎨 WELCOME BLOCK
-// Medical blue theme welcome header with gradient background
-// Based on superdesign-dashboard reference
+// 🎨 WELCOME BLOCK — LIGHT THEME (Superdesign)
+// White card with soft shadow, centered layout
 // =============================================
+
+// Light theme colors (forced, no theme tokens)
+const LIGHT = {
+  cardBg: '#FFFFFF',
+  cardBorder: '#E6EEFF',
+  cardShadow: '0 4px 20px rgba(47, 107, 255, 0.08)',
+  titleColor: '#0F172A',
+  subtitleColor: '#64748B',
+};
 
 // Fade-in animation
 const fadeSlideIn = keyframes`
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -24,53 +32,38 @@ export interface WelcomeBlockProps {
   title: string;
   /** Subtitle text */
   subtitle?: string;
-  /** Maximum width of the block */
-  maxW?: string;
 }
 
 /**
- * WelcomeBlock - Centered welcome header with medical blue gradient.
+ * WelcomeBlock - White welcome card matching Superdesign reference.
  *
  * Features:
- * - Soft blue gradient background (light mode feel on dark theme)
- * - Rounded container with shadow
- * - Fade-in animation on mount
- * - Calm medical typography
- *
- * @example
- * <WelcomeBlock
- *   title="Добро пожаловать, Доктор!"
- *   subtitle="Управление вашей практикой"
- * />
+ * - Pure white background #FFFFFF
+ * - Soft blue shadow
+ * - Border radius 20px
+ * - Large centered title, gray subtitle
+ * - Fade-in animation
  */
-export function WelcomeBlock({
-  title,
-  subtitle,
-  maxW = '3xl',
-}: WelcomeBlockProps) {
+export function WelcomeBlock({ title, subtitle }: WelcomeBlockProps) {
   return (
     <Box
       w="100%"
-      maxW={maxW}
-      mx="auto"
-      px={8}
-      py={10}
-      borderRadius="2xl"
-      // Medical blue gradient - works on dark theme
-      bg="linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(14, 165, 233, 0.12) 100%)"
-      boxShadow="0 8px 32px rgba(59, 130, 246, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
+      bg={LIGHT.cardBg}
       border="1px solid"
-      borderColor="rgba(59, 130, 246, 0.2)"
+      borderColor={LIGHT.cardBorder}
+      borderRadius="20px"
+      boxShadow={LIGHT.cardShadow}
+      px={{ base: 6, md: 10 }}
+      py={{ base: 8, md: 10 }}
       textAlign="center"
       animation={`${fadeSlideIn} 0.5s ease-out`}
-      transition="all 0.3s ease"
     >
       <Text
         fontSize={{ base: '2xl', md: '3xl' }}
-        fontWeight="semibold"
-        letterSpacing="tight"
-        color="text.primary"
-        mb={subtitle ? 3 : 0}
+        fontWeight="bold"
+        letterSpacing="-0.02em"
+        color={LIGHT.titleColor}
+        mb={subtitle ? 2 : 0}
       >
         {title}
       </Text>
@@ -79,7 +72,7 @@ export function WelcomeBlock({
         <Text
           fontSize={{ base: 'md', md: 'lg' }}
           fontWeight="normal"
-          color="text.secondary"
+          color={LIGHT.subtitleColor}
         >
           {subtitle}
         </Text>
