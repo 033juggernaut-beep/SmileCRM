@@ -16,6 +16,7 @@ const SubscriptionPage = lazy(() => import('./pages/SubscriptionPage').then(m =>
 const HelpPage = lazy(() => import('./pages/HelpPage').then(m => ({ default: m.HelpPage })))
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage').then(m => ({ default: m.PrivacyPolicyPage })))
 const MarketingPage = lazy(() => import('./pages/MarketingPage').then(m => ({ default: m.MarketingPage })))
+const StatsPage = lazy(() => import('./pages/StatsPage').then(m => ({ default: m.StatsPage })))
 
 // Loading fallback for lazy routes
 const PageLoader = () => (
@@ -45,6 +46,7 @@ const router = createBrowserRouter([
       { path: '/marketing', element: withSuspense(MarketingPage) },
       { path: '/help', element: withSuspense(HelpPage) },
       { path: '/privacy', element: withSuspense(PrivacyPolicyPage) },
+      { path: '/stats', element: withSuspense(StatsPage) },
     ],
   },
 ])

@@ -1,14 +1,20 @@
+/**
+ * DashboardGrid - Superdesign Blue Theme
+ * 
+ * Features:
+ * - 2x2 responsive grid (1 col on mobile)
+ * - max-w-3xl (768px)
+ * - gap-4 (16px) / gap-5 (20px) on md
+ * - Staggered animation on mount
+ */
+
 import type { ReactNode } from 'react';
-import { Box, SimpleGrid } from '@chakra-ui/react';
+import { SimpleGrid } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
 
-// =============================================
-// 🎨 DASHBOARD GRID — LIGHT THEME (Superdesign)
-// Responsive 2x2 grid with staggered animation
-// =============================================
-
-// Motion wrapper for grid items
-const MotionBox = motion.create(Box);
+// Motion wrapper
+const MotionSimpleGrid = motion.create(SimpleGrid);
+const MotionDiv = motion.div;
 
 // Animation variants for staggered entrance
 const containerVariants = {
@@ -16,8 +22,8 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.08,
-      delayChildren: 0.15,
+      staggerChildren: 0.1,
+      delayChildren: 0.3,
     },
   },
 };
@@ -25,66 +31,41 @@ const containerVariants = {
 const itemVariants = {
   hidden: {
     opacity: 0,
-    y: 16,
+    y: 20,
   },
   visible: {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.35,
+      duration: 0.4,
       ease: [0.25, 0.1, 0.25, 1] as const,
     },
   },
 };
 
-// Motion wrapper for SimpleGrid
-const MotionSimpleGrid = motion.create(SimpleGrid);
-
 export interface DashboardGridProps {
-  /** Dashboard card children */
   children: ReactNode;
-  /** Number of columns (default: 2) */
-  columns?: number | { base?: number; sm?: number; md?: number };
-  /** Grid gap in pixels (default: 16) */
-  gap?: number;
-  /** Enable stagger animation (default: true) */
   animated?: boolean;
 }
 
-/**
- * DashboardGrid - Responsive grid container for Superdesign layout.
- *
- * Features:
- * - 2-column responsive grid
- * - 16px gap between cards
- * - Staggered fade-in animation
- */
-export function DashboardGrid({
-  children,
-  columns = { base: 1, sm: 2 },
-  gap = 16,
-  animated = true,
-}: DashboardGridProps) {
+export function DashboardGrid({ children, animated = true }: DashboardGridProps) {
   // Wrap each child in motion div for animation
-  const wrappedChildren = animated
-    ? Array.isArray(children)
-      ? children.map((child, index) => (
-          <MotionBox key={index} variants={itemVariants}>
-            {child}
-          </MotionBox>
-        ))
-      : (
-          <MotionBox variants={itemVariants}>
-            {children}
-          </MotionBox>
-        )
+  const wrappedChildren = animated && Array.isArray(children)
+    ? children.map((child, index) => (
+        <MotionDiv key={index} variants={itemVariants}>
+          {child}
+        </MotionDiv>
+      ))
     : children;
 
   if (animated) {
     return (
       <MotionSimpleGrid
-        columns={columns}
-        spacing={`${gap}px`}
+        w="100%"
+        maxW="768px"                        // max-w-3xl
+        mx="auto"
+        columns={{ base: 1, sm: 2 }}        // grid-cols-1 sm:grid-cols-2
+        spacing={{ base: '16px', md: '20px' }} // gap-4 md:gap-5
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -95,7 +76,13 @@ export function DashboardGrid({
   }
 
   return (
-    <SimpleGrid columns={columns} spacing={`${gap}px`}>
+    <SimpleGrid
+      w="100%"
+      maxW="768px"
+      mx="auto"
+      columns={{ base: 1, sm: 2 }}
+      spacing={{ base: '16px', md: '20px' }}
+    >
       {children}
     </SimpleGrid>
   );

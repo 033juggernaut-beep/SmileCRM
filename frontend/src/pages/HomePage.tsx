@@ -1,148 +1,112 @@
-import { Box, Flex, Text } from '@chakra-ui/react';
+/**
+ * HomePage - SmileCRM Dashboard (Superdesign Blue Theme)
+ * 
+ * FORCED LIGHT MODE - No global theme dependency
+ * All styles hardcoded to match Superdesign reference exactly
+ */
+
+import { Box, Flex } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { Users, UserPlus, Megaphone, TrendingUp } from 'lucide-react';
 import {
+  Header,
   WelcomeBlock,
   DashboardGrid,
-  SuperDashboardCard,
-  SuperStatisticsCard,
+  DashboardCard,
+  Footer,
 } from '../components/dashboard';
 import { useLanguage } from '../context/LanguageContext';
 
 // =============================================
-// 🎨 HOMEPAGE — FORCED LIGHT THEME (Superdesign)
-// No global dark theme, no useColorModeValue
+// 🎨 LIGHT THEME COLORS (Superdesign Reference)
 // =============================================
-
-// Force light mode (temporary toggle for testing)
-const FORCE_LIGHT = true;
-
-// Light theme colors (hardcoded, no theme tokens)
-const LIGHT = {
-  pageBg: '#F7FAFF',
-  footerColor: '#64748B',
-  footerHoverColor: '#0F172A',
+const COLORS = {
+  // Page background: gradient from slate-50 via blue-50/30 to sky-50/50
+  pageBg: 'linear-gradient(135deg, #f8fafc 0%, rgba(239, 246, 255, 0.3) 50%, rgba(240, 249, 255, 0.5) 100%)',
 };
 
 export const HomePage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
 
-  // Always use light styles when FORCE_LIGHT is true
-  if (!FORCE_LIGHT) {
-    return null; // Fallback (not used)
-  }
+  // Footer links configuration
+  const footerLinks = [
+    { label: t('home.subscription'), onClick: () => navigate('/subscription') },
+    { label: t('home.help'), onClick: () => navigate('/help') },
+    { label: t('home.privacy'), onClick: () => navigate('/privacy') },
+  ];
 
   return (
     <Box
       minH="100vh"
       w="100%"
-      bg={LIGHT.pageBg}
-      // Remove any inherited dark styles
-      color="#0F172A"
+      bg={COLORS.pageBg}
+      // Force light mode text color
+      color="#1e293b"
     >
-      {/* Main Content Container */}
-      <Box
-        maxW="960px"
-        mx="auto"
-        px={{ base: 5, md: 8 }}
-        py={{ base: 6, md: 10 }}
+      {/* Header */}
+      <Header notificationCount={3} />
+
+      {/* Main Content */}
+      <Flex
+        as="main"
+        direction="column"
+        align="center"
+        justify="flex-start"
+        flex="1"
+        px={4}
+        py={{ base: 8, md: 12 }}            // py-8 md:py-12
+        gap={{ base: 8, md: 10 }}           // gap-8 md:gap-10
       >
         {/* Welcome Block */}
-        <Box mb={6}>
-          <WelcomeBlock
-            title={t('home.welcome')}
-            subtitle={t('home.subtitle')}
-          />
-        </Box>
+        <WelcomeBlock
+          title={t('home.welcome')}
+          subtitle={t('home.subtitle')}
+        />
 
         {/* Dashboard Cards Grid */}
-        <DashboardGrid columns={{ base: 1, sm: 2 }} gap={16} animated>
+        <DashboardGrid animated>
           {/* Card 1: My Patients */}
-          <SuperDashboardCard
+          <DashboardCard
+            icon={<Users />}
             title={t('home.patients')}
             description={t('home.patientsHelper')}
-            icon={<Users />}
             onClick={() => navigate('/patients')}
           />
 
           {/* Card 2: Add Patient */}
-          <SuperDashboardCard
+          <DashboardCard
+            icon={<UserPlus />}
             title={t('home.addPatient')}
             description={t('home.addPatientHelper')}
-            icon={<UserPlus />}
             onClick={() => navigate('/patients/new')}
           />
 
           {/* Card 3: Marketing */}
-          <SuperDashboardCard
+          <DashboardCard
+            icon={<Megaphone />}
             title={t('home.marketing')}
             description={t('home.marketingHelper')}
-            icon={<Megaphone />}
             onClick={() => navigate('/marketing')}
           />
 
           {/* Card 4: Statistics */}
-          <SuperStatisticsCard
-            title={t('home.statistics')}
+          <DashboardCard
             icon={<TrendingUp />}
+            title={t('home.statistics')}
             stats={[
-              { value: '247', label: t('home.totalPatients') },
-              { value: '8', label: t('home.todayVisits') },
+              { label: t('home.totalPatients'), value: 1247 },
+              { label: t('home.todayVisits'), value: 12 },
             ]}
-            onClick={() => navigate('/patients')}
+            onClick={() => navigate('/stats')}
           />
         </DashboardGrid>
+      </Flex>
 
-        {/* Footer Links */}
-        <Flex
-          justify="center"
-          gap={6}
-          mt={10}
-          pb={6}
-          flexWrap="wrap"
-        >
-          <FooterLink
-            label={t('home.subscription')}
-            onClick={() => navigate('/subscription')}
-          />
-          <FooterLink
-            label={t('home.help')}
-            onClick={() => navigate('/help')}
-          />
-          <FooterLink
-            label={t('home.privacy')}
-            onClick={() => navigate('/privacy')}
-          />
-        </Flex>
-      </Box>
+      {/* Footer */}
+      <Footer links={footerLinks} />
     </Box>
   );
 };
 
-/** Footer link - light theme, no background */
-function FooterLink({
-  label,
-  onClick,
-}: {
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <Box
-      as="button"
-      onClick={onClick}
-      color={LIGHT.footerColor}
-      fontSize="sm"
-      fontWeight="medium"
-      transition="color 150ms ease"
-      _hover={{ color: LIGHT.footerHoverColor }}
-      _active={{ color: LIGHT.footerHoverColor }}
-      sx={{
-        WebkitTapHighlightColor: 'transparent',
-      }}
-    >
-      <Text>{label}</Text>
-    </Box>
-  );
-}
+export default HomePage;

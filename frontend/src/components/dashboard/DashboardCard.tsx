@@ -1,207 +1,112 @@
-import type { ReactElement } from 'react';
-import {
-  Box,
-  Flex,
-  Text,
-} from '@chakra-ui/react';
+/**
+ * DashboardCard - Superdesign Blue Theme (Light Mode Forced)
+ * 
+ * Features:
+ * - Fixed height 180px
+ * - White background, blue-100 border
+ * - Blue shadow
+ * - Icon box with blue-100 bg, blue-600 icon
+ * - Hover: lift, border-blue-400, stronger shadow
+ * - Stats variant with label/value rows
+ */
 
-// Teal accent color (default icon color from design)
-const TEAL_ACCENT = '#3B9B8C';
-const TEAL_ALPHA = 'rgba(59, 155, 140, 0.12)';
-// Gold accent (press/focus only)
-const GOLD_ACCENT = '#B8A060';
+import type { ReactElement } from 'react';
+import { Box, Flex, Text } from '@chakra-ui/react';
+import { motion } from 'framer-motion';
+
+// =============================================
+// 🎨 LIGHT THEME COLORS (Superdesign Reference)
+// =============================================
+const COLORS = {
+  cardBg: '#ffffff',
+  cardBorder: '#dbeafe',          // blue-100
+  cardBorderHover: '#60a5fa',     // blue-400
+  cardShadow: 'rgba(239, 246, 255, 1)',     // blue-50
+  cardShadowHover: 'rgba(219, 234, 254, 1)', // blue-100
+  iconBg: '#dbeafe',              // blue-100
+  iconBgHover: '#bfdbfe',         // blue-200
+  iconColor: '#2563eb',           // blue-600
+  titleColor: '#1e293b',          // slate-800
+  descriptionColor: '#64748b',    // slate-500
+  statLabelColor: '#94a3b8',      // slate-400
+  statValueColor: '#2563eb',      // blue-600
+};
+
+// Motion wrapper for hover animation
+const MotionBox = motion.create(Box);
+
+export interface StatItem {
+  label: string;
+  value: string | number;
+}
 
 export interface DashboardCardProps {
-  /** Card title */
-  title: string;
-  /** Card subtitle/description */
-  subtitle?: string;
-  /** Lucide or Chakra icon element */
   icon: ReactElement;
-  /** Click/tap handler */
+  title: string;
+  description?: string;
+  stats?: StatItem[];
   onClick?: () => void;
-  /** Custom content instead of subtitle (for stats card) */
-  children?: React.ReactNode;
 }
 
-/**
- * DashboardCard - A square, pressable card for Premium Onyx dark theme.
- *
- * Features:
- * - Equal 1:1 aspect ratio
- * - Teal icon by default, gold only on press
- * - Dark theme only (Telegram Mini App)
- */
 export function DashboardCard({
-  title,
-  subtitle,
   icon,
-  onClick,
-  children,
-}: DashboardCardProps) {
-  const iconBoxSize = '44px';
-  const iconFontSize = '22px';
-
-  return (
-    <Box
-      as="button"
-      onClick={onClick}
-      position="relative"
-      w="100%"
-      aspectRatio="1 / 1"
-      p={4}
-      bg="bg.surface"
-      border="1px solid"
-      borderColor="border.subtle"
-      borderRadius="2xl"
-      textAlign="left"
-      display="flex"
-      flexDirection="column"
-      cursor="pointer"
-      transition="transform 120ms ease-out, box-shadow 120ms ease-out, background-color 120ms ease-out, color 120ms ease-out"
-      _active={{
-        transform: 'scale(0.985)',
-        boxShadow: `inset 0 1px 4px rgba(0, 0, 0, 0.25), 0 0 0 2px ${GOLD_ACCENT}`,
-        bg: 'bg.surface2',
-      }}
-      _focusVisible={{
-        outline: 'none',
-        boxShadow: `0 0 0 2px ${GOLD_ACCENT}`,
-      }}
-      sx={{
-        WebkitTapHighlightColor: 'transparent',
-        touchAction: 'manipulation',
-        // Gold icon color on active state
-        '&:active .icon-container': {
-          color: GOLD_ACCENT,
-          bg: 'rgba(184, 160, 96, 0.15)',
-        },
-      }}
-    >
-      {/* Icon Container */}
-      <Flex
-        className="icon-container"
-        align="center"
-        justify="center"
-        w={iconBoxSize}
-        h={iconBoxSize}
-        bg={TEAL_ALPHA}
-        borderRadius="xl"
-        mb="auto"
-        flexShrink={0}
-        color={TEAL_ACCENT}
-        fontSize={iconFontSize}
-        transition="background-color 120ms ease-out, color 120ms ease-out"
-        sx={{
-          '& svg': {
-            width: iconFontSize,
-            height: iconFontSize,
-            strokeWidth: 2,
-          },
-        }}
-      >
-        {icon}
-      </Flex>
-
-      {/* Text Content - pushed to bottom */}
-      <Box mt="auto">
-        <Text
-          fontSize="md"
-          fontWeight="semibold"
-          color="text.primary"
-          mb={subtitle || children ? 1 : 0}
-          lineHeight="short"
-        >
-          {title}
-        </Text>
-
-        {subtitle && (
-          <Text
-            fontSize="xs"
-            color="text.muted"
-            lineHeight="short"
-          >
-            {subtitle}
-          </Text>
-        )}
-
-        {children}
-      </Box>
-    </Box>
-  );
-}
-
-/**
- * StatisticsCard - A card variant showing stats with numbers
- */
-export interface StatisticsCardProps {
-  title: string;
-  icon: ReactElement;
-  stats: Array<{ value: string | number; label: string }>;
-  onClick?: () => void;
-}
-
-export function StatisticsCard({
   title,
-  icon,
+  description,
   stats,
   onClick,
-}: StatisticsCardProps) {
-  const iconBoxSize = '44px';
-  const iconFontSize = '22px';
+}: DashboardCardProps) {
+  const hasStats = stats && stats.length > 0;
 
   return (
-    <Box
+    <MotionBox
       as="button"
       onClick={onClick}
-      position="relative"
       w="100%"
-      aspectRatio="1 / 1"
-      p={4}
-      bg="bg.surface"
+      h="180px"                   // Fixed height
+      p={5}                       // p-5 = 20px
+      bg={COLORS.cardBg}
       border="1px solid"
-      borderColor="border.subtle"
-      borderRadius="2xl"
+      borderColor={COLORS.cardBorder}
+      borderRadius="12px"         // rounded-xl
+      boxShadow={`0 4px 6px -1px ${COLORS.cardShadow}, 0 2px 4px -2px ${COLORS.cardShadow}`}
       textAlign="left"
       display="flex"
       flexDirection="column"
       cursor="pointer"
-      transition="transform 120ms ease-out, box-shadow 120ms ease-out, background-color 120ms ease-out"
-      _active={{
-        transform: 'scale(0.985)',
-        boxShadow: `inset 0 1px 4px rgba(0, 0, 0, 0.25), 0 0 0 2px ${GOLD_ACCENT}`,
-        bg: 'bg.surface2',
+      transition="all 0.2s ease"
+      whileHover={{ y: -3 }}
+      _hover={{
+        borderColor: COLORS.cardBorderHover,
+        boxShadow: `0 10px 15px -3px ${COLORS.cardShadowHover}, 0 4px 6px -4px ${COLORS.cardShadowHover}`,
       }}
       _focusVisible={{
         outline: 'none',
-        boxShadow: `0 0 0 2px ${GOLD_ACCENT}`,
+        boxShadow: `0 0 0 3px ${COLORS.iconColor}40`,
       }}
       sx={{
         WebkitTapHighlightColor: 'transparent',
         touchAction: 'manipulation',
-        '&:active .icon-container': {
-          color: GOLD_ACCENT,
-          bg: 'rgba(184, 160, 96, 0.15)',
+        '&:hover .icon-box': {
+          bg: COLORS.iconBgHover,
         },
       }}
     >
       {/* Icon Container */}
       <Flex
-        className="icon-container"
+        className="icon-box"
         align="center"
         justify="center"
-        w={iconBoxSize}
-        h={iconBoxSize}
-        bg={TEAL_ALPHA}
-        borderRadius="xl"
+        w="40px"                  // w-10
+        h="40px"                  // h-10
+        bg={COLORS.iconBg}
+        borderRadius="8px"        // rounded-lg
         flexShrink={0}
-        color={TEAL_ACCENT}
-        fontSize={iconFontSize}
-        transition="background-color 120ms ease-out, color 120ms ease-out"
+        color={COLORS.iconColor}
+        transition="background-color 0.2s ease"
         sx={{
           '& svg': {
-            width: iconFontSize,
-            height: iconFontSize,
+            width: '24px',        // w-6
+            height: '24px',       // h-6
             strokeWidth: 2,
           },
         }}
@@ -209,45 +114,53 @@ export function StatisticsCard({
         {icon}
       </Flex>
 
-      {/* Title + Stats - pushed to bottom */}
-      <Box mt="auto">
-        <Text
-          fontSize="md"
-          fontWeight="semibold"
-          color="text.primary"
-          mb={2}
-          lineHeight="short"
-        >
-          {title}
-        </Text>
+      {/* Title */}
+      <Text
+        fontSize="1rem"           // text-base
+        fontWeight="semibold"
+        color={COLORS.titleColor}
+        mt={3}
+        lineHeight="1.4"
+      >
+        {title}
+      </Text>
 
-        {/* Stats row */}
-        <Flex gap={4}>
+      {/* Description or Stats */}
+      {hasStats ? (
+        <Box mt="auto" pt={2}>
           {stats.map((stat, index) => (
-            <Box key={index}>
+            <Flex
+              key={index}
+              justify="space-between"
+              align="center"
+              mb={index < stats.length - 1 ? 1 : 0}
+            >
+              <Text fontSize="0.75rem" color={COLORS.statLabelColor}>
+                {stat.label}
+              </Text>
               <Text
-                fontSize="2xl"
-                fontWeight="bold"
-                color={index === 0 ? 'text.primary' : TEAL_ACCENT}
-                lineHeight="1"
+                fontSize="0.875rem"
+                fontWeight="semibold"
+                color={COLORS.statValueColor}
               >
                 {stat.value}
               </Text>
-              <Text
-                fontSize="xs"
-                color="text.muted"
-                lineHeight="short"
-                mt={0.5}
-              >
-                {stat.label}
-              </Text>
-            </Box>
+            </Flex>
           ))}
-        </Flex>
-      </Box>
-    </Box>
+        </Box>
+      ) : description ? (
+        <Text
+          fontSize="0.875rem"     // text-sm
+          fontWeight="normal"
+          color={COLORS.descriptionColor}
+          mt={1}
+          lineHeight="1.4"
+        >
+          {description}
+        </Text>
+      ) : null}
+    </MotionBox>
   );
 }
 
 export default DashboardCard;
-
