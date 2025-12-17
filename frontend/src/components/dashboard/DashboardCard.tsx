@@ -73,8 +73,8 @@ export function DashboardCard({
       display="flex"
       flexDirection="column"
       cursor="pointer"
-      transition="all 0.2s ease"
       whileHover={{ y: -3 }}
+      style={{ transition: 'border-color 0.2s ease, box-shadow 0.2s ease' }}
       _hover={{
         borderColor: COLORS.cardBorderHover,
         boxShadow: `0 10px 15px -3px ${COLORS.cardShadowHover}, 0 4px 6px -4px ${COLORS.cardShadowHover}`,
