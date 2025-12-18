@@ -1,5 +1,6 @@
 /* =============================================
- * 🎨 PREMIUM ONYX — Global CSS
+ * 🎨 SMILECRM LIGHT THEME — Global CSS
+ * Medical SaaS with soft blue palette
  * ============================================= */
 
 :root {
@@ -9,15 +10,15 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   
-  /* Premium Onyx color variables */
-  --onyx-bg: #0B0B0D;
-  --onyx-surface: #131316;
-  --onyx-surface2: #1A1A1E;
-  --onyx-border: #26262C;
-  --onyx-accent: #B8A060;
-  --onyx-text: #F5F5F7;
-  --onyx-text2: #B0B0B8;
-  --onyx-muted: #707078;
+  /* Light theme color variables */
+  --app-bg: #F7FAFF;
+  --app-surface: #FFFFFF;
+  --app-surface2: #F1F5F9;
+  --app-border: #E6EEFF;
+  --app-primary: #2563EB;
+  --app-text: #0F172A;
+  --app-text2: #64748B;
+  --app-muted: #94A3B8;
   
   /* Telegram viewport height - will be set by JS */
   --app-height: 100vh;
@@ -37,7 +38,6 @@
 }
 
 html {
-  /* Ensure html takes full size */
   width: 100%;
   height: 100%;
   min-height: 100%;
@@ -48,17 +48,16 @@ body {
   margin: 0;
   padding: 0;
   
-  /* Premium Onyx dark background */
-  background-color: var(--onyx-bg);
-  background: linear-gradient(180deg, #0E0E10 0%, #0B0B0D 100%);
-  color: var(--onyx-text);
+  /* Light background */
+  background-color: var(--app-bg);
+  background: var(--app-bg);
+  color: var(--app-text);
   
   width: 100%;
   height: 100%;
   min-height: 100%;
   overflow: hidden;
   
-  /* Body line height */
   line-height: 1.55;
   
   /* Prevent pull-to-refresh on mobile */
@@ -82,18 +81,15 @@ body {
  * ============================================= */
 
 .chakra-portal {
-  /* pointer-events: none allows clicks to pass through the portal container */
-  /* Child elements (modals, tooltips) will set pointer-events: auto when needed */
   pointer-events: none;
 }
 
-/* Portal children (actual modals, overlays) should capture events */
 .chakra-portal > * {
   pointer-events: auto;
 }
 
 /* =============================================
- * Custom scrollbar styling
+ * Custom scrollbar styling (light theme)
  * ============================================= */
 
 ::-webkit-scrollbar {
@@ -102,32 +98,32 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--onyx-bg);
+  background: var(--app-bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--onyx-border);
+  background: var(--app-border);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #32323A;
+  background: #BFDBFE;
 }
 
 /* =============================================
- * Text selection
+ * Text selection (blue)
  * ============================================= */
 
 ::selection {
-  background: var(--onyx-accent);
-  color: var(--onyx-bg);
+  background: var(--app-primary);
+  color: white;
 }
 
 /* =============================================
- * Focus styles
+ * Focus styles (blue ring)
  * ============================================= */
 
 *:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(184, 160, 96, 0.4);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
 }

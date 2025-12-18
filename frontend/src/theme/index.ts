@@ -1,6 +1,6 @@
 // =============================================
-// 🎨 PREMIUM ONYX THEME
-// A sophisticated dark SaaS theme with desaturated gold accents
+// 🎨 SMILECRM LIGHT THEME
+// Medical SaaS with soft blue palette (Superdesign style)
 // =============================================
 
 import { extendTheme, type ThemeConfig } from '@chakra-ui/react'
@@ -23,11 +23,11 @@ import {
 import { components } from './components'
 
 // =============================================
-// 🌙 THEME CONFIGURATION
+// ☀️ THEME CONFIGURATION — LIGHT MODE ONLY
 // =============================================
 
 const config: ThemeConfig = {
-  initialColorMode: 'dark',
+  initialColorMode: 'light',
   useSystemColorMode: false,
 }
 
@@ -46,11 +46,11 @@ const styles = {
       textRendering: 'optimizeLegibility',
     },
     body: {
-      background: gradients.bgGradient,
-      lineHeight: 'tall',         // 1.55
+      background: 'bg.primary',
+      lineHeight: 'tall',
     },
     
-    // Custom scrollbar
+    // Custom scrollbar (light theme)
     '::-webkit-scrollbar': {
       width: '8px',
       height: '8px',
@@ -66,9 +66,9 @@ const styles = {
       bg: 'border.strong',
     },
     
-    // Text selection
+    // Text selection (blue)
     '::selection': {
-      bg: 'accent.500',
+      bg: 'primary.500',
       color: 'text.inverse',
     },
     
@@ -76,11 +76,6 @@ const styles = {
     '*:focus-visible': {
       outline: 'none',
       boxShadow: 'focusRing',
-    },
-    
-    // Smooth transitions for color scheme
-    '*': {
-      transition: 'background-color 0.2s ease, border-color 0.2s ease',
     },
   },
 }
@@ -91,23 +86,10 @@ const styles = {
 
 const semanticTokens = {
   colors: {
-    // Background semantic tokens
-    'chakra-body-bg': {
-      default: 'bg.primary',
-      _dark: 'bg.primary',
-    },
-    'chakra-body-text': {
-      default: 'text.primary',
-      _dark: 'text.primary',
-    },
-    'chakra-border-color': {
-      default: 'border.subtle',
-      _dark: 'border.subtle',
-    },
-    'chakra-placeholder-color': {
-      default: 'text.muted',
-      _dark: 'text.muted',
-    },
+    'chakra-body-bg': 'bg.primary',
+    'chakra-body-text': 'text.primary',
+    'chakra-border-color': 'border.subtle',
+    'chakra-placeholder-color': 'text.muted',
   },
 }
 
@@ -131,12 +113,12 @@ export const theme = extendTheme({
   semanticTokens,
 })
 
-// Re-export for backward compatibility
+// Alias for backward compatibility
 export const premiumTheme = theme
 
-// Export gradients for external component use
+// Export gradients for external use
 export { gradients }
 
-// Export foundations and components for customization
+// Export foundations and components
 export * from './foundations'
 export * from './components'

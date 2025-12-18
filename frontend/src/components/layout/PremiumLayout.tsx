@@ -21,15 +21,16 @@ export const PremiumLayout = ({
   showHeader = true,
   showBack = false,
   onBack,
-  background = 'gradient',
+  background = 'solid',
   safeAreaBottom = false,
   headerRightElement,
 }: PremiumLayoutProps) => {
+  // All backgrounds are light now
   const backgrounds = {
-    gradient: 'linear-gradient(180deg, #0E0E10 0%, #0B0B0D 100%)',
+    gradient: 'bg.primary',
     solid: 'bg.primary',
     light: 'bg.primary',
-    white: 'bg.primary',
+    white: 'bg.surface',
   }
 
   return (
@@ -52,7 +53,7 @@ export const PremiumLayout = ({
         />
       )}
 
-      {/* Main Content - Scrollable, full width on desktop */}
+      {/* Main Content */}
       <Box
         as="main"
         flex="1"
@@ -68,19 +69,10 @@ export const PremiumLayout = ({
         zIndex={1}
         pointerEvents="auto"
         css={{
-          '&::-webkit-scrollbar': {
-            width: '6px',
-          },
-          '&::-webkit-scrollbar-track': {
-            background: 'transparent',
-          },
-          '&::-webkit-scrollbar-thumb': {
-            background: 'rgba(255,255,255,0.15)',
-            borderRadius: '4px',
-          },
-          '&::-webkit-scrollbar-thumb:hover': {
-            background: 'rgba(255,255,255,0.25)',
-          },
+          '&::-webkit-scrollbar': { width: '6px' },
+          '&::-webkit-scrollbar-track': { background: 'transparent' },
+          '&::-webkit-scrollbar-thumb': { background: 'rgba(0,0,0,0.1)', borderRadius: '4px' },
+          '&::-webkit-scrollbar-thumb:hover': { background: 'rgba(0,0,0,0.2)' },
         }}
       >
         {children}

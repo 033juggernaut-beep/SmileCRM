@@ -34,18 +34,6 @@ export const PremiumHeader = ({
       bg="bg.surface"
       borderBottom="1px solid"
       borderColor="border.subtle"
-      backdropFilter="blur(12px)"
-      _before={{
-        content: '""',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        bg: 'linear-gradient(180deg, rgba(19, 19, 22, 0.95) 0%, rgba(19, 19, 22, 0.9) 100%)',
-        zIndex: -1,
-        pointerEvents: 'none',
-      }}
     >
       <Flex
         align="center"
@@ -67,9 +55,7 @@ export const PremiumHeader = ({
               size="sm"
               onClick={handleBack}
               borderRadius="lg"
-              _hover={{
-                bg: 'bg.hover',
-              }}
+              _hover={{ bg: 'bg.hover' }}
             />
           ) : (
             <Text fontSize="2xl" role="img" aria-label="SmileCRM">

@@ -33,7 +33,7 @@ export const PremiumCard = ({
       boxShadow: 'none',
     },
     glass: {
-      bg: 'rgba(19, 19, 22, 0.7)',
+      bg: 'rgba(255, 255, 255, 0.9)',
       borderWidth: '1px',
       borderColor: 'border.subtle',
       backdropFilter: 'blur(12px)',

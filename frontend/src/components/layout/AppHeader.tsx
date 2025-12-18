@@ -1,12 +1,6 @@
 /**
- * AppHeader - Main application header with language, notifications, and theme controls
- * 
- * Features:
- * - Fixed position at top
- * - Logo on left
- * - Language switcher (AM | RU | EN)
- * - Notifications bell (placeholder)
- * - Theme toggle (sun/moon)
+ * AppHeader - Application header for non-dashboard pages
+ * Light theme only (no dark mode toggle)
  */
 
 import {
@@ -16,13 +10,9 @@ import {
   Text,
   IconButton,
   Button,
-  useColorMode,
 } from '@chakra-ui/react'
-import { Bell, Sun, Moon } from 'lucide-react'
+import { Bell } from 'lucide-react'
 import { useLanguage, type Language } from '../../context/LanguageContext'
-
-// Teal accent for active state
-const TEAL_ACCENT = '#3B9B8C'
 
 const LANGUAGES: { code: Language; label: string }[] = [
   { code: 'am', label: 'AM' },
@@ -32,11 +22,6 @@ const LANGUAGES: { code: Language; label: string }[] = [
 
 export function AppHeader() {
   const { language, setLanguage } = useLanguage()
-  const { colorMode, toggleColorMode } = useColorMode()
-
-  const handleNotifications = () => {
-    console.log('notifications')
-  }
 
   return (
     <Box
@@ -83,19 +68,15 @@ export function AppHeader() {
                 variant="ghost"
                 fontSize="xs"
                 fontWeight={language === code ? 'bold' : 'medium'}
-                color={language === code ? TEAL_ACCENT : 'text.muted'}
-                bg={language === code ? 'rgba(59, 155, 140, 0.12)' : 'transparent'}
+                color={language === code ? 'primary.600' : 'text.muted'}
+                bg={language === code ? 'primary.50' : 'transparent'}
                 borderRadius="md"
                 minW="32px"
                 h="28px"
                 px={2}
                 onClick={() => setLanguage(code)}
-                _active={{
-                  bg: 'rgba(59, 155, 140, 0.2)',
-                }}
-                sx={{
-                  WebkitTapHighlightColor: 'transparent',
-                }}
+                _hover={{ bg: 'bg.hover' }}
+                sx={{ WebkitTapHighlightColor: 'transparent' }}
               >
                 {label}
               </Button>
@@ -110,32 +91,8 @@ export function AppHeader() {
             size="sm"
             color="text.muted"
             borderRadius="lg"
-            onClick={handleNotifications}
-            _active={{
-              color: 'text.primary',
-              bg: 'bg.surface2',
-            }}
-            sx={{
-              WebkitTapHighlightColor: 'transparent',
-            }}
-          />
-
-          {/* Theme Toggle */}
-          <IconButton
-            aria-label="Toggle theme"
-            icon={colorMode === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-            variant="ghost"
-            size="sm"
-            color="text.muted"
-            borderRadius="lg"
-            onClick={toggleColorMode}
-            _active={{
-              color: 'text.primary',
-              bg: 'bg.surface2',
-            }}
-            sx={{
-              WebkitTapHighlightColor: 'transparent',
-            }}
+            _hover={{ bg: 'bg.hover', color: 'text.primary' }}
+            sx={{ WebkitTapHighlightColor: 'transparent' }}
           />
         </HStack>
       </Flex>
