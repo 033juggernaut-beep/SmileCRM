@@ -30,13 +30,21 @@ export const HomePage = () => {
   ];
 
   return (
+    // Light theme isolator - covers any dark global/body backgrounds
     <Box
-      minH="100vh"
+      position="absolute"
+      inset={0}
       w="100%"
+      h="100%"
+      minH="var(--app-height, 100vh)"
       bg={T.pageBg}
       color={T.textTitle}
       display="flex"
       flexDirection="column"
+      overflowY="auto"
+      overflowX="hidden"
+      // Ensure this covers any inherited dark backgrounds
+      zIndex={1}
     >
       {/* Header */}
       <Header notificationCount={3} />

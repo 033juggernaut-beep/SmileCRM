@@ -4,7 +4,8 @@ import { useEffect } from 'react'
 import { AppHeader } from './layout/AppHeader'
 
 // Pages where AppHeader should be shown
-const PAGES_WITH_APP_HEADER = ['/home']
+// Note: /home now has its own light Header component, so we exclude it
+const PAGES_WITH_APP_HEADER: string[] = []
 
 export const AppLayout = () => {
   const location = useLocation()
