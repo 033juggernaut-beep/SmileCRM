@@ -1,39 +1,12 @@
 /**
- * DashboardCard - Superdesign Blue Theme (Light Mode Forced)
- * 
- * Features:
- * - Fixed height 180px
- * - White background, blue-100 border
- * - Blue shadow
- * - Icon box with blue-100 bg, blue-600 icon
- * - Hover: lift, border-blue-400, stronger shadow
- * - Stats variant with label/value rows
+ * DashboardCard - Superdesign exact copy
+ * White bg, blue-100 border, blue icons
+ * Using exact tokens from designTokens.ts
  */
 
 import type { ReactElement } from 'react';
 import { Box, Flex, Text } from '@chakra-ui/react';
-import { motion } from 'framer-motion';
-
-// =============================================
-// 🎨 LIGHT THEME COLORS (Superdesign Reference)
-// =============================================
-const COLORS = {
-  cardBg: '#ffffff',
-  cardBorder: '#dbeafe',          // blue-100
-  cardBorderHover: '#60a5fa',     // blue-400
-  cardShadow: 'rgba(239, 246, 255, 1)',     // blue-50
-  cardShadowHover: 'rgba(219, 234, 254, 1)', // blue-100
-  iconBg: '#dbeafe',              // blue-100
-  iconBgHover: '#bfdbfe',         // blue-200
-  iconColor: '#2563eb',           // blue-600
-  titleColor: '#1e293b',          // slate-800
-  descriptionColor: '#64748b',    // slate-500
-  statLabelColor: '#94a3b8',      // slate-400
-  statValueColor: '#2563eb',      // blue-600
-};
-
-// Motion wrapper for hover animation
-const MotionBox = motion.create(Box);
+import { DASHBOARD_TOKENS as T } from './designTokens';
 
 export interface StatItem {
   label: string;
@@ -58,36 +31,36 @@ export function DashboardCard({
   const hasStats = stats && stats.length > 0;
 
   return (
-    <MotionBox
+    <Box
       as="button"
       onClick={onClick}
       w="100%"
-      h="180px"                   // Fixed height
-      p={5}                       // p-5 = 20px
-      bg={COLORS.cardBg}
+      h={T.cardHeight}
+      p={T.cardPadding}
+      bg={T.cardBg}
       border="1px solid"
-      borderColor={COLORS.cardBorder}
-      borderRadius="12px"         // rounded-xl
-      boxShadow={`0 4px 6px -1px ${COLORS.cardShadow}, 0 2px 4px -2px ${COLORS.cardShadow}`}
+      borderColor={T.borderLight}
+      borderRadius={T.cardRadius}
+      boxShadow={T.shadowCard}
       textAlign="left"
       display="flex"
       flexDirection="column"
       cursor="pointer"
-      whileHover={{ y: -3 }}
-      style={{ transition: 'border-color 0.2s ease, box-shadow 0.2s ease' }}
+      style={{ transition: 'transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease' }}
       _hover={{
-        borderColor: COLORS.cardBorderHover,
-        boxShadow: `0 10px 15px -3px ${COLORS.cardShadowHover}, 0 4px 6px -4px ${COLORS.cardShadowHover}`,
+        transform: 'translateY(-3px)',
+        borderColor: T.borderHover,
+        boxShadow: T.shadowCardHover,
       }}
       _focusVisible={{
         outline: 'none',
-        boxShadow: `0 0 0 3px ${COLORS.iconColor}40`,
+        boxShadow: `0 0 0 3px ${T.iconColor}40`,
       }}
       sx={{
         WebkitTapHighlightColor: 'transparent',
         touchAction: 'manipulation',
         '&:hover .icon-box': {
-          bg: COLORS.iconBgHover,
+          bg: T.iconBoxBgHover,
         },
       }}
     >
@@ -96,17 +69,17 @@ export function DashboardCard({
         className="icon-box"
         align="center"
         justify="center"
-        w="40px"                  // w-10
-        h="40px"                  // h-10
-        bg={COLORS.iconBg}
-        borderRadius="8px"        // rounded-lg
+        w={T.iconBoxSize}
+        h={T.iconBoxSize}
+        bg={T.iconBoxBg}
+        borderRadius={T.iconBoxRadius}
         flexShrink={0}
-        color={COLORS.iconColor}
-        transition="background-color 0.2s ease"
+        color={T.iconColor}
+        style={{ transition: 'background-color 0.2s ease' }}
         sx={{
           '& svg': {
-            width: '24px',        // w-6
-            height: '24px',       // h-6
+            width: T.iconSize,
+            height: T.iconSize,
             strokeWidth: 2,
           },
         }}
@@ -116,10 +89,10 @@ export function DashboardCard({
 
       {/* Title */}
       <Text
-        fontSize="1rem"           // text-base
-        fontWeight="semibold"
-        color={COLORS.titleColor}
-        mt={3}
+        fontSize={T.fontBase}
+        fontWeight={T.weightSemibold}
+        color={T.textTitle}
+        mt="12px"
         lineHeight="1.4"
       >
         {title}
@@ -127,22 +100,18 @@ export function DashboardCard({
 
       {/* Description or Stats */}
       {hasStats ? (
-        <Box mt="auto" pt={2}>
+        <Box mt="auto" pt="8px">
           {stats.map((stat, index) => (
             <Flex
               key={index}
               justify="space-between"
               align="center"
-              mb={index < stats.length - 1 ? 1 : 0}
+              mb={index < stats.length - 1 ? '4px' : '0'}
             >
-              <Text fontSize="0.75rem" color={COLORS.statLabelColor}>
+              <Text fontSize={T.fontXs} color={T.textMuted}>
                 {stat.label}
               </Text>
-              <Text
-                fontSize="0.875rem"
-                fontWeight="semibold"
-                color={COLORS.statValueColor}
-              >
+              <Text fontSize={T.fontSm} fontWeight={T.weightSemibold} color={T.textAccent}>
                 {stat.value}
               </Text>
             </Flex>
@@ -150,16 +119,16 @@ export function DashboardCard({
         </Box>
       ) : description ? (
         <Text
-          fontSize="0.875rem"     // text-sm
-          fontWeight="normal"
-          color={COLORS.descriptionColor}
-          mt={1}
+          fontSize={T.fontSm}
+          fontWeight={T.weightNormal}
+          color={T.textBody}
+          mt="4px"
           lineHeight="1.4"
         >
           {description}
         </Text>
       ) : null}
-    </MotionBox>
+    </Box>
   );
 }
 

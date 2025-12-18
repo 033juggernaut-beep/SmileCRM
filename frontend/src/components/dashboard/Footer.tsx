@@ -1,23 +1,11 @@
 /**
- * Footer - Superdesign Blue Theme (Light Mode Forced)
- * 
- * Features:
- * - py-6 (24px)
- * - Top border blue-100/50
- * - Text xs, slate-400 with hover to slate-500
- * - Centered links with gap-6
+ * Footer - Superdesign exact copy
+ * Minimal links with hover underline
+ * Using exact tokens from designTokens.ts
  */
 
 import { Box, Flex, Text } from '@chakra-ui/react';
-
-// =============================================
-// 🎨 LIGHT THEME COLORS (Superdesign Reference)
-// =============================================
-const COLORS = {
-  borderColor: 'rgba(219, 234, 254, 0.5)', // blue-100/50
-  linkColor: '#94a3b8',                     // slate-400
-  linkHoverColor: '#64748b',                // slate-500
-};
+import { DASHBOARD_TOKENS as T } from './designTokens';
 
 interface FooterLink {
   label: string;
@@ -33,29 +21,30 @@ export function Footer({ links }: FooterProps) {
     <Box
       as="footer"
       w="100%"
-      py={6}
+      py={T.footerPaddingY}
       mt="auto"
       borderTop="1px solid"
-      borderColor={COLORS.borderColor}
+      borderColor={T.borderLightAlpha}
     >
       <Flex
+        as="nav"
         align="center"
         justify="center"
-        gap={6}
+        gap={T.gapFooterLinks}
         flexWrap="wrap"
-        px={4}
+        px={T.paddingPageX}
       >
         {links.map((link, index) => (
           <Box
             key={index}
             as="button"
             onClick={link.onClick}
-            fontSize="0.75rem"     // text-xs = 12px
-            fontWeight="normal"
-            color={COLORS.linkColor}
-            transition="color 0.2s ease"
+            fontSize={T.fontXs}
+            fontWeight={T.weightNormal}
+            color={T.textMuted}
+            style={{ transition: 'color 0.2s ease' }}
             _hover={{ 
-              color: COLORS.linkHoverColor,
+              color: T.textBody,
               textDecoration: 'underline',
               textUnderlineOffset: '2px',
             }}

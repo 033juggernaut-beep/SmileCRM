@@ -1,14 +1,16 @@
 /**
- * HomePage - SmileCRM Dashboard (Superdesign Blue Theme)
+ * HomePage - SmileCRM Dashboard
+ * Superdesign exact copy using DASHBOARD_TOKENS
  * 
- * FORCED LIGHT MODE - No global theme dependency
- * All styles hardcoded to match Superdesign reference exactly
+ * Structure: Header -> WelcomeBlock -> DashboardGrid -> Footer
+ * Forced light theme (pageBg overrides any global dark styles)
  */
 
 import { Box, Flex } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { Users, UserPlus, Megaphone, TrendingUp } from 'lucide-react';
 import {
+  DASHBOARD_TOKENS as T,
   Header,
   WelcomeBlock,
   DashboardGrid,
@@ -17,19 +19,10 @@ import {
 } from '../components/dashboard';
 import { useLanguage } from '../context/LanguageContext';
 
-// =============================================
-// 🎨 LIGHT THEME COLORS (Superdesign Reference)
-// =============================================
-const COLORS = {
-  // Page background: gradient from slate-50 via blue-50/30 to sky-50/50
-  pageBg: 'linear-gradient(135deg, #f8fafc 0%, rgba(239, 246, 255, 0.3) 50%, rgba(240, 249, 255, 0.5) 100%)',
-};
-
 export const HomePage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
 
-  // Footer links configuration
   const footerLinks = [
     { label: t('home.subscription'), onClick: () => navigate('/subscription') },
     { label: t('home.help'), onClick: () => navigate('/help') },
@@ -40,9 +33,10 @@ export const HomePage = () => {
     <Box
       minH="100vh"
       w="100%"
-      bg={COLORS.pageBg}
-      // Force light mode text color
-      color="#1e293b"
+      bg={T.pageBg}
+      color={T.textTitle}
+      display="flex"
+      flexDirection="column"
     >
       {/* Header */}
       <Header notificationCount={3} />
@@ -54,9 +48,9 @@ export const HomePage = () => {
         align="center"
         justify="flex-start"
         flex="1"
-        px={4}
-        py={{ base: 8, md: 12 }}            // py-8 md:py-12
-        gap={{ base: 8, md: 10 }}           // gap-8 md:gap-10
+        px={T.paddingPageX}
+        py={{ base: T.paddingPageY, md: T.paddingPageYMd }}
+        gap={{ base: T.gapMain, md: T.gapMainMd }}
       >
         {/* Welcome Block */}
         <WelcomeBlock

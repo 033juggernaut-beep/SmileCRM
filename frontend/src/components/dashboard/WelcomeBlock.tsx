@@ -1,30 +1,13 @@
 /**
- * WelcomeBlock - Superdesign Blue Theme (Light Mode Forced)
- * 
- * Features:
- * - Gradient background: blue-50 to sky-50
- * - Rounded 2xl (16px)
- * - Soft blue shadow
- * - Large centered title, gray subtitle
- * - Fade-in animation
+ * WelcomeBlock - Superdesign exact copy
+ * Flat blue-50 background (no gradient)
+ * Using exact tokens from designTokens.ts
  */
 
 import { Box, Text } from '@chakra-ui/react';
 import { keyframes } from '@emotion/react';
+import { DASHBOARD_TOKENS as T } from './designTokens';
 
-// =============================================
-// 🎨 LIGHT THEME COLORS (Superdesign Reference)
-// =============================================
-const COLORS = {
-  // Gradient: from-blue-50 to-sky-50
-  gradientFrom: '#eff6ff',        // blue-50
-  gradientTo: '#f0f9ff',          // sky-50
-  shadow: 'rgba(219, 234, 254, 0.5)', // blue-100/50
-  titleColor: '#1e293b',          // slate-800
-  subtitleColor: '#64748b',       // slate-500
-};
-
-// Fade-in animation
 const fadeSlideIn = keyframes`
   from {
     opacity: 0;
@@ -45,31 +28,31 @@ export function WelcomeBlock({ title, subtitle }: WelcomeBlockProps) {
   return (
     <Box
       w="100%"
-      maxW="768px"              // max-w-3xl = 48rem
+      maxW={T.welcomeMaxW}
       mx="auto"
-      px={8}                    // px-8 = 32px
-      py={10}                   // py-10 = 40px
-      borderRadius="16px"       // rounded-2xl
-      bg={`linear-gradient(135deg, ${COLORS.gradientFrom} 0%, ${COLORS.gradientTo} 100%)`}
-      boxShadow={`0 10px 15px -3px ${COLORS.shadow}, 0 4px 6px -4px ${COLORS.shadow}`}
+      px={T.welcomePaddingX}
+      py={T.welcomePaddingY}
+      bg={T.welcomeBg}
+      borderRadius={T.welcomeRadius}
+      boxShadow={T.shadowWelcome}
       textAlign="center"
       animation={`${fadeSlideIn} 0.5s ease-out`}
     >
       <Text
-        fontSize={{ base: '1.875rem', md: '2.25rem' }}  // text-3xl / text-4xl
-        fontWeight="semibold"
-        letterSpacing="-0.025em"                         // tracking-tight
-        color={COLORS.titleColor}
+        fontSize={{ base: T.font3xl, md: T.font4xl }}
+        fontWeight={T.weightSemibold}
+        letterSpacing={T.trackingTight}
+        color={T.textTitle}
       >
         {title}
       </Text>
 
       {subtitle && (
         <Text
-          mt={3}
-          fontSize={{ base: '1rem', md: '1.125rem' }}   // text-base / text-lg
-          fontWeight="normal"
-          color={COLORS.subtitleColor}
+          mt="12px"
+          fontSize={{ base: T.fontBase, md: T.fontLg }}
+          fontWeight={T.weightNormal}
+          color={T.textBody}
         >
           {subtitle}
         </Text>

@@ -1,73 +1,66 @@
 /**
  * StatsPage - Statistics placeholder
- * Will be implemented with actual analytics
+ * Uses DASHBOARD_TOKENS for consistent styling
  */
 
 import { Box, Container, Heading, Text, Button } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, TrendingUp } from 'lucide-react';
-
-// Light theme colors (consistent with HomePage)
-const COLORS = {
-  pageBg: '#f8fafc',
-  cardBg: '#ffffff',
-  cardBorder: '#dbeafe',
-  titleColor: '#1e293b',
-  textColor: '#64748b',
-  iconColor: '#2563eb',
-};
+import { DASHBOARD_TOKENS as T } from '../components/dashboard';
 
 export const StatsPage = () => {
   const navigate = useNavigate();
 
   return (
-    <Box minH="100vh" bg={COLORS.pageBg} py={8}>
-      <Container maxW="768px">
+    <Box minH="100vh" bg={T.pageBg} py={T.paddingPageY}>
+      <Container maxW={T.containerMaxW}>
         {/* Back Button */}
         <Button
           variant="ghost"
           leftIcon={<ArrowLeft size={20} />}
           onClick={() => navigate('/home')}
-          mb={6}
-          color={COLORS.textColor}
-          _hover={{ color: COLORS.titleColor }}
+          mb="24px"
+          color={T.textBody}
+          _hover={{ color: T.textTitle }}
         >
           Назад
         </Button>
 
         {/* Placeholder Card */}
         <Box
-          bg={COLORS.cardBg}
+          bg={T.cardBg}
           border="1px solid"
-          borderColor={COLORS.cardBorder}
-          borderRadius="16px"
-          p={8}
+          borderColor={T.borderLight}
+          borderRadius={T.welcomeRadius}
+          boxShadow={T.shadowWelcome}
+          p={T.welcomePaddingX}
           textAlign="center"
         >
           <Box
             w="64px"
             h="64px"
-            bg="#dbeafe"
-            borderRadius="16px"
+            bg={T.iconBoxBg}
+            borderRadius={T.welcomeRadius}
             display="flex"
             alignItems="center"
             justifyContent="center"
             mx="auto"
-            mb={4}
+            mb="16px"
           >
-            <TrendingUp size={32} color={COLORS.iconColor} />
+            <TrendingUp size={32} color={T.iconColor} />
           </Box>
 
           <Heading
             as="h1"
-            size="lg"
-            color={COLORS.titleColor}
-            mb={2}
+            fontSize={T.font2xl}
+            fontWeight={T.weightSemibold}
+            color={T.textTitle}
+            mb="8px"
           >
             Статистика
           </Heading>
 
-          <Text color={COLORS.textColor}>
+          <Text color={T.textBody} fontSize={T.fontBase}>
             Раздел аналитики находится в разработке.
             <br />
             Здесь будет отображаться статистика вашей практики.
