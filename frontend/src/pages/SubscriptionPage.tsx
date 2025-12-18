@@ -18,13 +18,12 @@ import type { PaymentProvider, SubscriptionSnapshot } from '../api/subscription'
 import { PremiumLayout } from '../components/layout/PremiumLayout'
 import { PremiumCard } from '../components/premium/PremiumCard'
 import { PremiumButton } from '../components/premium/PremiumButton'
-import { gradients } from '../theme'
 import { useLanguage } from '../context/LanguageContext'
 
 const STATUS_COLORS: Record<SubscriptionSnapshot['status'], string> = {
-  trial: 'teal.600',
-  active: 'green.600',
-  expired: 'red.500',
+  trial: 'accent.600',
+  active: 'success.600',
+  expired: 'error.500',
 }
 
 const formatDate = (value: string | null): string => {
@@ -148,13 +147,13 @@ export const SubscriptionPage = () => {
       title={t('subscription.title')} 
       showBack={true}
       onBack={() => navigate('/home')}
-      background="gradient"
+      background="solid"
     >
       <Stack spacing={5}>
         {/* Premium Banner */}
         <Box
-          background={gradients.navy}
-          borderRadius="md"
+          bg="primary.600"
+          borderRadius="xl"
           p={6}
           position="relative"
           overflow="hidden"
@@ -167,7 +166,7 @@ export const SubscriptionPage = () => {
             w="120px"
             h="120px"
             borderRadius="full"
-            bg="whiteAlpha.100"
+            bg="whiteAlpha.200"
             filter="blur(30px)"
           />
           
@@ -205,7 +204,7 @@ export const SubscriptionPage = () => {
               {isLoading ? (
                 <Skeleton height="24px" width="180px" />
               ) : (
-                <Text fontWeight="semibold" fontSize="lg" color="text.main">
+                <Text fontWeight="semibold" fontSize="lg" color="text.primary">
                   {formattedDate}
                 </Text>
               )}
@@ -231,7 +230,7 @@ export const SubscriptionPage = () => {
         <PremiumCard variant="elevated">
           <Stack spacing={4}>
             <Stack spacing={1}>
-              <Heading size="md" color="text.main">
+              <Heading size="md" color="text.primary">
                 {t('subscription.paymentOptions')}
               </Heading>
               <Text fontSize="sm" color="text.muted">

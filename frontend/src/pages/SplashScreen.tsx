@@ -1,7 +1,6 @@
 import { Box, Flex, Heading, Spinner, Text } from '@chakra-ui/react'
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { gradients } from '../theme'
 
 export const SplashScreen = () => {
   const navigate = useNavigate()
@@ -21,7 +20,7 @@ export const SplashScreen = () => {
       align="center"
       justify="center"
       minH="100vh"
-      background={gradients.navy}
+      bg="primary.600"
       position="relative"
       overflow="hidden"
     >
@@ -33,7 +32,7 @@ export const SplashScreen = () => {
         w="300px"
         h="300px"
         borderRadius="full"
-        bg="whiteAlpha.100"
+        bg="whiteAlpha.200"
         filter="blur(60px)"
       />
       <Box
@@ -43,7 +42,7 @@ export const SplashScreen = () => {
         w="250px"
         h="250px"
         borderRadius="full"
-        bg="whiteAlpha.100"
+        bg="whiteAlpha.200"
         filter="blur(50px)"
       />
 
@@ -108,4 +107,3 @@ export const SplashScreen = () => {
     </Flex>
   )
 }
-
