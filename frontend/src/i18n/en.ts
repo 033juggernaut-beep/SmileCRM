@@ -342,6 +342,113 @@ const en = {
     vip: '🔥 VIP',
     vipBadge: '🔥 VIP',
   },
+
+  // Patient Card (Superdesign reference)
+  patientCard: {
+    // Diagnosis section
+    diagnosis: 'Diagnosis',
+    diagnosisPlaceholder: 'Enter patient diagnosis...',
+    diagnosisEmpty: 'Diagnosis not specified',
+    hasChanges: 'Has changes',
+    saving: 'Saving...',
+    save: 'Save',
+    saveNotes: 'Save',
+    saveMedications: 'Save',
+
+    // Visits section
+    visits: 'Visits',
+    newVisit: 'New visit',
+    noVisits: 'No visits yet',
+    addFirstVisit: 'Add first visit',
+    editVisit: 'Edit visit',
+    visitDate: 'Visit date',
+    description: 'Description',
+    visitNotesPlaceholder: 'Visit description...',
+    nextVisitDate: 'Next visit',
+    nextVisit: 'Next visit',
+
+    // Files section
+    files: 'Files',
+    addFile: 'Add',
+    noFiles: 'No files added',
+
+    // Medications section
+    medications: 'Prescribed medications',
+    addMedication: 'Add',
+    noMedications: 'No medications prescribed',
+
+    // Notes section
+    doctorNotes: 'Doctor notes',
+    notesPlaceholder: 'Add notes about the patient...',
+    notesEmpty: 'No notes added',
+
+    // Marketing section
+    marketing: {
+      title: 'Marketing',
+      hint: 'Personalized messages for the patient',
+      aiAssistant: 'AI Assistant',
+      aiHint: 'Generate personalized messages for the patient',
+      birthday: 'Birthday greeting',
+      reminder: 'Visit reminder',
+      discount: 'Discount / offer',
+      recommendation: 'Post-treatment recommendation',
+      birthdayTitle: 'Birthday greeting',
+      reminderTitle: 'Visit reminder',
+      discountTitle: 'Discount / offer',
+      recommendationTitle: 'Post-treatment recommendation',
+      dearPatient: 'Dear',
+      birthdayMessage: 'Happy Birthday!\n\nWe wish you good health, great mood and a beautiful smile! In honor of your special day, we are pleased to offer you a 15% discount on all clinic services during this month.',
+      reminderMessage: 'This is a reminder that it\'s time for your scheduled check-up.\n\nRegular visits to the dentist help maintain dental health and prevent disease development. We recommend scheduling an appointment at your convenience.',
+      discountMessage: 'We are pleased to announce a special offer for our patients!\n\nThis month, enjoy a 20% discount on professional dental hygiene. It\'s a great opportunity to take care of your dental health.',
+      recommendationMessage: 'Thank you for visiting our clinic.\n\nTo maintain the results of your treatment, we recommend:\n• Avoid eating for 2 hours\n• Avoid hard foods for the first day\n• Take painkillers if needed\n\nIf you have any questions, please contact us.',
+      clinicSignature: 'With care,\nSmileCRM Clinic',
+      regenerate: 'Regenerate',
+      copy: 'Copy text',
+      copied: 'Copied',
+      deliveryHint: 'Message can be sent via WhatsApp / Telegram',
+    },
+
+    // Finance section
+    finance: {
+      title: 'Finance',
+      totalCost: 'Total treatment cost',
+      editCost: 'Edit cost',
+      history: 'Payment history',
+      noPayments: 'No payment records',
+      addPayment: 'Add payment',
+      addFirstPayment: 'Add first payment',
+      editPayment: 'Edit payment',
+      deleteConfirm: 'Delete payment?',
+      deleteWarning: 'This action cannot be undone. The payment will be removed from history.',
+      paymentAdded: 'Payment added',
+      paymentDeleted: 'Payment deleted',
+      paid: 'Paid',
+      remaining: 'Remaining',
+      date: 'Date',
+      amount: 'Amount',
+      comment: 'Comment',
+      commentPlaceholder: 'E.g.: Professional cleaning',
+      add: 'Add',
+    },
+
+    // AI Assistant
+    ai: {
+      title: 'AI Assistant',
+      voice: 'Voice',
+      text: 'Text',
+      placeholder: 'Enter command...',
+      listening: 'Listening...',
+      helpWith: 'Help with:',
+      diagnosis: 'Diagnosis',
+      diagnosisDesc: 'Fill in diagnosis',
+      visits: 'Visits',
+      visitsDesc: 'Add visits',
+      finance: 'Finance',
+      financeDesc: 'Update payments',
+      marketing: 'Marketing',
+      marketingDesc: 'Generate texts',
+    },
+  },
 } as const
 
 export default en

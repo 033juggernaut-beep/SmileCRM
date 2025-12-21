@@ -343,6 +343,113 @@ const am = {
     vip: '🔥 VIP',
     vipBadge: '🔥 VIP',
   },
+
+  // Patient Card (Superdesign reference)
+  patientCard: {
+    // Diagnosis section
+    diagnosis: 'Axtoroshuм',
+    diagnosisPlaceholder: 'Mutqagreq pacienti axtoroshume...',
+    diagnosisEmpty: 'Axtoroshuмe nshvac che',
+    hasChanges: 'Kan popokhutуunner',
+    saving: 'Pahpanuм e...',
+    save: 'Pahpanel',
+    saveNotes: 'Pahpanel',
+    saveMedications: 'Pahpanel',
+
+    // Visits section
+    visits: 'Vizitner',
+    newVisit: 'Nor vizit',
+    noVisits: 'Vizitner derevs chkan',
+    addFirstVisit: 'Avelacnel arajin vizite',
+    editVisit: 'Xmbagrel vizite',
+    visitDate: 'Viziti amativ',
+    description: 'Nkaragrutyun',
+    visitNotesPlaceholder: 'Viziti nkaragrutyun...',
+    nextVisitDate: 'Hajord vizit',
+    nextVisit: 'Hajord vizit',
+
+    // Files section
+    files: 'Faуler',
+    addFile: 'Avelacnel',
+    noFiles: 'Faуler chen avelacvel',
+
+    // Medications section
+    medications: 'Nshanakvac medikamentner',
+    addMedication: 'Avelacnel',
+    noMedications: 'Medikamentner chen nshanakvac',
+
+    // Notes section
+    doctorNotes: 'Bjshki notaner',
+    notesPlaceholder: 'Avelacreq notaner pacienti masin...',
+    notesEmpty: 'Notaner chen avelacvel',
+
+    // Marketing section
+    marketing: {
+      title: 'Marqueting',
+      hint: 'Anhatakan haxordagrutyunner pacienti hamar',
+      aiAssistant: 'AI օgnakan',
+      aiHint: 'Generacnel anhatakan haxordagrutyunner pacienti hamar',
+      birthday: 'Cnndan shnorhavor',
+      reminder: 'Viziti hishecum',
+      discount: 'Akcia / zexch',
+      recommendation: 'Bujumuc heto xorurd',
+      birthdayTitle: 'Cnndan shnorhavoranq',
+      reminderTitle: 'Viziti hishecum',
+      discountTitle: 'Akcia / zexch',
+      recommendationTitle: 'Bujumuc heto xorurd',
+      dearPatient: 'Haгeli',
+      birthdayMessage: 'Shnorhavoruм enq Cer cnndan orvа!\n\nMaхtuм enq Cez lav aroхjutyun, lav tրаmаdrutуun ev geхecik jpait! Cer tоnаkаn artin menq urakh enq arаjarkel 15% zеxch klиnikaуi boлоr carayutyunneри hamar amsu entacquм.',
+      reminderMessage: 'Hishecnum enq, or jamаnakn e planауin stugman hamar.\n\nKаnonаvor aуcеlutyunnerе atamnabujhin ognum en paуhpanel atamneri aroхjutyune. Xorhurд enq taиs grels harmar jаmаnakоuм.',
+      discountMessage: 'Urakh enq hауtnел special arаjarke mer pacientneri hamar!\n\nАys aмsva gorcuм e 20% zexch professional atamnaуin hиgienaуi vra. Sa haнdиsаvor nrapаstutуun e hetevelu cer atamnеri arохjutуan.',
+      recommendationMessage: 'Shnorhakalutyun mer klиnиkan aуcelelu hamar.\n\nBujmаn arjуunqnere amrаcnelu hаmаr xorhuрd enq:\n• Зeрj paheq utеluц 2 ժам\n• Xusаfeq khosht uteliqic arajin ore\n• Anհraжeshtutуan depquм unеceq cevazрkиch\n\nНарcer unenak -- kapveq mezи.',
+      clinicSignature: 'Srtacaнc hogаtаrutуamb,\nSmileCRM klinika',
+      regenerate: 'Generacnel noric',
+      copy: 'Patchenel tekste',
+      copied: 'Patchenvac e',
+      deliveryHint: 'Haxordagrutyune karox eq uxarkel WhatsApp / Telegram micоcov',
+    },
+
+    // Finance section
+    finance: {
+      title: 'Finansner',
+      totalCost: 'Bujman endhanur arjeq',
+      editCost: 'Xmbagrel arjeqe',
+      history: 'Vjarumneri patmutyun',
+      noPayments: 'Vjarumneri graruмner chkan',
+      addPayment: 'Avelacnel vjarum',
+      addFirstPayment: 'Avelacnel arajin vjarume',
+      editPayment: 'Xmbagrel vjarume',
+      deleteConfirm: 'Jnjel vjarume?',
+      deleteWarning: 'Ays gorcoxutyune hnaravor che chexarkel. Vjarume kjnjvi patmutyunic.',
+      paymentAdded: 'Vjarume avelacvac e',
+      paymentDeleted: 'Vjarume jnjvac e',
+      paid: 'Vjarvac',
+      remaining: 'Mnacord',
+      date: 'Amativ',
+      amount: 'Gumar',
+      comment: 'Meknabanutуun',
+      commentPlaceholder: 'Orinak: Professional maqrum',
+      add: 'Avelacnel',
+    },
+
+    // AI Assistant
+    ai: {
+      title: 'AI Ognaкan',
+      voice: 'Dzaуn',
+      text: 'Tekst',
+      placeholder: 'Mutqagreq hramane...',
+      listening: 'Lsum eм...',
+      helpWith: 'Oгnutуun:',
+      diagnosis: 'Axtoroshuм',
+      diagnosisDesc: 'Lracnel axtoroshuмe',
+      visits: 'Vizitner',
+      visitsDesc: 'Avelacnel vizitner',
+      finance: 'Finansner',
+      financeDesc: 'Tarmacnel vjarumner',
+      marketing: 'Marqueting',
+      marketingDesc: 'Generacnel tekster',
+    },
+  },
 } as const
 
 export default am
