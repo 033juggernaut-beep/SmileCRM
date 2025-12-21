@@ -1,18 +1,23 @@
 /**
  * AppHeader - Application header for non-dashboard pages
- * Light theme only (no dark mode toggle)
+ * Uses NotificationDropdown for notifications
  */
 
+import { useState, useCallback } from 'react'
 import {
   Box,
   Flex,
   HStack,
   Text,
-  IconButton,
   Button,
 } from '@chakra-ui/react'
-import { Bell } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useLanguage, type Language } from '../../context/LanguageContext'
+import {
+  NotificationDropdown,
+  mockNotifications,
+  type Notification,
+} from '../notifications'
 
 const LANGUAGES: { code: Language; label: string }[] = [
   { code: 'am', label: 'AM' },
@@ -22,6 +27,29 @@ const LANGUAGES: { code: Language; label: string }[] = [
 
 export function AppHeader() {
   const { language, setLanguage } = useLanguage()
+  const navigate = useNavigate()
+
+  // Notifications state - ready for real API integration
+  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications)
+
+  const handleNotificationClick = useCallback((notification: Notification) => {
+    // Mark as read
+    setNotifications((prev) =>
+      prev.map((n) =>
+        n.id === notification.id ? { ...n, read: true } : n
+      )
+    )
+    // Navigate if has target path
+    if (notification.targetPath) {
+      navigate(notification.targetPath)
+    }
+  }, [navigate])
+
+  const handleMarkAllRead = useCallback(() => {
+    setNotifications((prev) =>
+      prev.map((n) => ({ ...n, read: true }))
+    )
+  }, [])
 
   return (
     <Box
@@ -83,16 +111,11 @@ export function AppHeader() {
             ))}
           </HStack>
 
-          {/* Notifications */}
-          <IconButton
-            aria-label="Notifications"
-            icon={<Bell size={20} />}
-            variant="ghost"
-            size="sm"
-            color="text.muted"
-            borderRadius="lg"
-            _hover={{ bg: 'bg.hover', color: 'text.primary' }}
-            sx={{ WebkitTapHighlightColor: 'transparent' }}
+          {/* Notifications Dropdown */}
+          <NotificationDropdown
+            notifications={notifications}
+            onNotificationClick={handleNotificationClick}
+            onMarkAllRead={handleMarkAllRead}
           />
         </HStack>
       </Flex>

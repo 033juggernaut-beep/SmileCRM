@@ -5,21 +5,48 @@
  * Dark: bg-slate-900/80, border-slate-700/50
  */
 
+import { useState, useCallback } from 'react';
 import { Box, Flex, Text, useColorMode } from '@chakra-ui/react';
-import { Bell, Sun, Moon } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
 import { ToothLogo } from './ToothLogo';
 import { useLanguage } from '../../context/LanguageContext';
+import { useNavigate } from 'react-router-dom';
+import {
+  NotificationDropdown,
+  mockNotifications,
+  type Notification,
+} from '../notifications';
 
 const LANGS = ['AM', 'RU', 'EN'] as const;
 
-interface HeaderProps {
-  notificationCount?: number;
-}
-
-export function Header({ notificationCount = 0 }: HeaderProps) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function Header(_props?: { notificationCount?: number }) {
   const { language, setLanguage } = useLanguage();
   const { colorMode, toggleColorMode } = useColorMode();
+  const navigate = useNavigate();
   const isDark = colorMode === 'dark';
+
+  // Notifications state - ready for real API integration
+  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+
+  const handleNotificationClick = useCallback((notification: Notification) => {
+    // Mark as read
+    setNotifications((prev) =>
+      prev.map((n) =>
+        n.id === notification.id ? { ...n, read: true } : n
+      )
+    );
+    // Navigate if has target path
+    if (notification.targetPath) {
+      navigate(notification.targetPath);
+    }
+  }, [navigate]);
+
+  const handleMarkAllRead = useCallback(() => {
+    setNotifications((prev) =>
+      prev.map((n) => ({ ...n, read: true }))
+    );
+  }, []);
 
   // Exact colors from reference
   const headerBg = isDark ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.9)';
@@ -83,27 +110,12 @@ export function Header({ notificationCount = 0 }: HeaderProps) {
             ))}
           </Flex>
 
-          {/* Notification Bell - w-5 h-5 */}
-          <Box position="relative">
-            <Bell size={20} color={iconColor} />
-            {notificationCount > 0 && (
-              <Flex
-                position="absolute"
-                top="-6px"
-                right="-6px"
-                w="16px" // w-4
-                h="16px" // h-4
-                bg="#3B82F6" // blue-500
-                borderRadius="full"
-                align="center"
-                justify="center"
-              >
-                <Text fontSize="10px" fontWeight="semibold" color="white">
-                  {notificationCount}
-                </Text>
-              </Flex>
-            )}
-          </Box>
+          {/* Notification Dropdown */}
+          <NotificationDropdown
+            notifications={notifications}
+            onNotificationClick={handleNotificationClick}
+            onMarkAllRead={handleMarkAllRead}
+          />
 
           {/* Theme Toggle - w-5 h-5 */}
           <Box
