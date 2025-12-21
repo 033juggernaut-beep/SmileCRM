@@ -1,69 +1,84 @@
 /**
  * StatsPage - Statistics placeholder
- * Uses DASHBOARD_TOKENS for consistent styling
+ * Uses Chakra UI colorMode for dark/light theme
  */
 
-import { Box, Container, Heading, Text, Button } from '@chakra-ui/react';
+import { Box, Container, Heading, Text, Button, useColorMode } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, TrendingUp } from 'lucide-react';
-import { DASHBOARD_TOKENS as T } from '../components/dashboard';
+import { useLanguage } from '../context/LanguageContext';
 
 export const StatsPage = () => {
   const navigate = useNavigate();
+  const { colorMode } = useColorMode();
+  const { t } = useLanguage();
+  const isDark = colorMode === 'dark';
+
+  // Colors based on colorMode
+  const pageBg = isDark 
+    ? '#0F172A'
+    : 'linear-gradient(to bottom right, #F8FAFC, rgba(239, 246, 255, 0.3), rgba(240, 249, 255, 0.5))';
+  const cardBg = isDark ? 'rgba(30, 41, 59, 0.7)' : 'white';
+  const borderColor = isDark ? 'rgba(51, 65, 85, 0.5)' : '#DBEAFE';
+  const iconBoxBg = isDark ? 'rgba(59, 130, 246, 0.15)' : '#DBEAFE';
+  const iconColor = isDark ? '#60A5FA' : '#2563EB';
+  const titleColor = isDark ? 'white' : '#1E293B';
+  const bodyColor = isDark ? '#94A3B8' : '#64748B';
+  const shadow = isDark
+    ? '0 10px 15px -3px rgba(15, 23, 42, 0.3), 0 4px 6px -4px rgba(15, 23, 42, 0.3)'
+    : '0 10px 15px -3px rgba(219, 234, 254, 0.5), 0 4px 6px -4px rgba(219, 234, 254, 0.5)';
 
   return (
-    <Box minH="100vh" bg={T.pageBg} py={T.paddingPageY}>
-      <Container maxW={T.containerMaxW}>
+    <Box minH="100vh" bg={pageBg} py="32px">
+      <Container maxW="768px">
         {/* Back Button */}
         <Button
           variant="ghost"
           leftIcon={<ArrowLeft size={20} />}
           onClick={() => navigate('/home')}
           mb="24px"
-          color={T.textBody}
-          _hover={{ color: T.textTitle }}
+          color={bodyColor}
+          _hover={{ color: titleColor }}
         >
-          Назад
+          {t('common.back')}
         </Button>
 
         {/* Placeholder Card */}
         <Box
-          bg={T.cardBg}
+          bg={cardBg}
           border="1px solid"
-          borderColor={T.borderLight}
-          borderRadius={T.welcomeRadius}
-          boxShadow={T.shadowWelcome}
-          p={T.welcomePaddingX}
+          borderColor={borderColor}
+          borderRadius="2xl"
+          boxShadow={shadow}
+          p="32px"
           textAlign="center"
         >
           <Box
             w="64px"
             h="64px"
-            bg={T.iconBoxBg}
-            borderRadius={T.welcomeRadius}
+            bg={iconBoxBg}
+            borderRadius="2xl"
             display="flex"
             alignItems="center"
             justifyContent="center"
             mx="auto"
             mb="16px"
           >
-            <TrendingUp size={32} color={T.iconColor} />
+            <TrendingUp size={32} color={iconColor} />
           </Box>
 
           <Heading
             as="h1"
-            fontSize={T.font2xl}
-            fontWeight={T.weightSemibold}
-            color={T.textTitle}
+            fontSize="1.5rem"
+            fontWeight="semibold"
+            color={titleColor}
             mb="8px"
           >
-            Статистика
+            {t('home.statistics')}
           </Heading>
 
-          <Text color={T.textBody} fontSize={T.fontBase}>
-            Раздел аналитики находится в разработке.
-            <br />
-            Здесь будет отображаться статистика вашей практики.
+          <Text color={bodyColor} fontSize="md">
+            {t('stats.placeholder')}
           </Text>
         </Box>
       </Container>

@@ -1,4 +1,4 @@
-import { Box, type BoxProps } from '@chakra-ui/react'
+import { Box, type BoxProps, useColorMode } from '@chakra-ui/react'
 import { type ReactNode } from 'react'
 
 interface PremiumCardProps extends BoxProps {
@@ -13,6 +13,9 @@ export const PremiumCard = ({
   isHoverable = false,
   ...props 
 }: PremiumCardProps) => {
+  const { colorMode } = useColorMode()
+  const isDark = colorMode === 'dark'
+
   const variants = {
     default: {
       bg: 'bg.surface',
@@ -33,7 +36,7 @@ export const PremiumCard = ({
       boxShadow: 'none',
     },
     glass: {
-      bg: 'rgba(255, 255, 255, 0.9)',
+      bg: isDark ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
       borderWidth: '1px',
       borderColor: 'border.subtle',
       backdropFilter: 'blur(12px)',

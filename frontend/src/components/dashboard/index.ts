@@ -1,14 +1,10 @@
 /**
- * Dashboard Components (Superdesign exact copy)
- * All components use DASHBOARD_TOKENS from designTokens.ts
+ * Dashboard Components - Exact match to Superdesign reference
  */
-
-// Design tokens
-export { DASHBOARD_TOKENS } from './designTokens';
-export type { DashboardTokens } from './designTokens';
 
 // Icons
 export { ToothLogo } from './ToothLogo';
+export { BackgroundPattern } from './BackgroundPattern';
 
 // Layout
 export { Header } from './Header';

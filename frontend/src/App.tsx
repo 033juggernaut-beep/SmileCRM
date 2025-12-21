@@ -18,10 +18,10 @@ const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage').then(m 
 const MarketingPage = lazy(() => import('./pages/MarketingPage').then(m => ({ default: m.MarketingPage })))
 const StatsPage = lazy(() => import('./pages/StatsPage').then(m => ({ default: m.StatsPage })))
 
-// Loading fallback for lazy routes (light theme)
+// Loading fallback for lazy routes (supports dark mode via CSS var)
 const PageLoader = () => (
-  <Center h="100vh" bg="#F7FAFF">
-    <Spinner size="xl" color="#2563EB" thickness="4px" />
+  <Center h="100vh" bg="var(--app-bg, #F7FAFF)">
+    <Spinner size="xl" color="var(--app-primary, #2563EB)" thickness="4px" />
   </Center>
 )
 

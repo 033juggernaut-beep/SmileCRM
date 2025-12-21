@@ -1,13 +1,12 @@
 /**
- * DashboardGrid - Superdesign exact copy
- * 2x2 grid with stagger animation
- * Using exact tokens from designTokens.ts
+ * Dashboard cards grid - Exact match to Superdesign reference
+ * Layout: max-w-3xl, grid-cols-1 sm:grid-cols-2, gap-4 md:gap-5
+ * Staggered animation on load
  */
 
 import type { ReactNode } from 'react';
 import { SimpleGrid } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
-import { DASHBOARD_TOKENS as T } from './designTokens';
 
 const MotionSimpleGrid = motion.create(SimpleGrid);
 const MotionDiv = motion.div;
@@ -30,7 +29,7 @@ const itemVariants = {
     y: 0,
     transition: {
       duration: 0.4,
-      ease: [0.25, 0.1, 0.25, 1] as const,
+      ease: 'easeOut',
     },
   },
 };
@@ -49,14 +48,15 @@ export function DashboardGrid({ children, animated = true }: DashboardGridProps)
       ))
     : children;
 
+  // Reference: max-w-3xl = 768px, gap-4 = 16px, md:gap-5 = 20px
   if (animated) {
     return (
       <MotionSimpleGrid
         w="100%"
-        maxW={T.containerMaxW}
+        maxW="768px"
         mx="auto"
         columns={{ base: 1, sm: 2 }}
-        spacing={{ base: T.gapGrid, md: T.gapGridMd }}
+        spacing={{ base: '16px', md: '20px' }}
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -69,10 +69,10 @@ export function DashboardGrid({ children, animated = true }: DashboardGridProps)
   return (
     <SimpleGrid
       w="100%"
-      maxW={T.containerMaxW}
+      maxW="768px"
       mx="auto"
       columns={{ base: 1, sm: 2 }}
-      spacing={{ base: T.gapGrid, md: T.gapGridMd }}
+      spacing={{ base: '16px', md: '20px' }}
     >
       {children}
     </SimpleGrid>

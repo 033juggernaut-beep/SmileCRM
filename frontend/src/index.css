@@ -1,6 +1,7 @@
 /* =============================================
- * 🎨 SMILECRM LIGHT THEME — Global CSS
+ * 🎨 SMILECRM THEME — Global CSS
  * Medical SaaS with soft blue palette
+ * Supports light and dark modes
  * ============================================= */
 
 :root {
@@ -10,15 +11,19 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   
-  /* Light theme color variables */
+  /* Light theme color variables (default) */
   --app-bg: #F7FAFF;
   --app-surface: #FFFFFF;
   --app-surface2: #F1F5F9;
   --app-border: #E6EEFF;
   --app-primary: #2563EB;
+  --app-primary-light: #60A5FA;
   --app-text: #0F172A;
   --app-text2: #64748B;
   --app-muted: #94A3B8;
+  --app-icon-box-bg: #DBEAFE;
+  --app-card-shadow: 0 4px 6px -1px rgba(239,246,255,1), 0 2px 4px -2px rgba(239,246,255,1);
+  --app-card-shadow-hover: 0 10px 15px -3px rgba(219,234,254,1), 0 4px 6px -4px rgba(219,234,254,1);
   
   /* Telegram viewport height - will be set by JS */
   --app-height: 100vh;
@@ -27,6 +32,23 @@
   
   /* Prevent overscroll on mobile devices */
   overscroll-behavior: none;
+}
+
+/* Dark theme color variables */
+[data-theme='dark'],
+.chakra-ui-dark {
+  --app-bg: #0F172A;
+  --app-surface: #1E293B;
+  --app-surface2: #334155;
+  --app-border: #334155;
+  --app-primary: #3B82F6;
+  --app-primary-light: #60A5FA;
+  --app-text: #F1F5F9;
+  --app-text2: #94A3B8;
+  --app-muted: #64748B;
+  --app-icon-box-bg: #1E3A8A;
+  --app-card-shadow: 0 4px 6px -1px rgba(0,0,0,0.3), 0 2px 4px -2px rgba(0,0,0,0.2);
+  --app-card-shadow-hover: 0 10px 15px -3px rgba(0,0,0,0.4), 0 4px 6px -4px rgba(0,0,0,0.3);
 }
 
 *,
@@ -89,7 +111,7 @@ body {
 }
 
 /* =============================================
- * Custom scrollbar styling (light theme)
+ * Custom scrollbar styling (supports dark mode)
  * ============================================= */
 
 ::-webkit-scrollbar {
@@ -107,7 +129,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #BFDBFE;
+  background: var(--app-primary-light);
 }
 
 /* =============================================
