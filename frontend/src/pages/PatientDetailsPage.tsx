@@ -38,7 +38,6 @@ import {
   TreatmentPlanBlock,
   type TreatmentStep,
   VisitsSection,
-  FilesSection,
   MedicationsSection,
   NotesSection,
   MarketingSection,
@@ -46,7 +45,6 @@ import {
   FloatingAIAssistant,
 } from '../components/patientCard'
 import { BackgroundPattern } from '../components/dashboard/BackgroundPattern'
-import { MediaGallery } from '../components/MediaGallery'
 
 // Types for local finance structure
 interface Payment {
@@ -70,14 +68,6 @@ interface Medication {
   notes?: string
 }
 
-// Types for files (mocked for now)
-interface MedicalFile {
-  id: string
-  name: string
-  type: 'xray' | 'photo' | 'document'
-  url?: string
-}
-
 export const PatientDetailsPage = () => {
   const { t } = useLanguage()
   const { id } = useParams<{ id: string }>()
@@ -98,7 +88,6 @@ export const PatientDetailsPage = () => {
 
   // Mock state for features not yet connected to API
   const [medications] = useState<Medication[]>([])
-  const [files] = useState<MedicalFile[]>([])
 
   // Treatment plan state - mock data, ready for API integration
   const [treatmentSteps, setTreatmentSteps] = useState<TreatmentStep[]>([
@@ -270,16 +259,6 @@ export const PatientDetailsPage = () => {
     },
     []
   )
-
-  // Handle add file
-  const handleAddFile = useCallback(() => {
-    toast({
-      title: t('patientCard.addFile'),
-      description: 'File upload modal would open here',
-      status: 'info',
-      duration: 2000,
-    })
-  }, [t, toast])
 
   // Handle add medication
   const handleAddMedication = useCallback(() => {
@@ -477,14 +456,7 @@ export const PatientDetailsPage = () => {
               defaultOpen={true}
             />
 
-            {/* 5. Files - X-rays, photos, documents */}
-            <FilesSection
-              files={files}
-              onAddFile={handleAddFile}
-              defaultOpen={false}
-            />
-
-            {/* 6. Prescribed Medications */}
+            {/* 5. Prescribed Medications */}
             <MedicationsSection
               medications={medications}
               onAdd={handleAddMedication}
@@ -514,9 +486,6 @@ export const PatientDetailsPage = () => {
                 defaultOpen={false}
               />
             )}
-
-            {/* 10. Media Gallery - existing component */}
-            <MediaGallery patientId={id} />
           </VStack>
         </Box>
       </Box>
