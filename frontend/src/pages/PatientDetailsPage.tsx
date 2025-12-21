@@ -342,11 +342,18 @@ export const PatientDetailsPage = () => {
   if (isLoading) {
     return (
       <Box
-        minH="100vh"
+        minH="100dvh"
         w="full"
         position="relative"
         transition="colors 0.3s"
         bg={pageBg}
+        overflowY="auto"
+        overflowX="hidden"
+        sx={{
+          '@supports not (min-height: 100dvh)': {
+            minH: 'var(--app-height, 100vh)',
+          },
+        }}
       >
         <BackgroundPattern />
         <Box position="relative" zIndex={10} maxW="4xl" mx="auto" px={4} py={4}>
@@ -367,11 +374,18 @@ export const PatientDetailsPage = () => {
   if (error || !patient || !id) {
     return (
       <Box
-        minH="100vh"
+        minH="100dvh"
         w="full"
         position="relative"
         transition="colors 0.3s"
         bg={pageBg}
+        overflowY="auto"
+        overflowX="hidden"
+        sx={{
+          '@supports not (min-height: 100dvh)': {
+            minH: 'var(--app-height, 100vh)',
+          },
+        }}
       >
         <BackgroundPattern />
         <Box position="relative" zIndex={10} maxW="4xl" mx="auto" px={4} py={4}>
@@ -401,17 +415,24 @@ export const PatientDetailsPage = () => {
 
   return (
     <Box
-      minH="100vh"
+      minH="100dvh"
       w="full"
       position="relative"
       transition="colors 0.3s"
       bg={pageBg}
+      overflowY="auto"
+      overflowX="hidden"
+      sx={{
+        '@supports not (min-height: 100dvh)': {
+          minH: 'var(--app-height, 100vh)',
+        },
+      }}
     >
       {/* Subtle Background Pattern */}
       <BackgroundPattern />
 
       {/* Main Content */}
-      <Box position="relative" zIndex={10} display="flex" flexDirection="column" minH="100vh">
+      <Box position="relative" zIndex={10} display="flex" flexDirection="column" flex="1">
         {/* Page Content */}
         <Box as="main" flex={1} w="full" maxW="4xl" mx="auto" px={4} py={4}>
           {/* Back Button */}

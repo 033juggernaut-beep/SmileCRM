@@ -66,17 +66,28 @@ export const StatsPage = () => {
 
   return (
     <Box
-      minH="100vh"
+      minH="100dvh"
       w="full"
       position="relative"
       transition="colors 0.3s"
       bg={pageBg}
+      overflowY="auto"
+      overflowX="hidden"
+      sx={{
+        '@supports not (min-height: 100dvh)': {
+          minH: 'var(--app-height, 100vh)',
+        },
+      }}
     >
       {/* Background Pattern */}
       <BackgroundPattern />
 
       {/* Main Content */}
-      <Box position="relative" zIndex={10} display="flex" flexDirection="column" minH="100vh">
+      <Box position="relative" zIndex={10} display="flex" flexDirection="column" minH="100dvh" sx={{
+        '@supports not (min-height: 100dvh)': {
+          minH: 'var(--app-height, 100vh)',
+        },
+      }}>
         {/* Header */}
         <Header />
 

@@ -1,6 +1,7 @@
 /**
  * AppHeader - Application header for non-dashboard pages
  * Uses NotificationDropdown for notifications
+ * Includes safe-area padding for Telegram native buttons
  */
 
 import { useState, useCallback } from 'react'
@@ -24,6 +25,9 @@ const LANGUAGES: { code: Language; label: string }[] = [
   { code: 'ru', label: 'RU' },
   { code: 'en', label: 'EN' },
 ]
+
+// Safe area padding for Telegram native buttons (X and ... buttons on the right)
+const TELEGRAM_RIGHT_SAFE = '64px'
 
 export function AppHeader() {
   const { language, setLanguage } = useLanguage()
@@ -67,7 +71,8 @@ export function AppHeader() {
         align="center"
         justify="space-between"
         h="100%"
-        px={4}
+        pl={4}
+        pr={TELEGRAM_RIGHT_SAFE} // Safe area for Telegram buttons
         maxW="100%"
       >
         {/* Left - Logo */}

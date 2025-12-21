@@ -142,7 +142,7 @@ export const PatientsListPage = () => {
 
   return (
     <Box
-      minH="var(--app-height, 100vh)"
+      minH="100dvh"
       w="100%"
       bg={pageBg}
       display="flex"
@@ -151,12 +151,17 @@ export const PatientsListPage = () => {
       overflowX="hidden"
       position="relative"
       transition="background 0.3s"
+      sx={{
+        '@supports not (min-height: 100dvh)': {
+          minH: 'var(--app-height, 100vh)',
+        },
+      }}
     >
       {/* Background Pattern */}
       <BackgroundPattern />
 
       {/* Main Content */}
-      <Box position="relative" zIndex={10} display="flex" flexDir="column" minH="100%">
+      <Box position="relative" zIndex={10} display="flex" flexDir="column" flex="1">
         {/* Header */}
         <Header notificationCount={3} />
 

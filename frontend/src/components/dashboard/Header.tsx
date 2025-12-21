@@ -3,6 +3,8 @@
  * Layout: px-6 py-4, gap-3 (logo), gap-5 (controls)
  * Light: bg-white/90, border-blue-100
  * Dark: bg-slate-900/80, border-slate-700/50
+ * 
+ * Includes safe-area padding for Telegram native buttons (close/menu)
  */
 
 import { useState, useCallback } from 'react';
@@ -18,6 +20,9 @@ import {
 } from '../notifications';
 
 const LANGS = ['AM', 'RU', 'EN'] as const;
+
+// Safe area padding for Telegram native buttons (X and ... buttons on the right)
+const TELEGRAM_RIGHT_SAFE = '64px';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function Header(_props?: { notificationCount?: number }) {
@@ -62,7 +67,8 @@ export function Header(_props?: { notificationCount?: number }) {
     <Box
       as="header"
       w="100%"
-      px="24px" // px-6
+      pl="24px" // px-6 left
+      pr={TELEGRAM_RIGHT_SAFE} // Safe area for Telegram buttons
       py="16px" // py-4
       bg={headerBg}
       borderBottom="1px solid"

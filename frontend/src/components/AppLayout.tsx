@@ -76,10 +76,15 @@ export const AppLayout = () => {
   return (
     <Box 
       w="100%"
-      minH="var(--app-height, 100vh)"
-      h="var(--app-height, 100vh)"
+      minH="100dvh"
       position="relative"
-      overflow="hidden"
+      overflowX="hidden"
+      overflowY="auto"
+      sx={{
+        '@supports not (min-height: 100dvh)': {
+          minH: 'var(--app-height, 100vh)',
+        },
+      }}
     >
       {/* Global AppHeader - only on specific pages */}
       {showAppHeader && <AppHeader />}
@@ -87,8 +92,8 @@ export const AppLayout = () => {
       {/* Page content with padding for fixed header */}
       <Box
         pt={showAppHeader ? '56px' : 0}
-        h="100%"
-        overflow="hidden"
+        minH="100%"
+        overflowX="hidden"
       >
         <Outlet />
       </Box>

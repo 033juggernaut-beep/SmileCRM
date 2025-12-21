@@ -3,12 +3,12 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { Spinner, Center } from '@chakra-ui/react'
 import { AppLayout } from './components/AppLayout'
 
-// Eagerly loaded (small, needed immediately)
+// Eagerly loaded (small, needed immediately for auth flow)
 import { AuthLoadingPage } from './pages/AuthLoadingPage'
-import { HomePage } from './pages/HomePage'
 import { RegisterDoctorPage } from './pages/RegisterDoctorPage'
 
-// Lazy loaded (heavier pages, loaded on demand)
+// Lazy loaded (all feature pages, loaded on demand for faster initial bundle)
+const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })))
 const PatientsListPage = lazy(() => import('./pages/PatientsListPage').then(m => ({ default: m.PatientsListPage })))
 const PatientDetailsPage = lazy(() => import('./pages/PatientDetailsPage').then(m => ({ default: m.PatientDetailsPage })))
 const AddPatientPage = lazy(() => import('./pages/AddPatientPage').then(m => ({ default: m.AddPatientPage })))
@@ -18,10 +18,18 @@ const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage').then(m 
 const MarketingPage = lazy(() => import('./pages/MarketingPage').then(m => ({ default: m.MarketingPage })))
 const StatsPage = lazy(() => import('./pages/StatsPage').then(m => ({ default: m.StatsPage })))
 
-// Loading fallback for lazy routes (supports dark mode via CSS var)
+// Loading fallback for lazy routes (minimal, fast-loading skeleton)
 const PageLoader = () => (
-  <Center h="100vh" bg="var(--app-bg, #F7FAFF)">
-    <Spinner size="xl" color="var(--app-primary, #2563EB)" thickness="4px" />
+  <Center 
+    h="100dvh" 
+    bg="var(--app-bg, #F7FAFF)"
+    sx={{
+      '@supports not (height: 100dvh)': {
+        h: 'var(--app-height, 100vh)',
+      },
+    }}
+  >
+    <Spinner size="lg" color="var(--app-primary, #2563EB)" thickness="3px" speed="0.7s" />
   </Center>
 )
 
@@ -38,7 +46,7 @@ const router = createBrowserRouter([
     children: [
       { path: '/', element: <AuthLoadingPage /> },
       { path: '/register', element: <RegisterDoctorPage /> },
-      { path: '/home', element: <HomePage /> },
+      { path: '/home', element: withSuspense(HomePage) },
       { path: '/patients', element: withSuspense(PatientsListPage) },
       { path: '/patients/new', element: withSuspense(AddPatientPage) },
       { path: '/patients/:id', element: withSuspense(PatientDetailsPage) },
