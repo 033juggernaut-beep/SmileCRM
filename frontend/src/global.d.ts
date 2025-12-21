@@ -9,6 +9,13 @@ interface TelegramWebAppInitDataUnsafe {
   user?: TelegramWebAppUser
 }
 
+interface TelegramSafeAreaInset {
+  top: number
+  bottom: number
+  left: number
+  right: number
+}
+
 interface TelegramWebApp {
   initData?: string
   initDataUnsafe?: TelegramWebAppInitDataUnsafe
@@ -20,6 +27,10 @@ interface TelegramWebApp {
   close?: () => void
   requestFullscreen?: () => void // Request fullscreen mode (for desktop/laptop)
   exitFullscreen?: () => void // Exit fullscreen mode
+  
+  // Safe area insets (for notch, navigation bar, Telegram controls, etc.)
+  safeAreaInset?: TelegramSafeAreaInset
+  contentSafeAreaInset?: TelegramSafeAreaInset
   
   // Theme and appearance
   setHeaderColor?: (color: string) => void

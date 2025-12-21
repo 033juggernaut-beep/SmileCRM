@@ -2,6 +2,7 @@ import { Box } from '@chakra-ui/react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 import { AppHeader } from './layout/AppHeader'
+import { useTelegramSafeArea } from '../hooks/useTelegramSafeArea'
 
 // Pages where AppHeader should be shown
 // Note: /home now has its own light Header component, so we exclude it
@@ -10,6 +11,12 @@ const PAGES_WITH_APP_HEADER: string[] = []
 export const AppLayout = () => {
   const location = useLocation()
   const showAppHeader = PAGES_WITH_APP_HEADER.includes(location.pathname)
+  
+  // Get safe area insets for Telegram
+  const { topInset } = useTelegramSafeArea()
+  
+  // Calculate header height including safe area
+  const headerHeight = showAppHeader ? 56 + topInset : 0
 
   useEffect(() => {
     const telegram = window.Telegram?.WebApp
@@ -89,9 +96,9 @@ export const AppLayout = () => {
       {/* Global AppHeader - only on specific pages */}
       {showAppHeader && <AppHeader />}
       
-      {/* Page content with padding for fixed header */}
+      {/* Page content with padding for fixed header + safe area */}
       <Box
-        pt={showAppHeader ? '56px' : 0}
+        pt={showAppHeader ? `${headerHeight}px` : 0}
         minH="100%"
         overflowX="hidden"
       >

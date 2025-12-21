@@ -5,6 +5,7 @@
  * Dark: bg-slate-900/80, border-slate-700/50
  * 
  * Includes safe-area padding for Telegram native buttons (close/menu)
+ * Uses useTelegramSafeArea hook for dynamic safe area calculation
  */
 
 import { useCallback } from 'react';
@@ -18,12 +19,13 @@ import {
   type Notification,
 } from '../notifications';
 import { useNotifications } from '../../hooks/useNotifications';
+import { useTelegramSafeArea } from '../../hooks/useTelegramSafeArea';
 
 const LANGS = ['AM', 'RU', 'EN'] as const;
 
-// Safe area padding for Telegram native buttons (X and ... buttons on the right)
-// Increased to 100px to ensure icons don't overlap with Telegram controls
-const TELEGRAM_RIGHT_SAFE = '100px';
+// Minimum safe padding for header controls (fallback when hook returns lower values)
+const MIN_RIGHT_SAFE = 16; // Minimum padding on right
+const MIN_ICON_SIZE = 44; // Minimum touch target size
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function Header(_props?: { notificationCount?: number }) {
@@ -31,6 +33,12 @@ export function Header(_props?: { notificationCount?: number }) {
   const { colorMode, toggleColorMode } = useColorMode();
   const navigate = useNavigate();
   const isDark = colorMode === 'dark';
+
+  // Get safe area insets from Telegram
+  const { topInset, rightInset, isInTelegram } = useTelegramSafeArea();
+  
+  // Calculate right padding: use safe area value, but ensure minimum padding
+  const rightPadding = Math.max(rightInset + MIN_RIGHT_SAFE, isInTelegram ? 72 : 24);
 
   // Notifications from API (with fallback to mock data)
   const { notifications, markRead, markAllRead } = useNotifications();
@@ -63,12 +71,15 @@ export function Header(_props?: { notificationCount?: number }) {
       as="header"
       w="100%"
       pl="24px" // px-6 left
-      pr={TELEGRAM_RIGHT_SAFE} // Safe area for Telegram buttons
-      py="16px" // py-4
+      pr={`${rightPadding}px`} // Dynamic safe area for Telegram buttons
+      pt={topInset > 0 ? `${topInset + 16}px` : '16px'} // py-4 + top safe area
+      pb="16px" // py-4
       bg={headerBg}
       borderBottom="1px solid"
       borderColor={borderColor}
       transition="background-color 0.3s, border-color 0.3s"
+      position="relative"
+      zIndex={1000}
     >
       <Flex align="center" justify="space-between">
         {/* Left: Logo + Brand - gap-3 */}
@@ -118,7 +129,7 @@ export function Header(_props?: { notificationCount?: number }) {
             onMarkAllRead={handleMarkAllRead}
           />
 
-          {/* Theme Toggle - w-5 h-5 */}
+          {/* Theme Toggle - with proper touch target size */}
           <Box
             as="button"
             onClick={toggleColorMode}
@@ -127,8 +138,15 @@ export function Header(_props?: { notificationCount?: number }) {
             transition="color 0.2s"
             sx={{ WebkitTapHighlightColor: 'transparent' }}
             aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            minW={`${MIN_ICON_SIZE}px`}
+            minH={`${MIN_ICON_SIZE}px`}
+            borderRadius="md"
+            _active={{ bg: isDark ? 'whiteAlpha.100' : 'blackAlpha.50' }}
           >
-            {isDark ? <Sun size={20} /> : <Moon size={20} />}
+            {isDark ? <Sun size={22} /> : <Moon size={22} />}
           </Box>
         </Flex>
       </Flex>
