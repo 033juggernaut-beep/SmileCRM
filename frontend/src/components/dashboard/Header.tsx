@@ -22,8 +22,8 @@ import { useNotifications } from '../../hooks/useNotifications';
 const LANGS = ['AM', 'RU', 'EN'] as const;
 
 // Safe area padding for Telegram native buttons (X and ... buttons on the right)
-// Increased to 80px to ensure icons don't overlap with Telegram controls
-const TELEGRAM_RIGHT_SAFE = '80px';
+// Increased to 100px to ensure icons don't overlap with Telegram controls
+const TELEGRAM_RIGHT_SAFE = '100px';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function Header(_props?: { notificationCount?: number }) {

@@ -27,8 +27,8 @@ const LANGUAGES: { code: Language; label: string }[] = [
 ]
 
 // Safe area padding for Telegram native buttons (X and ... buttons on the right)
-// Increased to 80px to ensure icons don't overlap with Telegram controls
-const TELEGRAM_RIGHT_SAFE = '80px'
+// Increased to 100px to ensure icons don't overlap with Telegram controls
+const TELEGRAM_RIGHT_SAFE = '100px'
 
 export function AppHeader() {
   const { language, setLanguage } = useLanguage()
