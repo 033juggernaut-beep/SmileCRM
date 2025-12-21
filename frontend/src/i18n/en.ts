@@ -530,6 +530,24 @@ const en = {
     mockSystemTrial: 'Trial ends in 3 days',
     mockSystemSubscription: 'Subscription renewed successfully',
   },
+
+  // Treatment Plan
+  treatmentPlan: {
+    title: 'Treatment Plan',
+    addStep: 'Add step',
+    addStepTitle: 'Add Treatment Step',
+    noSteps: 'No treatment steps yet',
+    stepName: 'Procedure name',
+    stepNamePlaceholder: 'e.g., Professional cleaning',
+    price: 'Price',
+    total: 'Total',
+    completed: 'Completed',
+    add: 'Add',
+    stepAdded: 'Step added',
+    fillRequired: 'Please fill in all required fields',
+    invalidPrice: 'Please enter a valid price',
+    pdfComingSoon: 'PDF export coming soon',
+  },
 } as const
 
 export default en

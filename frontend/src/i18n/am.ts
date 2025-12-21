@@ -531,6 +531,24 @@ const am = {
     mockSystemTrial: 'Pordznakan shrjane averanum e 3 orum',
     mockSystemSubscription: 'Bajanagrutyune hajoxutyamb norogvec',
   },
+
+  // Treatment Plan
+  treatmentPlan: {
+    title: 'Bujman plan',
+    addStep: 'Avelacnel qayly',
+    addStepTitle: 'Avelacnel bujman qayly',
+    noSteps: 'Bujman qayler derevs chen avelacvel',
+    stepName: 'Procedurayi anun',
+    stepNamePlaceholder: 'orinak, Masnagitakan maqrum',
+    price: 'Gin',
+    total: 'Yndamene',
+    completed: 'Katarvac',
+    add: 'Avelacnel',
+    stepAdded: 'Qayle avelacvac e',
+    fillRequired: 'Xndrum enq lracnel bolor partadir dashere',
+    invalidPrice: 'Xndrum enq mutqagrel chisht gin',
+    pdfComingSoon: 'PDF eksporte mot klini',
+  },
 } as const
 
 export default am

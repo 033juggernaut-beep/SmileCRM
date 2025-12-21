@@ -13,5 +13,7 @@ export { MarketingSection } from './MarketingSection'
 export { MedicationsSection } from './MedicationsSection'
 export { NotesSection } from './NotesSection'
 export { PatientInfoCard } from './PatientInfoCard'
+export { TreatmentPlanBlock } from './TreatmentPlanBlock'
+export type { TreatmentStep, TreatmentPlanBlockProps } from './TreatmentPlanBlock'
 export { VisitsSection } from './VisitsSection'
 

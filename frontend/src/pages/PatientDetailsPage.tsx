@@ -35,6 +35,8 @@ import {
   BackButton,
   PatientInfoCard,
   DiagnosisSection,
+  TreatmentPlanBlock,
+  type TreatmentStep,
   VisitsSection,
   FilesSection,
   MedicationsSection,
@@ -97,6 +99,14 @@ export const PatientDetailsPage = () => {
   // Mock state for features not yet connected to API
   const [medications] = useState<Medication[]>([])
   const [files] = useState<MedicalFile[]>([])
+
+  // Treatment plan state - mock data, ready for API integration
+  const [treatmentSteps, setTreatmentSteps] = useState<TreatmentStep[]>([
+    // Mock data for demonstration
+    { id: 'step-1', title: 'Professional cleaning', priceAmd: 15000, done: true },
+    { id: 'step-2', title: 'Dental filling (tooth #16)', priceAmd: 25000, done: false },
+    { id: 'step-3', title: 'Root canal treatment', priceAmd: 45000, done: false },
+  ])
 
   // Page background
   const pageBg = isDark
@@ -452,7 +462,14 @@ export const PatientDetailsPage = () => {
               defaultOpen={true}
             />
 
-            {/* 3. Visits - Chronological list (latest first) */}
+            {/* 3. Treatment Plan - Interactive step list */}
+            <TreatmentPlanBlock
+              steps={treatmentSteps}
+              onStepsChange={setTreatmentSteps}
+              defaultOpen={true}
+            />
+
+            {/* 4. Visits - Chronological list (latest first) */}
             <VisitsSection
               visits={sortedVisits as Visit[]}
               onAddVisit={handleAddVisit}
@@ -460,14 +477,14 @@ export const PatientDetailsPage = () => {
               defaultOpen={true}
             />
 
-            {/* 4. Files - X-rays, photos, documents */}
+            {/* 5. Files - X-rays, photos, documents */}
             <FilesSection
               files={files}
               onAddFile={handleAddFile}
               defaultOpen={false}
             />
 
-            {/* 5. Prescribed Medications */}
+            {/* 6. Prescribed Medications */}
             <MedicationsSection
               medications={medications}
               onAdd={handleAddMedication}
@@ -475,21 +492,21 @@ export const PatientDetailsPage = () => {
               defaultOpen={false}
             />
 
-            {/* 6. Doctor Notes - Free text notes */}
+            {/* 7. Doctor Notes - Free text notes */}
             <NotesSection
               notes={(patient as any).notes ?? ''}
               onSave={handleSaveNotes}
               defaultOpen={false}
             />
 
-            {/* 7. Marketing - AI-generated content */}
+            {/* 8. Marketing - AI-generated content */}
             <MarketingSection
               patientName={`${patient.firstName} ${patient.lastName}`}
               dateOfBirth={patient.birthDate ?? undefined}
               defaultOpen={false}
             />
 
-            {/* 8. Finance - Last section */}
+            {/* 9. Finance - Last section */}
             {financeData && (
               <FinanceSection
                 finance={financeData}
@@ -498,7 +515,7 @@ export const PatientDetailsPage = () => {
               />
             )}
 
-            {/* 9. Media Gallery - existing component */}
+            {/* 10. Media Gallery - existing component */}
             <MediaGallery patientId={id} />
           </VStack>
         </Box>

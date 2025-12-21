@@ -530,6 +530,24 @@ const ru = {
     mockSystemTrial: 'Пробный период заканчивается через 3 дня',
     mockSystemSubscription: 'Подписка успешно продлена',
   },
+
+  // Treatment Plan
+  treatmentPlan: {
+    title: 'План лечения',
+    addStep: 'Добавить этап',
+    addStepTitle: 'Добавить этап лечения',
+    noSteps: 'Этапы лечения пока не добавлены',
+    stepName: 'Название процедуры',
+    stepNamePlaceholder: 'напр., Профессиональная чистка',
+    price: 'Цена',
+    total: 'Итого',
+    completed: 'Выполнено',
+    add: 'Добавить',
+    stepAdded: 'Этап добавлен',
+    fillRequired: 'Пожалуйста, заполните все обязательные поля',
+    invalidPrice: 'Пожалуйста, введите корректную цену',
+    pdfComingSoon: 'Экспорт PDF скоро будет доступен',
+  },
 } as const
 
 export default ru

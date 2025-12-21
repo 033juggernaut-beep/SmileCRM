@@ -4,7 +4,7 @@
  * Includes safe-area padding for Telegram native buttons
  */
 
-import { useState, useCallback } from 'react'
+import { useCallback } from 'react'
 import {
   Box,
   Flex,
@@ -16,9 +16,9 @@ import { useNavigate } from 'react-router-dom'
 import { useLanguage, type Language } from '../../context/LanguageContext'
 import {
   NotificationDropdown,
-  mockNotifications,
   type Notification,
 } from '../notifications'
+import { useNotifications } from '../../hooks/useNotifications'
 
 const LANGUAGES: { code: Language; label: string }[] = [
   { code: 'am', label: 'AM' },
@@ -27,33 +27,28 @@ const LANGUAGES: { code: Language; label: string }[] = [
 ]
 
 // Safe area padding for Telegram native buttons (X and ... buttons on the right)
-const TELEGRAM_RIGHT_SAFE = '64px'
+// Increased to 80px to ensure icons don't overlap with Telegram controls
+const TELEGRAM_RIGHT_SAFE = '80px'
 
 export function AppHeader() {
   const { language, setLanguage } = useLanguage()
   const navigate = useNavigate()
 
-  // Notifications state - ready for real API integration
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications)
+  // Notifications from API (with fallback to mock data)
+  const { notifications, markRead, markAllRead } = useNotifications()
 
   const handleNotificationClick = useCallback((notification: Notification) => {
     // Mark as read
-    setNotifications((prev) =>
-      prev.map((n) =>
-        n.id === notification.id ? { ...n, read: true } : n
-      )
-    )
+    markRead([notification.id])
     // Navigate if has target path
     if (notification.targetPath) {
       navigate(notification.targetPath)
     }
-  }, [navigate])
+  }, [navigate, markRead])
 
   const handleMarkAllRead = useCallback(() => {
-    setNotifications((prev) =>
-      prev.map((n) => ({ ...n, read: true }))
-    )
-  }, [])
+    markAllRead()
+  }, [markAllRead])
 
   return (
     <Box

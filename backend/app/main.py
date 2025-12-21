@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-from app.api import ai, auth, doctors, marketing, media, patient_finance, patients, payments, subscription, test_supabase, visits
+from app.api import ai, auth, doctors, marketing, media, notifications, patient_finance, patients, payments, subscription, test_supabase, visits
 from app.bot.bot import get_bot, is_bot_configured, process_update
 from app.config import get_settings
 
@@ -89,6 +89,7 @@ app.include_router(media.router, prefix="/api")
 app.include_router(payments.router, prefix="/api")
 app.include_router(ai.router, prefix="/api")
 app.include_router(marketing.router, prefix="/api")
+app.include_router(notifications.router, prefix="/api")
 
 
 @app.post("/bot/webhook")

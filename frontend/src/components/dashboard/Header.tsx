@@ -7,7 +7,7 @@
  * Includes safe-area padding for Telegram native buttons (close/menu)
  */
 
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { Box, Flex, Text, useColorMode } from '@chakra-ui/react';
 import { Sun, Moon } from 'lucide-react';
 import { ToothLogo } from './ToothLogo';
@@ -15,14 +15,15 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import {
   NotificationDropdown,
-  mockNotifications,
   type Notification,
 } from '../notifications';
+import { useNotifications } from '../../hooks/useNotifications';
 
 const LANGS = ['AM', 'RU', 'EN'] as const;
 
 // Safe area padding for Telegram native buttons (X and ... buttons on the right)
-const TELEGRAM_RIGHT_SAFE = '64px';
+// Increased to 80px to ensure icons don't overlap with Telegram controls
+const TELEGRAM_RIGHT_SAFE = '80px';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function Header(_props?: { notificationCount?: number }) {
@@ -31,27 +32,21 @@ export function Header(_props?: { notificationCount?: number }) {
   const navigate = useNavigate();
   const isDark = colorMode === 'dark';
 
-  // Notifications state - ready for real API integration
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+  // Notifications from API (with fallback to mock data)
+  const { notifications, markRead, markAllRead } = useNotifications();
 
   const handleNotificationClick = useCallback((notification: Notification) => {
     // Mark as read
-    setNotifications((prev) =>
-      prev.map((n) =>
-        n.id === notification.id ? { ...n, read: true } : n
-      )
-    );
+    markRead([notification.id]);
     // Navigate if has target path
     if (notification.targetPath) {
       navigate(notification.targetPath);
     }
-  }, [navigate]);
+  }, [navigate, markRead]);
 
   const handleMarkAllRead = useCallback(() => {
-    setNotifications((prev) =>
-      prev.map((n) => ({ ...n, read: true }))
-    );
-  }, []);
+    markAllRead();
+  }, [markAllRead]);
 
   // Exact colors from reference
   const headerBg = isDark ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.9)';
