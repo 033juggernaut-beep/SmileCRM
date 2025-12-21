@@ -49,17 +49,25 @@ const ru = {
 
   // Patients list
   patients: {
-    title: 'Пациенты',
+    title: 'Мои пациенты',
+    subtitle: 'Список всех пациентов',
     addNew: 'Добавить',
     addPatient: 'Добавить пациента',
-    noPatients: 'Нет пациентов',
-    noPatientsHint: 'Добавьте первого пациента для начала работы',
-    searchPlaceholder: 'Поиск пациента...',
-    notFound: 'Ничего не найдено',
+    noPatients: 'Пациентов пока нет',
+    noPatientsHint: 'Добавьте первого пациента, чтобы начать работу',
+    searchPlaceholder: 'Поиск по имени или телефону',
+    notFound: 'Пациенты не найдены',
     loadError: 'Ошибка загрузки',
     count: 'пациентов',
     statusInProgress: 'В процессе',
     statusCompleted: 'Завершён',
+    lastVisit: 'Последний визит',
+    // Filters
+    allStatuses: 'Все статусы',
+    segmentAll: 'Все',
+    segmentVip: 'Только VIP',
+    // VIP badge
+    vipBadge: 'VIP',
   },
 
   // Add/Edit patient form

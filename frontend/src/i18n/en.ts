@@ -49,17 +49,25 @@ const en = {
 
   // Patients list
   patients: {
-    title: 'Patients',
+    title: 'My Patients',
+    subtitle: 'List of all patients',
     addNew: 'Add',
     addPatient: 'Add patient',
-    noPatients: 'No patients',
+    noPatients: 'No patients yet',
     noPatientsHint: 'Add your first patient to get started',
-    searchPlaceholder: 'Search patient...',
-    notFound: 'Nothing found',
+    searchPlaceholder: 'Search by name or phone',
+    notFound: 'No patients found',
     loadError: 'Loading error',
     count: 'patients',
     statusInProgress: 'In progress',
     statusCompleted: 'Completed',
+    lastVisit: 'Last visit',
+    // Filters
+    allStatuses: 'All statuses',
+    segmentAll: 'All',
+    segmentVip: 'VIP only',
+    // VIP badge
+    vipBadge: 'VIP',
   },
 
   // Add/Edit patient form

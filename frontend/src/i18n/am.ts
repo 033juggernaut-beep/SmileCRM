@@ -50,17 +50,25 @@ const am = {
 
   // Patients list
   patients: {
-    title: 'Pacientner',
+    title: 'Im pacientnere',
+    subtitle: 'Bolor pacientneri cank',
     addNew: 'Avelacnel',
     addPatient: 'Avelacnel pacient',
-    noPatients: 'Pacientner chkan',
+    noPatients: 'Pacientner derevs chkan',
     noPatientsHint: 'Avelacreq arajin paciente skselu hamar',
-    searchPlaceholder: 'Oronel pacient...',
-    notFound: 'Vochinch chi gtnvel',
+    searchPlaceholder: 'Oronel anvamb kam heraxosov',
+    notFound: 'Pacientner chen gtnvel',
     loadError: 'Bernman sxal',
     count: 'pacient',
     statusInProgress: 'Entacqum',
     statusCompleted: 'Avartvac',
+    lastVisit: 'Verjin aycelvutyun',
+    // Filters
+    allStatuses: 'Bolor kargavichakner',
+    segmentAll: 'Bolorը',
+    segmentVip: 'Miayn VIP',
+    // VIP badge
+    vipBadge: 'VIP',
   },
 
   // Add/Edit patient form

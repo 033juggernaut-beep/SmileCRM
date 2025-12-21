@@ -1,297 +1,251 @@
-import {
-  Box,
-  Flex,
-  Input,
-  InputGroup,
-  InputLeftElement,
-  Stack,
-  Tag,
-  Skeleton,
-  Text,
-  Heading,
-} from '@chakra-ui/react'
-import { useEffect, useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+/**
+ * PatientsListPage - Exact match to Superdesign reference
+ * Uses real API data with loading/error states
+ */
+
+import { useState, useMemo, useEffect } from 'react';
+import { Box, Text, useColorMode } from '@chakra-ui/react';
+import { useNavigate } from 'react-router-dom';
 import {
   type Patient,
   type PatientStatus,
   patientsApi,
-} from '../api/patients'
-import { PremiumLayout } from '../components/layout/PremiumLayout'
-import { PremiumCard } from '../components/premium/PremiumCard'
-import { PremiumButton } from '../components/premium/PremiumButton'
-import { getErrorMessage, isPaymentRequiredError } from '../utils/errorHandler'
-import { useLanguage } from '../context/LanguageContext'
+} from '../api/patients';
+import { Header, BackgroundPattern, Footer } from '../components/dashboard';
+import {
+  PatientsHeader,
+  PatientsSearchBar,
+  PatientsList,
+  PatientsEmptyState,
+  PatientsListSkeleton,
+  AddPatientFAB,
+  type PatientData,
+} from '../components/patients';
+import { useLanguage } from '../context/LanguageContext';
+import { getErrorMessage, isPaymentRequiredError } from '../utils/errorHandler';
 
-const statusColors: Record<PatientStatus, { bg: string; color: string }> = {
-  in_progress: { bg: 'warning.500', color: 'black' },
-  completed: { bg: 'success.500', color: 'white' },
-}
+type SegmentFilter = 'all' | 'vip';
 
 export const PatientsListPage = () => {
-  const { t } = useLanguage()
-  const [patients, setPatients] = useState<Patient[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [search, setSearch] = useState('')
-  const navigate = useNavigate()
-  
-  // Translated status labels
-  const statusLabels: Record<PatientStatus, string> = {
-    in_progress: t('patients.statusInProgress'),
-    completed: t('patients.statusCompleted'),
-  }
+  const navigate = useNavigate();
+  const { t } = useLanguage();
+  const { colorMode } = useColorMode();
+  const isDark = colorMode === 'dark';
 
+  // State
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | PatientStatus>('all');
+  const [segmentFilter, setSegmentFilter] = useState<SegmentFilter>('all');
+
+  // Fetch patients
   useEffect(() => {
-    let mounted = true
+    let mounted = true;
 
     const fetchPatients = async () => {
-      setIsLoading(true)
-      setError(null)
+      setIsLoading(true);
+      setError(null);
       try {
-        const data = await patientsApi.list()
+        const data = await patientsApi.list();
         if (mounted) {
-          setPatients(data)
+          setPatients(data);
         }
       } catch (err) {
         if (mounted) {
           if (isPaymentRequiredError(err)) {
-            navigate('/subscription')
-            return
+            navigate('/subscription');
+            return;
           }
-          setError(getErrorMessage(err))
+          setError(getErrorMessage(err));
         }
       } finally {
         if (mounted) {
-          setIsLoading(false)
+          setIsLoading(false);
         }
       }
-    }
+    };
 
-    void fetchPatients()
+    void fetchPatients();
 
     return () => {
-      mounted = false
-    }
-  }, [navigate])
+      mounted = false;
+    };
+  }, [navigate]);
 
+  // Filter patients
   const filteredPatients = useMemo(() => {
-    if (!search.trim()) return patients
-    const query = search.toLowerCase()
-    return patients.filter(
-      (p) =>
-        p.firstName.toLowerCase().includes(query) ||
-        p.lastName.toLowerCase().includes(query) ||
-        p.phone?.toLowerCase().includes(query) ||
-        p.diagnosis?.toLowerCase().includes(query)
-    )
-  }, [patients, search])
+    return patients.filter((patient) => {
+      // Search filter
+      const searchLower = searchQuery.toLowerCase();
+      const nameMatch = `${patient.firstName} ${patient.lastName}`
+        .toLowerCase()
+        .includes(searchLower) || patient.phone?.includes(searchQuery);
 
-  const renderContent = () => {
-    if (isLoading) {
-      return (
-        <Stack spacing={3}>
-          {Array.from({ length: 5 }).map((_, index) => (
-            <PremiumCard key={index} variant="default">
-              <Skeleton height="60px" borderRadius="md" startColor="bg.tertiary" endColor="bg.hover" />
-            </PremiumCard>
-          ))}
-        </Stack>
-      )
+      // Status filter
+      const statusMatch = statusFilter === 'all' || patient.status === statusFilter;
+
+      // Segment filter (VIP if segment field exists)
+      const segmentMatch = segmentFilter === 'all' || 
+        (segmentFilter === 'vip' && (patient as PatientData).segment === 'vip');
+
+      return nameMatch && statusMatch && segmentMatch;
+    });
+  }, [patients, searchQuery, statusFilter, segmentFilter]);
+
+  // Background gradient
+  const pageBg = isDark
+    ? '#0F172A'
+    : 'linear-gradient(to bottom right, #F8FAFC, rgba(239, 246, 255, 0.3), rgba(240, 249, 255, 0.5))';
+
+  // Handlers
+  const handlePatientClick = (patient: PatientData) => {
+    navigate(`/patients/${patient.id}`);
+  };
+
+  const handleAddPatient = () => {
+    navigate('/patients/new');
+  };
+
+  const handleBack = () => {
+    navigate('/home');
+  };
+
+  const handleRetry = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await patientsApi.list();
+      setPatients(data);
+    } catch (err) {
+      if (isPaymentRequiredError(err)) {
+        navigate('/subscription');
+        return;
+      }
+      setError(getErrorMessage(err));
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    if (error) {
-      return (
-        <PremiumCard variant="elevated">
-          <Stack spacing={4} align="center" py={8}>
-            <Text fontSize="4xl">⚠️</Text>
-            <Stack spacing={2} textAlign="center">
-              <Text fontWeight="semibold" fontSize="lg" color="error.400">
-                {t('patients.loadError')}
-              </Text>
-              <Text fontSize="sm" color="text.muted">
-                {error}
-              </Text>
-            </Stack>
-            <Stack spacing={2} w="full" maxW="280px">
-              <PremiumButton 
-                onClick={() => {
-                  setError(null)
-                  setIsLoading(true)
-                  void patientsApi.list().then(
-                    (data) => {
-                      setPatients(data)
-                      setIsLoading(false)
-                    },
-                    (err) => {
-                      if (isPaymentRequiredError(err)) {
-                        navigate('/subscription')
-                        return
-                      }
-                      setError(getErrorMessage(err))
-                      setIsLoading(false)
-                    }
-                  )
-                }}
-                fullWidth
-              >
-                {t('common.tryAgain')}
-              </PremiumButton>
-            </Stack>
-          </Stack>
-        </PremiumCard>
-      )
-    }
+  const footerLinks = [
+    { label: t('home.subscription'), onClick: () => navigate('/subscription') },
+    { label: t('home.help'), onClick: () => navigate('/help') },
+    { label: t('home.privacy'), onClick: () => navigate('/privacy') },
+  ];
 
-    if (!patients.length) {
-      return (
-        <PremiumCard variant="elevated">
-          <Stack spacing={4} align="center" py={8}>
-            <Text fontSize="5xl">👤</Text>
-            <Stack spacing={2} textAlign="center">
-              <Text fontWeight="bold" fontSize="xl" color="text.primary">
-                {t('patients.noPatients')}
-              </Text>
-              <Text fontSize="sm" color="text.muted">
-                {t('patients.noPatientsHint')}
-              </Text>
-            </Stack>
-            <PremiumButton 
-              onClick={() => navigate('/patients/new')}
-              leftIcon={<Text>➕</Text>}
-            >
-              {t('patients.addPatient')}
-            </PremiumButton>
-          </Stack>
-        </PremiumCard>
-      )
-    }
-
-    if (!filteredPatients.length) {
-      return (
-        <PremiumCard variant="flat">
-          <Stack spacing={2} align="center" py={6}>
-            <Text fontSize="3xl">🔍</Text>
-            <Text color="text.muted">{t('patients.notFound')}</Text>
-          </Stack>
-        </PremiumCard>
-      )
-    }
-
-    return (
-      <Stack spacing={3}>
-        {filteredPatients.map((patient) => (
-          <PremiumCard
-            key={patient.id}
-            variant="default"
-            isHoverable
-            onClick={() => navigate(`/patients/${patient.id}`)}
-            p={0}
-          >
-            <Flex align="center" gap={3} p={4}>
-              {/* Avatar */}
-              <Box
-                w="48px"
-                h="48px"
-                borderRadius="lg"
-                bg="bg.tertiary"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                fontSize="xl"
-                flexShrink={0}
-              >
-                👤
-              </Box>
-
-              {/* Info */}
-              <Box flex={1} minW={0}>
-                <Text
-                  fontWeight="semibold"
-                  fontSize="md"
-                  color="text.primary"
-                  noOfLines={1}
-                >
-                  {patient.firstName} {patient.lastName}
-                </Text>
-                {patient.diagnosis && (
-                  <Text
-                    fontSize="sm"
-                    color="text.muted"
-                    noOfLines={1}
-                    mt={0.5}
-                  >
-                    {patient.diagnosis}
-                  </Text>
-                )}
-              </Box>
-
-              {/* Status & Arrow */}
-              <Flex align="center" gap={2} flexShrink={0}>
-                {patient.status && (
-                  <Tag
-                    size="sm"
-                    bg={statusColors[patient.status]?.bg ?? 'bg.tertiary'}
-                    color={statusColors[patient.status]?.color ?? 'text.secondary'}
-                    borderRadius="full"
-                    fontWeight="medium"
-                    fontSize="xs"
-                  >
-                    {statusLabels[patient.status] ?? patient.status}
-                  </Tag>
-                )}
-                <Text color="text.muted" fontSize="lg">→</Text>
-              </Flex>
-            </Flex>
-          </PremiumCard>
-        ))}
-      </Stack>
-    )
-  }
+  // States
+  const showEmptyState = !isLoading && !error && patients.length === 0;
+  const showNoResults = !isLoading && !error && patients.length > 0 && filteredPatients.length === 0;
+  const showList = !isLoading && !error && filteredPatients.length > 0;
 
   return (
-    <PremiumLayout 
-      title={t('patients.title')} 
-      showBack={true}
-      onBack={() => navigate('/home')}
-      background="gradient"
-      safeAreaBottom
+    <Box
+      minH="var(--app-height, 100vh)"
+      w="100%"
+      bg={pageBg}
+      display="flex"
+      flexDirection="column"
+      overflowY="auto"
+      overflowX="hidden"
+      position="relative"
+      transition="background 0.3s"
     >
-      <Stack spacing={4}>
-        {/* Header with count */}
-        <Flex justify="space-between" align="center">
-          <Heading size="md" color="text.primary">
-            {isLoading ? t('common.loading') : `${patients.length} ${t('patients.count')}`}
-          </Heading>
-          <PremiumButton
-            size="sm"
-            onClick={() => navigate('/patients/new')}
-            leftIcon={<Text fontSize="sm">➕</Text>}
-          >
-            {t('patients.addNew')}
-          </PremiumButton>
-        </Flex>
+      {/* Background Pattern */}
+      <BackgroundPattern />
 
-        {/* Search */}
-        {patients.length > 0 && (
-          <InputGroup size="lg">
-            <InputLeftElement pointerEvents="none">
-              <Text color="text.muted">🔍</Text>
-            </InputLeftElement>
-            <Input
-              placeholder={t('patients.searchPlaceholder')}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              bg="bg.secondary"
-              borderColor="border.subtle"
-              _placeholder={{ color: 'text.muted' }}
-            />
-          </InputGroup>
+      {/* Main Content */}
+      <Box position="relative" zIndex={10} display="flex" flexDir="column" minH="100%">
+        {/* Header */}
+        <Header notificationCount={3} />
+
+        {/* Page Title with Back Button */}
+        <PatientsHeader onBack={handleBack} />
+
+        {/* Search & Filters (only if patients exist) */}
+        {!showEmptyState && !isLoading && !error && (
+          <PatientsSearchBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            segmentFilter={segmentFilter}
+            onSegmentFilterChange={setSegmentFilter}
+          />
         )}
 
-        {/* Patients List */}
-        {renderContent()}
-      </Stack>
-    </PremiumLayout>
-  )
-}
+        {/* Main Content Area */}
+        <Box as="main" flex="1" pb="96px">
+          {/* Loading State */}
+          {isLoading && <PatientsListSkeleton count={5} />}
+
+          {/* Error State */}
+          {error && (
+            <Box w="100%" maxW="896px" mx="auto" px="16px" py="64px" textAlign="center">
+              <Text fontSize="4xl" mb="16px">⚠️</Text>
+              <Text
+                fontWeight="semibold"
+                fontSize="lg"
+                color={isDark ? '#F87171' : '#DC2626'}
+                mb="8px"
+              >
+                {t('patients.loadError')}
+              </Text>
+              <Text fontSize="sm" color={isDark ? '#94A3B8' : '#64748B'} mb="24px">
+                {error}
+              </Text>
+              <Box
+                as="button"
+                onClick={handleRetry}
+                px="20px"
+                py="10px"
+                bg="#3B82F6"
+                color="white"
+                fontSize="sm"
+                fontWeight="medium"
+                borderRadius="xl"
+                _hover={{ bg: '#2563EB' }}
+                sx={{ WebkitTapHighlightColor: 'transparent' }}
+              >
+                {t('common.tryAgain')}
+              </Box>
+            </Box>
+          )}
+
+          {/* Empty State */}
+          {showEmptyState && (
+            <PatientsEmptyState onAddPatient={handleAddPatient} />
+          )}
+
+          {/* No Search Results */}
+          {showNoResults && (
+            <Box w="100%" maxW="896px" mx="auto" px="16px" py="48px" textAlign="center">
+              <Text fontSize="sm" color={isDark ? '#94A3B8' : '#64748B'}>
+                {t('patients.notFound')}
+              </Text>
+            </Box>
+          )}
+
+          {/* Patients List */}
+          {showList && (
+            <PatientsList
+              patients={filteredPatients as PatientData[]}
+              onPatientClick={handlePatientClick}
+            />
+          )}
+        </Box>
+
+        {/* Footer */}
+        <Footer links={footerLinks} />
+
+        {/* Floating Add Button (hide when empty state shown) */}
+        {!showEmptyState && !isLoading && (
+          <AddPatientFAB onClick={handleAddPatient} />
+        )}
+      </Box>
+    </Box>
+  );
+};
+
+export default PatientsListPage;
