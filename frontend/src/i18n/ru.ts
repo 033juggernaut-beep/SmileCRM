@@ -47,6 +47,42 @@ const ru = {
     todayVisits: 'Сегодня визитов',
   },
 
+  // Statistics page
+  stats: {
+    title: 'Статистика клиники',
+    subtitle: 'Обзор ключевых показателей',
+    // Section titles
+    generalMetrics: 'Общие показатели',
+    visits: 'Визиты',
+    visitDynamics: 'Динамика визитов',
+    finance: 'Финансы',
+    // General metrics
+    totalPatients: 'Пациентов',
+    total: 'Всего',
+    activePatients: 'Активных',
+    active: '+8%',
+    vipPatients: 'VIP пациентов',
+    vip: 'VIP',
+    // Visits
+    totalVisits: 'Общее количество визитов',
+    visitsForPeriod: 'Визиты за период',
+    todayVisits: 'Сегодня визитов',
+    visitsLast7Days: 'За 7 дней',
+    visitsLast30Days: 'За 30 дней',
+    period7d: '7 дн.',
+    period30d: '30 дн.',
+    daysAgo7: '7 дней назад',
+    daysAgo30: '30 дней назад',
+    today: 'Сегодня',
+    // Finance
+    todayRevenue: 'Доход за сегодня',
+    monthRevenue: 'Доход за месяц',
+    monthExpenses: 'Расходы за месяц',
+    month: 'Месяц',
+    // Mock data labels
+    placeholder: 'Статистика скоро будет доступна',
+  },
+
   // Patients list
   patients: {
     title: 'Мои пациенты',
@@ -72,23 +108,41 @@ const ru = {
 
   // Add/Edit patient form
   addPatient: {
-    title: 'Новый пациент',
+    title: 'Добавить пациента',
+    subtitle: 'Основная информация о пациенте',
     dataTitle: 'Данные пациента',
     dataHint: 'Заполните информацию о пациенте',
     firstName: 'Имя',
-    firstNamePlaceholder: 'Имя',
+    firstNamePlaceholder: 'Введите имя',
     lastName: 'Фамилия',
-    lastNamePlaceholder: 'Фамилия',
+    lastNamePlaceholder: 'Введите фамилию',
     phone: 'Телефон',
-    phonePlaceholder: '+374 XX XXX XXX',
+    phonePlaceholder: '+7 (___) ___-__-__',
     status: 'Статус',
     diagnosis: 'Диагноз / Заметки',
     diagnosisPlaceholder: 'Описание диагноза или заметки...',
     birthDate: 'Дата рождения',
     birthDatePlaceholder: 'Выберите дату',
-    save: '✓ Сохранить пациента',
+    segment: 'Сегмент',
+    segmentRegular: 'Обычный',
+    segmentVip: 'VIP',
+    // Collapsible sections
+    diagnosisSection: 'Диагноз (опционально)',
+    notesSection: 'Заметки врача (опционально)',
+    firstVisitSection: 'Первый визит (опционально)',
+    diagnosisLabel: 'Описание диагноза',
+    diagnosisPlaceholderShort: 'Можно заполнить позже...',
+    doctorNotes: 'Личные заметки',
+    doctorNotesPlaceholder: 'Дополнительная информация...',
+    visitDate: 'Дата визита',
+    visitDescription: 'Описание / заметки',
+    visitDescPlaceholder: 'Причина визита, жалобы, план лечения...',
+    nextVisit: 'Следующий визит',
+    // Buttons
+    save: 'Сохранить пациента',
+    cancel: 'Отмена',
     saving: 'Сохранение...',
-    validationError: 'Пожалуйста, заполните имя и фамилию.',
+    validationError: 'Пожалуйста, заполните имя, фамилию и телефон.',
     successTitle: 'Пациент добавлен',
     successDescription: 'создан в системе',
     errorCreate: 'Не удалось создать пациента. Попробуйте снова.',
@@ -448,6 +502,33 @@ const ru = {
       marketing: 'Маркетинг',
       marketingDesc: 'Генерация текстов',
     },
+  },
+
+  // Notifications
+  notifications: {
+    title: 'Уведомления',
+    markAllRead: 'Прочитать все',
+    noNotifications: 'Нет уведомлений',
+    // Time
+    now: 'Сейчас',
+    minutesAgo: 'мин. назад',
+    hoursAgo: 'ч. назад',
+    yesterday: 'Вчера',
+    daysAgo: 'дн. назад',
+    // Notification types
+    visitUpcoming: 'Предстоящий визит',
+    visitRemaining: 'Оставшийся визит',
+    patientNoShow: 'Пациент не пришёл',
+    patientOverdue: 'Просроченный визит',
+    systemTrial: 'Пробный период',
+    systemSubscription: 'Подписка',
+    // Mock messages
+    mockVisitUpcoming: 'Визит через 30 минут',
+    mockVisitRemaining: 'Осталось 2 визита на сегодня',
+    mockPatientNoShow: 'Пациент не явился на приём',
+    mockPatientOverdue: 'Напоминание о повторном визите',
+    mockSystemTrial: 'Пробный период заканчивается через 3 дня',
+    mockSystemSubscription: 'Подписка успешно продлена',
   },
 } as const
 

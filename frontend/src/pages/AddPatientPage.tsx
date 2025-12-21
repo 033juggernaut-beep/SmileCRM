@@ -1,78 +1,101 @@
-import {
-  Alert,
-  AlertIcon,
-  Box,
-  Flex,
-  FormControl,
-  FormLabel,
-  Heading,
-  Input,
-  Select,
-  Stack,
-  Text,
-  Textarea,
-  chakra,
-  useToast,
-} from '@chakra-ui/react'
-import { useCallback, useState } from 'react'
-import type { ChangeEvent, FormEvent } from 'react'
+/**
+ * AddPatientPage - Add new patient form page
+ * Matches Superdesign reference 1:1
+ * 
+ * Features:
+ * - Required fields: First Name, Last Name, Phone
+ * - Optional fields: Birth date, Segment
+ * - Collapsible sections: Diagnosis, Doctor Notes, First Visit
+ * - Voice assistant integration
+ * - Form validation and error display
+ * - Loading state with spinner
+ */
+
+import { useState, useCallback } from 'react'
+import { Box, SimpleGrid, VStack, Alert, AlertIcon, useToast, useColorMode } from '@chakra-ui/react'
 import { useNavigate } from 'react-router-dom'
-import {
-  patientsApi,
-} from '../api/patients'
+import { patientsApi } from '../api/patients'
 import type { PatientStatus } from '../api/patients'
 import { type VoiceParseStructured, isPatientStructured } from '../api/ai'
-import { PremiumLayout } from '../components/layout/PremiumLayout'
-import { PremiumCard } from '../components/premium/PremiumCard'
-import { PremiumButton } from '../components/premium/PremiumButton'
 import { VoiceAssistantButton } from '../components/VoiceAssistantButton'
+import { BackgroundPattern } from '../components/dashboard/BackgroundPattern'
+import { Header } from '../components/dashboard/Header'
+import { Footer } from '../components/dashboard/Footer'
 import { useLanguage } from '../context/LanguageContext'
+import {
+  FormField,
+  FormTextarea,
+  SegmentSelector,
+  AddPatientCollapsibleSection,
+  AddPatientHeader,
+  ActionButtons,
+} from '../components/addPatient'
+import type { PatientSegment } from '../components/addPatient'
 
 type FormFields = {
   firstName: string
   lastName: string
-  diagnosis: string
   phone: string
-  status: PatientStatus
   birthDate: string
+  segment: PatientSegment
+  diagnosis: string
+  doctorNotes: string
+  // First visit
+  visitDate: string
+  visitDescription: string
+  nextVisitDate: string
+}
+
+type FormErrors = {
+  firstName?: string
+  lastName?: string
+  phone?: string
 }
 
 const initialFormState: FormFields = {
   firstName: '',
   lastName: '',
-  diagnosis: '',
   phone: '',
-  status: 'in_progress',
   birthDate: '',
+  segment: 'regular',
+  diagnosis: '',
+  doctorNotes: '',
+  visitDate: '',
+  visitDescription: '',
+  nextVisitDate: '',
 }
 
 export const AddPatientPage = () => {
   const { t } = useLanguage()
+  const { colorMode } = useColorMode()
+  const isDark = colorMode === 'dark'
   const [form, setForm] = useState<FormFields>(initialFormState)
-  const [error, setError] = useState<string | null>(null)
+  const [errors, setErrors] = useState<FormErrors>({})
+  const [globalError, setGlobalError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
   const toast = useToast()
-  
-  // Translated status options
-  const statusOptions = [
-    { value: 'in_progress' as PatientStatus, label: t('patients.statusInProgress') },
-    { value: 'completed' as PatientStatus, label: t('patients.statusCompleted') },
-  ]
 
-  const handleChange =
-    (field: keyof FormFields) =>
-    (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setForm((prev) => ({
-        ...prev,
-        [field]: event.target.value,
-      }))
-    }
-
-  const handleStatusChange = (event: ChangeEvent<HTMLSelectElement>) => {
+  // Handle individual field change
+  const handleFieldChange = (field: keyof FormFields) => (value: string) => {
     setForm((prev) => ({
       ...prev,
-      status: event.target.value as PatientStatus,
+      [field]: value,
+    }))
+    // Clear error on change
+    if (errors[field as keyof FormErrors]) {
+      setErrors((prev) => ({
+        ...prev,
+        [field]: undefined,
+      }))
+    }
+  }
+
+  // Handle segment change
+  const handleSegmentChange = (segment: PatientSegment) => {
+    setForm((prev) => ({
+      ...prev,
+      segment,
     }))
   }
 
@@ -84,34 +107,55 @@ export const AddPatientPage = () => {
       const { patient } = structured
       
       setForm((prev) => ({
+        ...prev,
         firstName: patient.first_name || prev.firstName,
         lastName: patient.last_name || prev.lastName,
-        diagnosis: patient.diagnosis || prev.diagnosis,
         phone: patient.phone || prev.phone,
-        status: patient.status || prev.status,
-        birthDate: prev.birthDate, // Keep existing birth date from form
+        diagnosis: patient.diagnosis || prev.diagnosis,
+        // Keep other fields
       }))
+      setErrors({})
     }
   }, [])
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setError(null)
+  // Validate form
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {}
 
-    if (!form.firstName.trim() || !form.lastName.trim()) {
-      setError(t('addPatient.validationError'))
+    if (!form.firstName.trim()) {
+      newErrors.firstName = t('addPatient.validationError')
+    }
+    if (!form.lastName.trim()) {
+      newErrors.lastName = t('addPatient.validationError')
+    }
+    if (!form.phone.trim()) {
+      newErrors.phone = t('addPatient.validationError')
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  // Handle form submit
+  const handleSave = async () => {
+    setGlobalError(null)
+
+    if (!validateForm()) {
       return
     }
 
     setIsSubmitting(true)
 
     try {
+      // Map segment to status for API compatibility
+      const status: PatientStatus = form.segment === 'vip' ? 'completed' : 'in_progress'
+
       const newPatient = await patientsApi.create({
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         diagnosis: form.diagnosis.trim() || undefined,
         phone: form.phone.trim() || undefined,
-        status: form.status,
+        status,
         birthDate: form.birthDate || undefined,
       })
 
@@ -125,7 +169,7 @@ export const AddPatientPage = () => {
 
       navigate(`/patients/${newPatient.id}`, { replace: true })
     } catch (err) {
-      setError(
+      setGlobalError(
         err instanceof Error
           ? err.message
           : t('addPatient.errorCreate'),
@@ -135,148 +179,196 @@ export const AddPatientPage = () => {
     }
   }
 
+  // Handle cancel
+  const handleCancel = () => {
+    navigate('/patients')
+  }
+
+  // Footer links
+  const footerLinks = [
+    { label: t('home.subscription'), onClick: () => navigate('/subscription') },
+    { label: t('home.help'), onClick: () => navigate('/help') },
+    { label: t('home.privacy'), onClick: () => navigate('/privacy') },
+  ]
+
+  // Page background
+  const pageBg = isDark
+    ? 'slate.900'
+    : 'linear-gradient(to bottom right, #F8FAFC, rgba(239, 246, 255, 0.3), rgba(240, 249, 255, 0.5))'
+
   return (
-    <PremiumLayout 
-      title={t('addPatient.title')} 
-      showBack={true}
-      onBack={() => navigate('/patients')}
-      background="gradient"
-      safeAreaBottom
+    <Box
+      minH="100vh"
+      w="full"
+      position="relative"
+      transition="colors 0.3s"
+      bg={pageBg}
     >
-      <chakra.form onSubmit={handleSubmit} w="full">
-        <Stack spacing={5}>
-          {/* Header with Voice Button */}
-          <Flex justify="space-between" align="center">
-            <Box>
-              <Heading size="md" color="text.primary">
-                {t('addPatient.dataTitle')}
-              </Heading>
-              <Text fontSize="sm" color="text.muted" mt={1}>
-                {t('addPatient.dataHint')}
-              </Text>
-            </Box>
-            <VoiceAssistantButton
-              mode="patient"
-              onApply={handleVoiceApply}
-              buttonLabel="🎤"
-            />
-          </Flex>
+      {/* Background Pattern */}
+      <BackgroundPattern />
 
-          {/* Form Card */}
-          <PremiumCard variant="elevated">
-            <Stack spacing={5}>
-              <FormControl isRequired>
-                <FormLabel color="text.secondary" fontSize="sm">
-                  {t('addPatient.firstName')}
-                </FormLabel>
-                <Input
-                  placeholder={t('addPatient.firstNamePlaceholder')}
-                  value={form.firstName}
-                  onChange={handleChange('firstName')}
-                  size="lg"
-                />
-              </FormControl>
+      {/* Main Content */}
+      <Box position="relative" zIndex={10} display="flex" flexDirection="column" minH="100vh">
+        {/* Header */}
+        <Header />
 
-              <FormControl isRequired>
-                <FormLabel color="text.secondary" fontSize="sm">
-                  {t('addPatient.lastName')}
-                </FormLabel>
-                <Input
-                  placeholder={t('addPatient.lastNamePlaceholder')}
-                  value={form.lastName}
-                  onChange={handleChange('lastName')}
-                  size="lg"
-                />
-              </FormControl>
+        {/* Page Title */}
+        <AddPatientHeader
+          onBack={handleCancel}
+        />
 
-              <FormControl>
-                <FormLabel color="text.secondary" fontSize="sm">
-                  {t('addPatient.phone')}
-                </FormLabel>
-                <Input
-                  placeholder={t('addPatient.phonePlaceholder')}
-                  value={form.phone}
-                  onChange={handleChange('phone')}
-                  size="lg"
-                  type="tel"
-                />
-              </FormControl>
-
-              <FormControl>
-                <FormLabel color="text.secondary" fontSize="sm">
-                  {t('addPatient.status')}
-                </FormLabel>
-                <Select 
-                  value={form.status} 
-                  onChange={handleStatusChange}
-                  size="lg"
-                  sx={{
-                    option: {
-                      bg: 'bg.secondary',
-                      color: 'text.primary',
-                    },
-                  }}
-                >
-                  {statusOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <FormControl>
-                <FormLabel color="text.secondary" fontSize="sm">
-                  {t('addPatient.birthDate')}
-                </FormLabel>
-                <Input
-                  type="date"
-                  value={form.birthDate}
-                  onChange={handleChange('birthDate')}
-                  size="lg"
-                />
-              </FormControl>
-
-              <FormControl>
-                <FormLabel color="text.secondary" fontSize="sm">
-                  {t('addPatient.diagnosis')}
-                </FormLabel>
-                <Textarea
-                  placeholder={t('addPatient.diagnosisPlaceholder')}
-                  rows={4}
-                  value={form.diagnosis}
-                  onChange={handleChange('diagnosis')}
-                  size="lg"
-                />
-              </FormControl>
-            </Stack>
-          </PremiumCard>
-
-          {/* Error Alert */}
-          {error && (
-            <Alert 
-              status="error" 
-              borderRadius="lg"
-              bg="error.500"
-              color="white"
-            >
-              <AlertIcon color="white" />
-              {error}
-            </Alert>
-          )}
-
-          {/* Submit Button */}
-          <PremiumButton
-            type="submit"
-            size="lg"
-            isLoading={isSubmitting}
-            loadingText={t('addPatient.saving')}
-            fullWidth
+        {/* Form Content */}
+        <Box as="main" flex={1} pb={24}>
+          <VStack
+            w="full"
+            maxW="2xl"
+            mx="auto"
+            px={4}
+            spacing={6}
           >
-            {t('addPatient.save')}
-          </PremiumButton>
-        </Stack>
-      </chakra.form>
-    </PremiumLayout>
+            {/* Voice Assistant - floating */}
+            <Box position="fixed" bottom={24} right={4} zIndex={20}>
+              <VoiceAssistantButton
+                mode="patient"
+                onApply={handleVoiceApply}
+                buttonLabel="🎤"
+              />
+            </Box>
+
+            {/* Main Form Card */}
+            <Box
+              w="full"
+              borderRadius="2xl"
+              p={6}
+              transition="colors 0.2s"
+              bg={isDark ? 'rgba(30, 41, 59, 0.5)' : 'white'}
+              border="1px solid"
+              borderColor={isDark ? 'rgba(51, 65, 85, 0.5)' : 'rgba(226, 232, 240, 0.8)'}
+              boxShadow={isDark ? 'none' : 'sm'}
+            >
+              <VStack spacing={5} align="stretch">
+                {/* Required Fields - Name Row */}
+                <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
+                  <FormField
+                    label={t('addPatient.firstName')}
+                    value={form.firstName}
+                    onChange={handleFieldChange('firstName')}
+                    placeholder={t('addPatient.firstNamePlaceholder')}
+                    required
+                    error={errors.firstName}
+                  />
+                  <FormField
+                    label={t('addPatient.lastName')}
+                    value={form.lastName}
+                    onChange={handleFieldChange('lastName')}
+                    placeholder={t('addPatient.lastNamePlaceholder')}
+                    required
+                    error={errors.lastName}
+                  />
+                </SimpleGrid>
+
+                {/* Phone - Required */}
+                <FormField
+                  label={t('addPatient.phone')}
+                  value={form.phone}
+                  onChange={handleFieldChange('phone')}
+                  placeholder={t('addPatient.phonePlaceholder')}
+                  required
+                  type="tel"
+                  error={errors.phone}
+                />
+
+                {/* Optional Fields - Birth Date & Segment */}
+                <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
+                  <FormField
+                    label={t('addPatient.birthDate')}
+                    value={form.birthDate}
+                    onChange={handleFieldChange('birthDate')}
+                    type="date"
+                  />
+                  <SegmentSelector
+                    value={form.segment}
+                    onChange={handleSegmentChange}
+                  />
+                </SimpleGrid>
+              </VStack>
+            </Box>
+
+            {/* Optional Collapsible Sections */}
+            <VStack spacing={3} align="stretch" w="full">
+              {/* Diagnosis */}
+              <AddPatientCollapsibleSection title={t('addPatient.diagnosisSection')}>
+                <FormTextarea
+                  label={t('addPatient.diagnosisLabel')}
+                  value={form.diagnosis}
+                  onChange={handleFieldChange('diagnosis')}
+                  placeholder={t('addPatient.diagnosisPlaceholderShort')}
+                  rows={3}
+                />
+              </AddPatientCollapsibleSection>
+
+              {/* Doctor Notes */}
+              <AddPatientCollapsibleSection title={t('addPatient.notesSection')}>
+                <FormTextarea
+                  label={t('addPatient.doctorNotes')}
+                  value={form.doctorNotes}
+                  onChange={handleFieldChange('doctorNotes')}
+                  placeholder={t('addPatient.doctorNotesPlaceholder')}
+                  rows={3}
+                />
+              </AddPatientCollapsibleSection>
+
+              {/* First Visit */}
+              <AddPatientCollapsibleSection title={t('addPatient.firstVisitSection')}>
+                <VStack spacing={4} align="stretch">
+                  <FormField
+                    label={t('addPatient.visitDate')}
+                    value={form.visitDate}
+                    onChange={handleFieldChange('visitDate')}
+                    type="date"
+                  />
+                  <FormTextarea
+                    label={t('addPatient.visitDescription')}
+                    value={form.visitDescription}
+                    onChange={handleFieldChange('visitDescription')}
+                    placeholder={t('addPatient.visitDescPlaceholder')}
+                    rows={3}
+                  />
+                  <FormField
+                    label={t('addPatient.nextVisit')}
+                    value={form.nextVisitDate}
+                    onChange={handleFieldChange('nextVisitDate')}
+                    type="date"
+                  />
+                </VStack>
+              </AddPatientCollapsibleSection>
+            </VStack>
+
+            {/* Error Alert */}
+            {globalError && (
+              <Alert
+                status="error"
+                borderRadius="xl"
+                bg="error.500"
+                color="white"
+              >
+                <AlertIcon color="white" />
+                {globalError}
+              </Alert>
+            )}
+
+            {/* Action Buttons */}
+            <ActionButtons
+              onSave={handleSave}
+              onCancel={handleCancel}
+              isLoading={isSubmitting}
+            />
+          </VStack>
+        </Box>
+
+        {/* Footer */}
+        <Footer links={footerLinks} />
+      </Box>
+    </Box>
   )
 }

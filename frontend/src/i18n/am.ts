@@ -48,6 +48,42 @@ const am = {
     todayVisits: 'Aysor aycelutyaneri',
   },
 
+  // Statistics page
+  stats: {
+    title: 'Klinikaji vijakagrutyan',
+    subtitle: 'Himnakan cuchanishneri aknark',
+    // Section titles
+    generalMetrics: 'Yndhanur cuchanishner',
+    visits: 'Aycelutyunner',
+    visitDynamics: 'Aycelutyunneri dinamika',
+    finance: 'Finansner',
+    // General metrics
+    totalPatients: 'Pacientner',
+    total: 'Yndamene',
+    activePatients: 'Aktivner',
+    active: '+8%',
+    vipPatients: 'VIP pacientner',
+    vip: 'VIP',
+    // Visits
+    totalVisits: 'Yndhanur aycelutyunneri qanak',
+    visitsForPeriod: 'Aycelutyunner zhamanakashrjani hamar',
+    todayVisits: 'Aysor aycelutyanneri',
+    visitsLast7Days: 'Verjin 7 or',
+    visitsLast30Days: 'Verjin 30 or',
+    period7d: '7 or',
+    period30d: '30 or',
+    daysAgo7: '7 or araj',
+    daysAgo30: '30 or araj',
+    today: 'Aysor',
+    // Finance
+    todayRevenue: 'Aysorvan ekamut',
+    monthRevenue: 'Amsakan ekamut',
+    monthExpenses: 'Amsakan cakhser',
+    month: 'Amis',
+    // Mock data labels
+    placeholder: 'Vijakagrutyan mot klini',
+  },
+
   // Patients list
   patients: {
     title: 'Im pacientnere',
@@ -73,23 +109,41 @@ const am = {
 
   // Add/Edit patient form
   addPatient: {
-    title: 'Nor pacient',
+    title: 'Avelacnel pacient',
+    subtitle: 'Pacienti himnakan texekutyun',
     dataTitle: 'Pacienti tvyalner',
     dataHint: 'Lracreq pacienti texekutyune',
     firstName: 'Anun',
-    firstNamePlaceholder: 'Anun',
+    firstNamePlaceholder: 'Mutqagreq anune',
     lastName: 'Azganun',
-    lastNamePlaceholder: 'Azganun',
+    lastNamePlaceholder: 'Mutqagreq azganune',
     phone: 'Heraxos',
     phonePlaceholder: '+374 XX XXX XXX',
     status: 'Kargavichak',
-    diagnosis: 'Axtoroshuм / Notaner',
+    diagnosis: 'Axtoroshum / Notaner',
     diagnosisPlaceholder: 'Axtoroshman nkaragrutyun kam notaner...',
     birthDate: 'Cnndan amativ',
     birthDatePlaceholder: 'Entreq amsative',
-    save: '✓ Pahpanel paciente',
+    segment: 'Segment',
+    segmentRegular: 'Sovorakan',
+    segmentVip: 'VIP',
+    // Collapsible sections
+    diagnosisSection: 'Axtoroshum (och partadir)',
+    notesSection: 'Bjshki notaner (och partadir)',
+    firstVisitSection: 'Arajin vizit (och partadir)',
+    diagnosisLabel: 'Axtoroshman nkaragrutyun',
+    diagnosisPlaceholderShort: 'Kareli e lracnel aveli ush...',
+    doctorNotes: 'Anjnakan notaner',
+    doctorNotesPlaceholder: 'Havelyal texekutyun...',
+    visitDate: 'Viziti amativ',
+    visitDescription: 'Nkaragrutyun / notaner',
+    visitDescPlaceholder: 'Viziti patchare, bołoqner, bujman plan...',
+    nextVisit: 'Hajord vizit',
+    // Buttons
+    save: 'Pahpanel paciente',
+    cancel: 'Chexarkel',
     saving: 'Pahpanum...',
-    validationError: 'Xndrum enq lracnel anune ev azganune.',
+    validationError: 'Xndrum enq lracnel anune, azganune ev heraxose.',
     successTitle: 'Paciente avelacvac e',
     successDescription: 'stexcvac e hamakargum',
     errorCreate: 'Chhajoxvec stexcel paciente. Porceq krkin.',
@@ -449,6 +503,33 @@ const am = {
       marketing: 'Marqueting',
       marketingDesc: 'Generacnel tekster',
     },
+  },
+
+  // Notifications
+  notifications: {
+    title: 'Canuceumner',
+    markAllRead: 'Nshanavorel bolor',
+    noNotifications: 'Canuceumner chka',
+    // Time
+    now: 'Hima',
+    minutesAgo: 'r. araj',
+    hoursAgo: 'zh. araj',
+    yesterday: 'Erek',
+    daysAgo: 'or araj',
+    // Notification types
+    visitUpcoming: 'Arajikah vizit',
+    visitRemaining: 'Mnacac vizit',
+    patientNoShow: 'Pacienty chegav',
+    patientOverdue: 'Usacac vizit',
+    systemTrial: 'Pordznakan shrjan',
+    systemSubscription: 'Bajanagrutyun',
+    // Mock messages
+    mockVisitUpcoming: 'Vizit 30 rope',
+    mockVisitRemaining: 'Aysor mnacac e 2 vizit',
+    mockPatientNoShow: 'Pacienty chegav endunelutyun',
+    mockPatientOverdue: 'Krknvox viziti hishexutyun',
+    mockSystemTrial: 'Pordznakan shrjane averanum e 3 orum',
+    mockSystemSubscription: 'Bajanagrutyune hajoxutyamb norogvec',
   },
 } as const
 

@@ -47,6 +47,42 @@ const en = {
     todayVisits: 'Today visits',
   },
 
+  // Statistics page
+  stats: {
+    title: 'Clinic Statistics',
+    subtitle: 'Overview of key metrics',
+    // Section titles
+    generalMetrics: 'General Metrics',
+    visits: 'Visits',
+    visitDynamics: 'Visit Dynamics',
+    finance: 'Finance',
+    // General metrics
+    totalPatients: 'Patients',
+    total: 'Total',
+    activePatients: 'Active',
+    active: '+8%',
+    vipPatients: 'VIP Patients',
+    vip: 'VIP',
+    // Visits
+    totalVisits: 'Total number of visits',
+    visitsForPeriod: 'Visits for period',
+    todayVisits: 'Today visits',
+    visitsLast7Days: 'Last 7 days',
+    visitsLast30Days: 'Last 30 days',
+    period7d: '7d',
+    period30d: '30d',
+    daysAgo7: '7 days ago',
+    daysAgo30: '30 days ago',
+    today: 'Today',
+    // Finance
+    todayRevenue: 'Today revenue',
+    monthRevenue: 'Month revenue',
+    monthExpenses: 'Month expenses',
+    month: 'Month',
+    // Mock data labels
+    placeholder: 'Statistics coming soon',
+  },
+
   // Patients list
   patients: {
     title: 'My Patients',
@@ -72,23 +108,41 @@ const en = {
 
   // Add/Edit patient form
   addPatient: {
-    title: 'New patient',
+    title: 'Add Patient',
+    subtitle: 'Basic patient information',
     dataTitle: 'Patient data',
     dataHint: 'Fill in patient information',
-    firstName: 'First name',
-    firstNamePlaceholder: 'First name',
-    lastName: 'Last name',
-    lastNamePlaceholder: 'Last name',
+    firstName: 'First Name',
+    firstNamePlaceholder: 'Enter first name',
+    lastName: 'Last Name',
+    lastNamePlaceholder: 'Enter last name',
     phone: 'Phone',
-    phonePlaceholder: '+374 XX XXX XXX',
+    phonePlaceholder: '+1 (___) ___-____',
     status: 'Status',
     diagnosis: 'Diagnosis / Notes',
     diagnosisPlaceholder: 'Diagnosis description or notes...',
-    birthDate: 'Date of birth',
+    birthDate: 'Date of Birth',
     birthDatePlaceholder: 'Select date',
-    save: '✓ Save patient',
+    segment: 'Segment',
+    segmentRegular: 'Regular',
+    segmentVip: 'VIP',
+    // Collapsible sections
+    diagnosisSection: 'Diagnosis (optional)',
+    notesSection: 'Doctor Notes (optional)',
+    firstVisitSection: 'First Visit (optional)',
+    diagnosisLabel: 'Diagnosis description',
+    diagnosisPlaceholderShort: 'Can be filled later...',
+    doctorNotes: 'Personal notes',
+    doctorNotesPlaceholder: 'Additional information...',
+    visitDate: 'Visit date',
+    visitDescription: 'Description / notes',
+    visitDescPlaceholder: 'Reason for visit, complaints, treatment plan...',
+    nextVisit: 'Next visit',
+    // Buttons
+    save: 'Save Patient',
+    cancel: 'Cancel',
     saving: 'Saving...',
-    validationError: 'Please fill in first name and last name.',
+    validationError: 'Please fill in first name, last name, and phone.',
     successTitle: 'Patient added',
     successDescription: 'created in system',
     errorCreate: 'Failed to create patient. Please try again.',
@@ -448,6 +502,33 @@ const en = {
       marketing: 'Marketing',
       marketingDesc: 'Generate texts',
     },
+  },
+
+  // Notifications
+  notifications: {
+    title: 'Notifications',
+    markAllRead: 'Mark all read',
+    noNotifications: 'No notifications',
+    // Time
+    now: 'Now',
+    minutesAgo: 'm ago',
+    hoursAgo: 'h ago',
+    yesterday: 'Yesterday',
+    daysAgo: 'd ago',
+    // Notification types
+    visitUpcoming: 'Upcoming visit',
+    visitRemaining: 'Remaining visit',
+    patientNoShow: 'Patient no-show',
+    patientOverdue: 'Overdue visit',
+    systemTrial: 'Trial period',
+    systemSubscription: 'Subscription',
+    // Mock messages
+    mockVisitUpcoming: 'Visit in 30 minutes',
+    mockVisitRemaining: '2 visits remaining today',
+    mockPatientNoShow: 'Patient did not show up',
+    mockPatientOverdue: 'Follow-up visit reminder',
+    mockSystemTrial: 'Trial ends in 3 days',
+    mockSystemSubscription: 'Subscription renewed successfully',
   },
 } as const
 
