@@ -3,6 +3,7 @@
  * Uses NotificationDropdown for notifications
  * Includes safe-area padding for Telegram native buttons
  * Uses useTelegramSafeArea hook for dynamic safe area calculation
+ * Uses LanguageMenu for mobile-friendly language dropdown
  */
 
 import { useCallback } from 'react'
@@ -11,30 +12,27 @@ import {
   Flex,
   HStack,
   Text,
-  Button,
+  useColorMode,
 } from '@chakra-ui/react'
+import { Sun, Moon } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { useLanguage, type Language } from '../../context/LanguageContext'
 import {
   NotificationDropdown,
   type Notification,
 } from '../notifications'
 import { useNotifications } from '../../hooks/useNotifications'
 import { useTelegramSafeArea } from '../../hooks/useTelegramSafeArea'
-
-const LANGUAGES: { code: Language; label: string }[] = [
-  { code: 'am', label: 'AM' },
-  { code: 'ru', label: 'RU' },
-  { code: 'en', label: 'EN' },
-]
+import { LanguageMenu } from '../LanguageMenu'
 
 // Minimum safe padding for header controls
 const MIN_RIGHT_SAFE = 16
 const BASE_HEADER_HEIGHT = 56
+const MIN_ICON_SIZE = 44
 
 export function AppHeader() {
-  const { language, setLanguage } = useLanguage()
   const navigate = useNavigate()
+  const { colorMode, toggleColorMode } = useColorMode()
+  const isDark = colorMode === 'dark'
 
   // Get safe area insets from Telegram
   const { topInset, rightInset, isInTelegram, headerHeight: computedHeight } = useTelegramSafeArea()
@@ -62,6 +60,12 @@ export function AppHeader() {
     markAllRead()
   }, [markAllRead])
 
+  // Colors
+  const activeColor = isDark ? '#60A5FA' : '#2563EB'
+  const inactiveColor = isDark ? '#64748B' : '#94A3B8'
+  const dividerColor = isDark ? '#475569' : '#CBD5E1'
+  const iconColor = isDark ? '#94A3B8' : '#64748B'
+
   return (
     <Box
       position="fixed"
@@ -75,7 +79,7 @@ export function AppHeader() {
       h={`${headerHeight}px`}
       minH={`${headerHeight}px`}
       pt={topInset > 0 ? `${topInset}px` : 0}
-      backdropFilter="blur(8px)"
+      backdropFilter="blur(12px)"
       isolation="isolate"
     >
       <Flex
@@ -102,30 +106,13 @@ export function AppHeader() {
         </HStack>
 
         {/* Right - Controls */}
-        <HStack spacing={3}>
-          {/* Language Switcher */}
-          <HStack spacing={1}>
-            {LANGUAGES.map(({ code, label }) => (
-              <Button
-                key={code}
-                size="xs"
-                variant="ghost"
-                fontSize="xs"
-                fontWeight={language === code ? 'bold' : 'medium'}
-                color={language === code ? 'primary.600' : 'text.muted'}
-                bg={language === code ? 'primary.50' : 'transparent'}
-                borderRadius="md"
-                minW="32px"
-                h="28px"
-                px={2}
-                onClick={() => setLanguage(code)}
-                _hover={{ bg: 'bg.hover' }}
-                sx={{ WebkitTapHighlightColor: 'transparent' }}
-              >
-                {label}
-              </Button>
-            ))}
-          </HStack>
+        <HStack spacing={{ base: 2, md: 3 }}>
+          {/* Language Menu - dropdown on mobile */}
+          <LanguageMenu
+            activeColor={activeColor}
+            inactiveColor={inactiveColor}
+            dividerColor={dividerColor}
+          />
 
           {/* Notifications Dropdown */}
           <NotificationDropdown
@@ -133,6 +120,32 @@ export function AppHeader() {
             onNotificationClick={handleNotificationClick}
             onMarkAllRead={handleMarkAllRead}
           />
+
+          {/* Theme Toggle */}
+          <Box
+            as="button"
+            onClick={toggleColorMode}
+            color={iconColor}
+            _hover={{ color: isDark ? '#F1F5F9' : '#2563EB' }}
+            transition="color 0.2s"
+            sx={{ 
+              WebkitTapHighlightColor: 'transparent',
+              '& svg': { display: 'block' },
+            }}
+            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            minW={`${MIN_ICON_SIZE}px`}
+            minH={`${MIN_ICON_SIZE}px`}
+            w={`${MIN_ICON_SIZE}px`}
+            h={`${MIN_ICON_SIZE}px`}
+            borderRadius="md"
+            _active={{ bg: isDark ? 'whiteAlpha.100' : 'blackAlpha.50' }}
+            flexShrink={0}
+          >
+            {isDark ? <Sun size={20} /> : <Moon size={20} />}
+          </Box>
         </HStack>
       </Flex>
     </Box>

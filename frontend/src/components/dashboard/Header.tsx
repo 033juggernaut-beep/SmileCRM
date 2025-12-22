@@ -8,13 +8,13 @@
  * for Telegram native buttons (close X, menu ...) to prevent overlap
  * 
  * Uses useTelegramSafeArea hook for dynamic safe area calculation
+ * Uses LanguageMenu for mobile-friendly language dropdown
  */
 
 import { useCallback } from 'react';
 import { Box, Flex, Text, useColorMode } from '@chakra-ui/react';
 import { Sun, Moon } from 'lucide-react';
 import { ToothLogo } from './ToothLogo';
-import { useLanguage } from '../../context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import {
   NotificationDropdown,
@@ -22,8 +22,7 @@ import {
 } from '../notifications';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useTelegramSafeArea } from '../../hooks/useTelegramSafeArea';
-
-const LANGS = ['AM', 'RU', 'EN'] as const;
+import { LanguageMenu } from '../LanguageMenu';
 
 // Minimum safe padding for header controls (fallback when hook returns lower values)
 const MIN_RIGHT_SAFE = 16; // Minimum padding on right
@@ -37,7 +36,6 @@ export function getHeaderHeight(topInset: number): number {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function Header(_props?: { notificationCount?: number }) {
-  const { language, setLanguage } = useLanguage();
   const { colorMode, toggleColorMode } = useColorMode();
   const navigate = useNavigate();
   const isDark = colorMode === 'dark';
@@ -69,7 +67,7 @@ export function Header(_props?: { notificationCount?: number }) {
   }, [markAllRead]);
 
   // Exact colors from reference
-  const headerBg = isDark ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.9)';
+  const headerBg = isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)';
   const borderColor = isDark ? 'rgba(51, 65, 85, 0.5)' : '#DBEAFE'; // blue-100
   const logoColor = isDark ? '#60A5FA' : '#2563EB'; // blue-400 / blue-600
   const brandColor = isDark ? 'white' : '#1E293B'; // slate-800
@@ -96,7 +94,7 @@ export function Header(_props?: { notificationCount?: number }) {
       borderColor={borderColor}
       transition="background-color 0.3s, border-color 0.3s"
       zIndex={1000}
-      backdropFilter="blur(8px)"
+      backdropFilter="blur(12px)"
       // Ensure the header stays above everything
       isolation="isolate"
     >
@@ -104,7 +102,6 @@ export function Header(_props?: { notificationCount?: number }) {
         align="center" 
         justify="space-between"
         h={`${BASE_HEADER_HEIGHT}px`}
-        py="16px" // py-4
       >
         {/* Left: Logo + Brand - gap-3 */}
         <Flex align="center" gap="12px">
@@ -115,36 +112,20 @@ export function Header(_props?: { notificationCount?: number }) {
             fontWeight="semibold"
             letterSpacing="wide" // 0.025em
             color={brandColor}
+            display={{ base: 'none', sm: 'block' }}
           >
             SmileCRM
           </Text>
         </Flex>
 
-        {/* Right: Controls - gap-5 */}
-        <Flex align="center" gap="20px">
-          {/* Language Switch - gap-1 text-sm */}
-          <Flex align="center" gap="4px" fontSize="sm">
-            {LANGS.map((lang, index) => (
-              <Flex key={lang} align="center">
-                {/* px-1.5 py-0.5 font-medium */}
-                <Box
-                  as="button"
-                  px="6px"
-                  py="2px"
-                  fontWeight="medium"
-                  color={language.toUpperCase() === lang ? activeColor : inactiveColor}
-                  onClick={() => setLanguage(lang.toLowerCase() as 'am' | 'ru' | 'en')}
-                  transition="color 0.2s"
-                  sx={{ WebkitTapHighlightColor: 'transparent' }}
-                >
-                  {lang}
-                </Box>
-                {index < LANGS.length - 1 && (
-                  <Text mx="4px" color={dividerColor}>|</Text>
-                )}
-              </Flex>
-            ))}
-          </Flex>
+        {/* Right: Controls - responsive gap */}
+        <Flex align="center" gap={{ base: '12px', md: '20px' }}>
+          {/* Language Menu - dropdown on mobile, inline on desktop */}
+          <LanguageMenu
+            activeColor={activeColor}
+            inactiveColor={inactiveColor}
+            dividerColor={dividerColor}
+          />
 
           {/* Notification Dropdown */}
           <NotificationDropdown
