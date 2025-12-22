@@ -4,7 +4,9 @@
  * Light: bg-white/90, border-blue-100
  * Dark: bg-slate-900/80, border-slate-700/50
  * 
- * Includes safe-area padding for Telegram native buttons (close/menu)
+ * IMPORTANT: This header is STICKY at top with proper safe-area padding
+ * for Telegram native buttons (close X, menu ...) to prevent overlap
+ * 
  * Uses useTelegramSafeArea hook for dynamic safe area calculation
  */
 
@@ -26,6 +28,12 @@ const LANGS = ['AM', 'RU', 'EN'] as const;
 // Minimum safe padding for header controls (fallback when hook returns lower values)
 const MIN_RIGHT_SAFE = 16; // Minimum padding on right
 const MIN_ICON_SIZE = 44; // Minimum touch target size
+const BASE_HEADER_HEIGHT = 56; // Base header height without safe area
+
+// Export header height calculation for use by parent components
+export function getHeaderHeight(topInset: number): number {
+  return BASE_HEADER_HEIGHT + topInset;
+}
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function Header(_props?: { notificationCount?: number }) {
@@ -35,10 +43,14 @@ export function Header(_props?: { notificationCount?: number }) {
   const isDark = colorMode === 'dark';
 
   // Get safe area insets from Telegram
-  const { topInset, rightInset, isInTelegram } = useTelegramSafeArea();
+  const { topInset, rightInset, isInTelegram, headerHeight } = useTelegramSafeArea();
   
   // Calculate right padding: use safe area value, but ensure minimum padding
-  const rightPadding = Math.max(rightInset + MIN_RIGHT_SAFE, isInTelegram ? 72 : 24);
+  // On mobile Telegram, we need extra padding for X and ... buttons
+  const rightPadding = Math.max(rightInset + MIN_RIGHT_SAFE, isInTelegram ? 80 : 24);
+  
+  // Total header height including safe area
+  const totalHeaderHeight = headerHeight || getHeaderHeight(topInset);
 
   // Notifications from API (with fallback to mock data)
   const { notifications, markRead, markAllRead } = useNotifications();
@@ -70,18 +82,30 @@ export function Header(_props?: { notificationCount?: number }) {
     <Box
       as="header"
       w="100%"
+      position="sticky"
+      top={0}
+      left={0}
+      right={0}
+      h={`${totalHeaderHeight}px`}
+      minH={`${totalHeaderHeight}px`}
       pl="24px" // px-6 left
       pr={`${rightPadding}px`} // Dynamic safe area for Telegram buttons
-      pt={topInset > 0 ? `${topInset + 16}px` : '16px'} // py-4 + top safe area
-      pb="16px" // py-4
+      pt={topInset > 0 ? `${topInset}px` : 0} // Top safe area padding
       bg={headerBg}
       borderBottom="1px solid"
       borderColor={borderColor}
       transition="background-color 0.3s, border-color 0.3s"
-      position="relative"
       zIndex={1000}
+      backdropFilter="blur(8px)"
+      // Ensure the header stays above everything
+      isolation="isolate"
     >
-      <Flex align="center" justify="space-between">
+      <Flex 
+        align="center" 
+        justify="space-between"
+        h={`${BASE_HEADER_HEIGHT}px`}
+        py="16px" // py-4
+      >
         {/* Left: Logo + Brand - gap-3 */}
         <Flex align="center" gap="12px">
           <ToothLogo size="28px" color={logoColor} />
@@ -129,22 +153,34 @@ export function Header(_props?: { notificationCount?: number }) {
             onMarkAllRead={handleMarkAllRead}
           />
 
-          {/* Theme Toggle - with proper touch target size */}
+          {/* Theme Toggle - with proper touch target size and visibility */}
           <Box
             as="button"
             onClick={toggleColorMode}
             color={iconColor}
             _hover={{ color: isDark ? '#F1F5F9' : '#2563EB' }}
             transition="color 0.2s"
-            sx={{ WebkitTapHighlightColor: 'transparent' }}
+            sx={{ 
+              WebkitTapHighlightColor: 'transparent',
+              // Ensure the icon is always visible
+              '& svg': {
+                display: 'block',
+              }
+            }}
             aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             display="flex"
             alignItems="center"
             justifyContent="center"
             minW={`${MIN_ICON_SIZE}px`}
             minH={`${MIN_ICON_SIZE}px`}
+            w={`${MIN_ICON_SIZE}px`}
+            h={`${MIN_ICON_SIZE}px`}
             borderRadius="md"
             _active={{ bg: isDark ? 'whiteAlpha.100' : 'blackAlpha.50' }}
+            flexShrink={0}
+            overflow="visible"
+            position="relative"
+            zIndex={1}
           >
             {isDark ? <Sun size={22} /> : <Moon size={22} />}
           </Box>

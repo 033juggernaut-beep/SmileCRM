@@ -7,7 +7,7 @@ export { ToothLogo } from './ToothLogo';
 export { BackgroundPattern } from './BackgroundPattern';
 
 // Layout
-export { Header } from './Header';
+export { Header, getHeaderHeight } from './Header';
 export { Footer } from './Footer';
 export type { FooterProps } from './Footer';
 

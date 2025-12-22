@@ -30,19 +30,21 @@ const LANGUAGES: { code: Language; label: string }[] = [
 
 // Minimum safe padding for header controls
 const MIN_RIGHT_SAFE = 16
+const BASE_HEADER_HEIGHT = 56
 
 export function AppHeader() {
   const { language, setLanguage } = useLanguage()
   const navigate = useNavigate()
 
   // Get safe area insets from Telegram
-  const { topInset, rightInset, isInTelegram } = useTelegramSafeArea()
+  const { topInset, rightInset, isInTelegram, headerHeight: computedHeight } = useTelegramSafeArea()
   
   // Calculate right padding: use safe area value, but ensure minimum padding
-  const rightPadding = Math.max(rightInset + MIN_RIGHT_SAFE, isInTelegram ? 72 : 24)
+  // On mobile Telegram, we need extra padding for X and ... buttons
+  const rightPadding = Math.max(rightInset + MIN_RIGHT_SAFE, isInTelegram ? 80 : 24)
   
   // Calculate header height including top inset
-  const headerHeight = 56 + topInset
+  const headerHeight = computedHeight || (BASE_HEADER_HEIGHT + topInset)
 
   // Notifications from API (with fallback to mock data)
   const { notifications, markRead, markAllRead } = useNotifications()
@@ -71,12 +73,15 @@ export function AppHeader() {
       borderBottom="1px solid"
       borderColor="border.subtle"
       h={`${headerHeight}px`}
+      minH={`${headerHeight}px`}
       pt={topInset > 0 ? `${topInset}px` : 0}
+      backdropFilter="blur(8px)"
+      isolation="isolate"
     >
       <Flex
         align="center"
         justify="space-between"
-        h="56px"
+        h={`${BASE_HEADER_HEIGHT}px`}
         pl={4}
         pr={`${rightPadding}px`} // Dynamic safe area for Telegram buttons
         maxW="100%"

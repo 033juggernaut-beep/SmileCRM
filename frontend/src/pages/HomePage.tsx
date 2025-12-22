@@ -3,6 +3,8 @@
  * Exact match to Superdesign reference
  * Light: bg-gradient-to-br from-slate-50 via-blue-50/30 to-sky-50/50
  * Dark: bg-slate-900
+ * 
+ * Uses sticky Header with Telegram safe area support
  */
 
 import { Box, Flex, useColorMode } from '@chakra-ui/react';
@@ -17,12 +19,21 @@ import {
   BackgroundPattern,
 } from '../components/dashboard';
 import { useLanguage } from '../context/LanguageContext';
+import { useTelegramSafeArea } from '../hooks/useTelegramSafeArea';
 
 export const HomePage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { colorMode } = useColorMode();
   const isDark = colorMode === 'dark';
+  
+  // Get safe area info for Telegram
+  const { isInTelegram, platform, topInset, rightInset } = useTelegramSafeArea();
+  
+  // Log Telegram info for debugging (only in development)
+  if (import.meta.env.DEV && isInTelegram) {
+    console.log('[HomePage] Telegram detected:', { platform, topInset, rightInset });
+  }
 
   // Reference: from-slate-50 via-blue-50/30 to-sky-50/50 (light) / bg-slate-900 (dark)
   const pageBg = isDark 
