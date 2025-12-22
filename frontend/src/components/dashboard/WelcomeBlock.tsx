@@ -4,6 +4,8 @@
  * Dark: bg-slate-800/60, shadow-xl shadow-slate-900/30
  * Spacing: px-8 py-10, max-w-3xl, rounded-2xl
  * Typography: text-3xl md:text-4xl font-semibold tracking-tight
+ * 
+ * Supports personalized greeting with daily motivation quote
  */
 
 import { Box, Text, useColorMode } from '@chakra-ui/react';
@@ -21,11 +23,22 @@ const fadeSlideIn = keyframes`
 `;
 
 export interface WelcomeBlockProps {
+  /** Main title text */
   title: string;
+  /** Subtitle text (optional) */
   subtitle?: string;
+  /** Doctor's last name for personalized greeting */
+  doctorName?: string;
+  /** Daily motivation quote */
+  motivationText?: string;
 }
 
-export function WelcomeBlock({ title, subtitle }: WelcomeBlockProps) {
+export function WelcomeBlock({ 
+  title, 
+  subtitle,
+  doctorName,
+  motivationText,
+}: WelcomeBlockProps) {
   const { colorMode } = useColorMode();
   const isDark = colorMode === 'dark';
 
@@ -41,13 +54,16 @@ export function WelcomeBlock({ title, subtitle }: WelcomeBlockProps) {
   const titleColor = isDark ? 'white' : '#1E293B'; // slate-800
   const subtitleColor = isDark ? '#94A3B8' : '#64748B'; // slate-400 / slate-500
 
+  // Check if we should show personalized greeting with motivation
+  const showPersonalized = doctorName && motivationText;
+
   return (
     <Box
       w="100%"
       maxW="768px" // max-w-3xl = 48rem
       mx="auto"
-      px="32px" // px-8
-      py="40px" // py-10
+      px={{ base: '24px', md: '32px' }} // px-6 on mobile, px-8 on desktop
+      py={{ base: '32px', md: '40px' }} // py-8 on mobile, py-10 on desktop
       {...bgStyle}
       borderRadius="2xl" // 16px
       boxShadow={shadow}
@@ -55,26 +71,55 @@ export function WelcomeBlock({ title, subtitle }: WelcomeBlockProps) {
       animation={`${fadeSlideIn} 0.5s ease-out`}
       transition="background-color 0.3s, box-shadow 0.3s"
     >
-      {/* text-3xl md:text-4xl font-semibold tracking-tight */}
-      <Text
-        fontSize={{ base: '1.875rem', md: '2.25rem' }} // 30px / 36px
-        fontWeight="semibold"
-        letterSpacing="tight" // -0.025em
-        color={titleColor}
-      >
-        {title}
-      </Text>
+      {showPersonalized ? (
+        // Personalized greeting with daily motivation
+        <>
+          {/* Doctor greeting - bold */}
+          <Text
+            fontSize={{ base: '1.5rem', md: '1.875rem' }} // 24px / 30px
+            fontWeight="semibold"
+            letterSpacing="tight"
+            color={titleColor}
+            mb="8px"
+          >
+            Доктор {doctorName},
+          </Text>
+          
+          {/* Motivation quote - normal weight */}
+          <Text
+            fontSize={{ base: 'md', md: 'lg' }} // 16px / 18px
+            fontWeight="normal"
+            color={subtitleColor}
+            lineHeight="tall"
+          >
+            {motivationText}
+          </Text>
+        </>
+      ) : (
+        // Default welcome block (fallback)
+        <>
+          {/* text-3xl md:text-4xl font-semibold tracking-tight */}
+          <Text
+            fontSize={{ base: '1.875rem', md: '2.25rem' }} // 30px / 36px
+            fontWeight="semibold"
+            letterSpacing="tight" // -0.025em
+            color={titleColor}
+          >
+            {title}
+          </Text>
 
-      {subtitle && (
-        // mt-3 text-base md:text-lg font-normal
-        <Text
-          mt="12px"
-          fontSize={{ base: 'md', md: 'lg' }} // 16px / 18px
-          fontWeight="normal"
-          color={subtitleColor}
-        >
-          {subtitle}
-        </Text>
+          {subtitle && (
+            // mt-3 text-base md:text-lg font-normal
+            <Text
+              mt="12px"
+              fontSize={{ base: 'md', md: 'lg' }} // 16px / 18px
+              fontWeight="normal"
+              color={subtitleColor}
+            >
+              {subtitle}
+            </Text>
+          )}
+        </>
       )}
     </Box>
   );
