@@ -5,10 +5,9 @@
  * Dark: bg-slate-900
  * 
  * Uses sticky Header with Telegram safe area support
- * Displays personalized daily motivation for the doctor
+ * Displays personalized daily motivation for the doctor (i18n support)
  */
 
-import { useMemo } from 'react';
 import { Box, Flex, useColorMode } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { Users, UserPlus, Megaphone, TrendingUp } from 'lucide-react';
@@ -22,8 +21,7 @@ import {
 } from '../components/dashboard';
 import { useLanguage } from '../context/LanguageContext';
 import { useTelegramSafeArea } from '../hooks/useTelegramSafeArea';
-import { useTelegramInitData } from '../hooks/useTelegramInitData';
-import { getDailyQuote } from '../constants/motivationQuotes';
+import { useDailyMotivation } from '../hooks/useDailyMotivation';
 
 export const HomePage = () => {
   const navigate = useNavigate();
@@ -34,22 +32,12 @@ export const HomePage = () => {
   // Get safe area info for Telegram
   const { isInTelegram, platform, topInset, rightInset } = useTelegramSafeArea();
   
-  // Get user info from Telegram
-  const telegramData = useTelegramInitData();
-  
-  // Get doctor's name for personalized greeting
-  const doctorName = useMemo(() => {
-    const user = telegramData?.user;
-    // Prefer last_name, fallback to first_name, then username
-    return user?.last_name || user?.first_name || user?.username || null;
-  }, [telegramData]);
-  
-  // Get today's motivation quote (same quote throughout the day)
-  const motivationQuote = useMemo(() => getDailyQuote(), []);
+  // Get daily personalized motivation (i18n aware)
+  const { prefix: motivationPrefix, quote: motivationQuote, hasName } = useDailyMotivation();
   
   // Log Telegram info for debugging (only in development)
   if (import.meta.env.DEV && isInTelegram) {
-    console.log('[HomePage] Telegram detected:', { platform, topInset, rightInset, doctorName });
+    console.log('[HomePage] Telegram detected:', { platform, topInset, rightInset, hasName });
   }
 
   // Reference: from-slate-50 via-blue-50/30 to-sky-50/50 (light) / bg-slate-900 (dark)
@@ -100,12 +88,12 @@ export const HomePage = () => {
           py={{ base: '32px', md: '48px' }} // py-8 md:py-12
           gap={{ base: '32px', md: '40px' }} // gap-8 md:gap-10
         >
-          {/* Welcome Block with personalized daily motivation */}
+          {/* Welcome Block with personalized daily motivation (i18n) */}
           <WelcomeBlock
             title={t('home.welcome')}
             subtitle={t('home.subtitle')}
-            doctorName={doctorName || undefined}
-            motivationText={doctorName ? motivationQuote : undefined}
+            motivationPrefix={motivationQuote ? motivationPrefix : undefined}
+            motivationQuote={motivationQuote || undefined}
           />
 
           {/* Dashboard Cards Grid */}

@@ -5,7 +5,7 @@
  * Spacing: px-8 py-10, max-w-3xl, rounded-2xl
  * Typography: text-3xl md:text-4xl font-semibold tracking-tight
  * 
- * Supports personalized greeting with daily motivation quote
+ * Supports personalized greeting with daily motivation quote (i18n)
  */
 
 import { Box, Text, useColorMode } from '@chakra-ui/react';
@@ -23,21 +23,21 @@ const fadeSlideIn = keyframes`
 `;
 
 export interface WelcomeBlockProps {
-  /** Main title text */
+  /** Main title text (from i18n) */
   title: string;
-  /** Subtitle text (optional) */
+  /** Subtitle text (optional, from i18n) */
   subtitle?: string;
-  /** Doctor's last name for personalized greeting */
-  doctorName?: string;
-  /** Daily motivation quote */
-  motivationText?: string;
+  /** Personalized prefix: "Dr. LastName," (from useDailyMotivation) */
+  motivationPrefix?: string;
+  /** Daily motivation quote (from useDailyMotivation) */
+  motivationQuote?: string;
 }
 
 export function WelcomeBlock({ 
   title, 
   subtitle,
-  doctorName,
-  motivationText,
+  motivationPrefix,
+  motivationQuote,
 }: WelcomeBlockProps) {
   const { colorMode } = useColorMode();
   const isDark = colorMode === 'dark';
@@ -54,8 +54,8 @@ export function WelcomeBlock({
   const titleColor = isDark ? 'white' : '#1E293B'; // slate-800
   const subtitleColor = isDark ? '#94A3B8' : '#64748B'; // slate-400 / slate-500
 
-  // Check if we should show personalized greeting with motivation
-  const showPersonalized = doctorName && motivationText;
+  // Show personalized motivation if available
+  const showMotivation = motivationPrefix && motivationQuote;
 
   return (
     <Box
@@ -63,7 +63,7 @@ export function WelcomeBlock({
       maxW="768px" // max-w-3xl = 48rem
       mx="auto"
       px={{ base: '24px', md: '32px' }} // px-6 on mobile, px-8 on desktop
-      py={{ base: '32px', md: '40px' }} // py-8 on mobile, py-10 on desktop
+      py={{ base: '28px', md: '36px' }} // slightly reduced padding for compact look
       {...bgStyle}
       borderRadius="2xl" // 16px
       boxShadow={shadow}
@@ -71,48 +71,47 @@ export function WelcomeBlock({
       animation={`${fadeSlideIn} 0.5s ease-out`}
       transition="background-color 0.3s, box-shadow 0.3s"
     >
-      {showPersonalized ? (
+      {showMotivation ? (
         // Personalized greeting with daily motivation
         <>
           {/* Doctor greeting - bold */}
           <Text
-            fontSize={{ base: '1.5rem', md: '1.875rem' }} // 24px / 30px
+            fontSize={{ base: '1.375rem', md: '1.625rem' }} // 22px / 26px - compact
             fontWeight="semibold"
             letterSpacing="tight"
             color={titleColor}
-            mb="8px"
+            mb="6px"
           >
-            Доктор {doctorName},
+            {motivationPrefix}
           </Text>
           
-          {/* Motivation quote - normal weight */}
+          {/* Motivation quote - normal weight, max 2 lines */}
           <Text
-            fontSize={{ base: 'md', md: 'lg' }} // 16px / 18px
+            fontSize={{ base: 'sm', md: 'md' }} // 14px / 16px - compact
             fontWeight="normal"
             color={subtitleColor}
             lineHeight="tall"
+            noOfLines={2}
           >
-            {motivationText}
+            {motivationQuote}
           </Text>
         </>
       ) : (
-        // Default welcome block (fallback)
+        // Default welcome block (fallback when no motivation data)
         <>
-          {/* text-3xl md:text-4xl font-semibold tracking-tight */}
           <Text
             fontSize={{ base: '1.875rem', md: '2.25rem' }} // 30px / 36px
             fontWeight="semibold"
-            letterSpacing="tight" // -0.025em
+            letterSpacing="tight"
             color={titleColor}
           >
             {title}
           </Text>
 
           {subtitle && (
-            // mt-3 text-base md:text-lg font-normal
             <Text
               mt="12px"
-              fontSize={{ base: 'md', md: 'lg' }} // 16px / 18px
+              fontSize={{ base: 'md', md: 'lg' }}
               fontWeight="normal"
               color={subtitleColor}
             >

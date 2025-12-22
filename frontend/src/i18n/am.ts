@@ -28,6 +28,7 @@ const am = {
     welcome: 'Bari galust',
     subtitle: 'Atamnabujakan praktikaji karavarume',
     quote: 'Kazmakerpakvac praktika — xaxax or',
+    doctorPrefix: 'Doktor',
     trialActive: '✓ Porcasterjann aktiv e',
     patients: 'Im pacientnere',
     patientsHelper: 'Bolor pacientneri cank',
@@ -548,6 +549,19 @@ const am = {
     fillRequired: 'Xndrum enq lracnel bolor partadir dashere',
     invalidPrice: 'Xndrum enq mutqagrel chisht gin',
     pdfComingSoon: 'PDF eksporte mot klini',
+  },
+
+  // Daily motivation quotes (same index = same meaning across languages)
+  motivation: {
+    quotes: [
+      'yuraqanchyur jpit, vor duq stexcum eq, poxum e meki kyanqe.',
+      'duq mardkanc veradarjnum eq vstahutyan, aroxjutyan u kyanqi orake.',
+      'dzer dzerqere gitutyan ev arvesti gorciqa en.',
+      'masnagitakan ache janaparh e, vory duq ancnum eq amen or.',
+      'dzer chshtgrutyan aysor — hivandi aroxjutyan e vaghva hamar.',
+      'hogatar verabermunqe bujum e voch miayn atamnere, ayl naev vaxe.',
+      'yuraqanchyur bard depq dzez darjnum e aveli uzex masnaget.',
+    ],
   },
 } as const
 

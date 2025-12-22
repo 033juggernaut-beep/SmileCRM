@@ -27,6 +27,7 @@ const en = {
     welcome: 'Welcome',
     subtitle: 'Dental practice management',
     quote: 'Organized practice — peaceful day',
+    doctorPrefix: 'Dr.',
     trialActive: '✓ Trial active',
     patients: 'My patients',
     patientsHelper: 'All patients list',
@@ -547,6 +548,19 @@ const en = {
     fillRequired: 'Please fill in all required fields',
     invalidPrice: 'Please enter a valid price',
     pdfComingSoon: 'PDF export coming soon',
+  },
+
+  // Daily motivation quotes (same index = same meaning across languages)
+  motivation: {
+    quotes: [
+      'every smile you create changes someone\'s life.',
+      'you restore confidence, health, and quality of life.',
+      'your hands are instruments of science and art.',
+      'professional growth is a journey you take every day.',
+      'your precision today protects a patient\'s health for years.',
+      'empathy heals more than teeth — it eases fear.',
+      'every complex case makes you a stronger clinician.',
+    ],
   },
 } as const
 
