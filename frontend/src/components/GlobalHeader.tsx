@@ -87,7 +87,6 @@ export function GlobalHeader({
     : isDark
       ? 'rgba(51, 65, 85, 0.5)'
       : '#DBEAFE'
-  const logoColor = isDark ? '#60A5FA' : '#2563EB'
   const brandColor = isDark ? 'white' : '#1E293B'
   const activeColor = isDark ? '#60A5FA' : '#2563EB'
   const inactiveColor = isDark ? '#64748B' : '#94A3B8'
