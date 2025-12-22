@@ -41,11 +41,11 @@ const FALLBACK_RIGHT_DESKTOP = 0 // Desktop doesn't have overlay buttons
 const BASE_HEADER_HEIGHT = 56
 
 // Helper to detect platform from user agent when Telegram API is not available
-function detectPlatformFromUA(): 'ios' | 'android' | 'desktop' | 'unknown' {
+function detectPlatformFromUA(): 'ios' | 'android' | 'tdesktop' | 'unknown' {
   const ua = navigator.userAgent || ''
   if (/iPad|iPhone|iPod/.test(ua)) return 'ios'
   if (/Android/.test(ua)) return 'android'
-  if (/Windows|Macintosh|Linux/.test(ua) && !/Mobile/.test(ua)) return 'desktop'
+  if (/Windows|Macintosh|Linux/.test(ua) && !/Mobile/.test(ua)) return 'tdesktop'
   return 'unknown'
 }
 
