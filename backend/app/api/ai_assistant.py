@@ -5,8 +5,6 @@ Provides safe, structured answers to doctor questions.
 Includes daily request limits based on subscription status.
 """
 
-from __future__ import annotations
-
 import logging
 from typing import Annotated
 
@@ -91,15 +89,18 @@ async def ask_ai_assistant(
         )
     
     try:
-        # Get context from request
-        context = request.context
-        clinic_name = context.clinic_name if context else None
-        specialization = context.specialization if context else None
+        # Get context from request (dict with clinicName, specialization)
+        context = request.context or {}
+        clinic_name = context.get("clinicName")
+        specialization = context.get("specialization")
+        
+        # Validate language
+        language = request.language if request.language in ("am", "ru", "en") else "ru"
         
         # Ask AI
         answer = await ai_assistant_service.ask(
             question=request.question,
-            language=request.language,
+            language=language,
             clinic_name=clinic_name,
             specialization=specialization,
         )
