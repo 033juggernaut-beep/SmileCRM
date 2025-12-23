@@ -2,24 +2,17 @@
 AI Assistant DTOs - Pydantic schemas for AI assistant endpoint.
 """
 
-from __future__ import annotations
-
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
 
-# Supported languages for AI responses
-AILanguage = Literal["am", "ru", "en"]
-
-
 class AIAssistantContext(BaseModel):
     """Optional context for AI assistant."""
-    clinic_name: str | None = Field(default=None, alias="clinicName")
-    specialization: str | None = None
+    clinic_name: Optional[str] = Field(default=None, alias="clinicName")
+    specialization: Optional[str] = None
     
-    class Config:
-        populate_by_name = True
+    model_config = {"populate_by_name": True}
 
 
 class AIAssistantAskRequest(BaseModel):
@@ -30,11 +23,11 @@ class AIAssistantAskRequest(BaseModel):
         max_length=1000,
         description="Doctor's question to the AI assistant"
     )
-    language: AILanguage = Field(
+    language: Literal["am", "ru", "en"] = Field(
         default="ru",
         description="Language for the response: am (Armenian), ru (Russian), en (English)"
     )
-    context: AIAssistantContext | None = Field(
+    context: Optional[AIAssistantContext] = Field(
         default=None,
         description="Optional context about clinic/doctor"
     )
@@ -56,8 +49,7 @@ class AIAssistantAskResponse(BaseModel):
         description="Total daily limit"
     )
     
-    class Config:
-        populate_by_name = True
+    model_config = {"populate_by_name": True}
 
 
 class AIUsageLimitError(BaseModel):
@@ -66,6 +58,8 @@ class AIUsageLimitError(BaseModel):
     remaining_today: int = Field(default=0, alias="remainingToday")
     limit_today: int = Field(..., alias="limitToday")
     
-    class Config:
-        populate_by_name = True
+    model_config = {"populate_by_name": True}
 
+
+# Type alias for use in service layer (not in Pydantic models)
+AILanguage = Literal["am", "ru", "en"]

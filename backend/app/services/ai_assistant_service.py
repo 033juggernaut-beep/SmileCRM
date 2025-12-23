@@ -5,13 +5,13 @@ Provides safe, structured answers to doctor questions about dental topics.
 Does NOT make diagnoses or request patient personal data.
 """
 
-from __future__ import annotations
-
 import logging
-from typing import Any, Literal
+from typing import Literal, Optional
 
 from app.config import get_settings
-from app.models.ai_assistant_dto import AILanguage
+
+# Type alias for language (local to avoid import issues)
+AILanguage = Literal["am", "ru", "en"]
 
 logger = logging.getLogger("smilecrm.ai_assistant")
 
@@ -71,8 +71,8 @@ def _get_language_name(language: AILanguage) -> str:
 
 def _build_system_prompt(
     language: AILanguage,
-    clinic_name: str | None = None,
-    specialization: str | None = None,
+    clinic_name: Optional[str] = None,
+    specialization: Optional[str] = None,
 ) -> str:
     """Build system prompt with context."""
     context_parts = []
@@ -95,8 +95,8 @@ def _build_system_prompt(
 async def ask(
     question: str,
     language: AILanguage = "ru",
-    clinic_name: str | None = None,
-    specialization: str | None = None,
+    clinic_name: Optional[str] = None,
+    specialization: Optional[str] = None,
     timeout: float = 20.0,
 ) -> str:
     """
