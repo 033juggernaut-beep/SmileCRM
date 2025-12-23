@@ -5,12 +5,10 @@ Uses Supabase table ai_usage_daily to track usage.
 If table doesn't exist, falls back to in-memory tracking (resets on restart).
 """
 
-from __future__ import annotations
-
 import logging
 from collections import defaultdict
 from datetime import date
-from typing import Any
+from typing import Any, Dict, Optional, Tuple
 
 from app.services.supabase_client import SupabaseNotConfiguredError, supabase_client
 
@@ -18,7 +16,7 @@ logger = logging.getLogger("smilecrm.ai_usage")
 
 # In-memory fallback for when Supabase table doesn't exist
 # Key: (doctor_id, date_str), Value: count
-_memory_usage: dict[tuple[str, str], int] = defaultdict(int)
+_memory_usage: Dict[Tuple[str, str], int] = defaultdict(int)
 
 
 def _get_today_str() -> str:
@@ -26,7 +24,7 @@ def _get_today_str() -> str:
     return date.today().isoformat()
 
 
-def get_limit_by_subscription(subscription_status: str | None) -> int:
+def get_limit_by_subscription(subscription_status: Optional[str]) -> int:
     """
     Determine daily AI request limit based on subscription status.
     

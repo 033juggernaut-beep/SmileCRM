@@ -10,26 +10,26 @@ Design decisions:
 - Handles missing columns gracefully (e.g., segment field)
 """
 
-from __future__ import annotations
-
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 from decimal import Decimal
-from typing import Any
+from typing import Any, Literal, Optional
 
 from app.models.statistics_dto import (
     FinanceStats,
     PatientsStats,
     StatisticsOverviewResponse,
-    StatsPeriod,
     VisitChartPoint,
     VisitsChart,
     VisitsStats,
 )
 from app.services.supabase_client import SupabaseNotConfiguredError, supabase_client
 
+# Type alias for period parameter
+StatsPeriod = Literal["7d", "30d"]
 
-def _parse_date(value: Any) -> date | None:
+
+def _parse_date(value: Any) -> Optional[date]:
     """Parse a date value from various formats."""
     if value is None:
         return None
@@ -48,7 +48,7 @@ def _parse_date(value: Any) -> date | None:
     return None
 
 
-def _parse_datetime(value: Any) -> datetime | None:
+def _parse_datetime(value: Any) -> Optional[datetime]:
     """Parse a datetime value from various formats."""
     if value is None:
         return None

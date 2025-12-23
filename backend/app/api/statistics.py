@@ -5,14 +5,12 @@ Provides aggregated data for the Statistics screen in SmileCRM.
 All endpoints require JWT Bearer token authentication.
 """
 
-from __future__ import annotations
-
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, Query
 
 from app.api.deps import AuthenticatedDoctor, get_current_doctor
-from app.models.statistics_dto import StatisticsOverviewResponse, StatsPeriod
+from app.models.statistics_dto import StatisticsOverviewResponse
 from app.services import statistics_service
 
 router = APIRouter(prefix="/statistics", tags=["statistics"])
@@ -23,7 +21,7 @@ CurrentDoctor = Annotated[AuthenticatedDoctor, Depends(get_current_doctor)]
 @router.get("/overview", response_model=StatisticsOverviewResponse)
 async def get_statistics_overview(
     current_doctor: CurrentDoctor,
-    chart_period: StatsPeriod = Query(
+    chart_period: str = Query(
         default="7d",
         description="Period for visits chart: '7d' or '30d'",
     ),

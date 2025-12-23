@@ -5,10 +5,8 @@ All fields are strictly typed and guaranteed to return 0 when no data available,
 never null/None, for frontend compatibility.
 """
 
-from __future__ import annotations
-
 from datetime import date
-from typing import Literal
+from typing import List
 
 from pydantic import BaseModel, Field
 
@@ -42,8 +40,8 @@ class VisitChartPoint(BaseModel):
 
 class VisitsChart(BaseModel):
     """Chart data for visit dynamics."""
-    period: Literal["7d", "30d"] = Field(default="7d", description="Chart period")
-    points: list[VisitChartPoint] = Field(default_factory=list, description="Data points sorted by date ASC")
+    period: str = Field(default="7d", description="Chart period: 7d or 30d")
+    points: List[VisitChartPoint] = Field(default_factory=list, description="Data points sorted by date ASC")
 
 
 class StatisticsOverviewResponse(BaseModel):
@@ -56,8 +54,3 @@ class StatisticsOverviewResponse(BaseModel):
     visits: VisitsStats = Field(default_factory=VisitsStats)
     finance: FinanceStats = Field(default_factory=FinanceStats)
     visits_chart: VisitsChart = Field(default_factory=VisitsChart)
-
-
-# Type alias for period parameter
-StatsPeriod = Literal["7d", "30d"]
-
