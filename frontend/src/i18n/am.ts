@@ -554,14 +554,15 @@ const am = {
   // AI Assistant
   ai: {
     title: 'AI Ognakanr',
-    subtitle: 'Harcreq bujman metodneriburtey, nyuteributey, protokolneriburtey…',
-    placeholder: 'Harcreq harc...',
+    cardDescription: 'Bujman metodner, nyuter, protokolner',
+    pageTitle: 'Atamnabuji AI ognakanr',
+    pageSubtitle: 'Teghekutyan nyuter. Chi poxarinum bzhishkin.',
+    inputPlaceholder: 'Tveq masnagitakan harc…',
     ask: 'Harcnel',
-    limitLeft: 'mnacel e',
+    limitLeft: 'mnacel e aysor',
     limitReached: 'Limite sparvace',
     errorGeneric: 'Chi hajoxvel pataskhan stanalutyun. Phordzek aveli uzh.',
-    history: 'Patmutyun',
-    clearHistory: 'Maqrel',
+    answerTitle: 'AI pataskhan',
   },
 
   // Daily motivation quotes (same index = same meaning across languages)

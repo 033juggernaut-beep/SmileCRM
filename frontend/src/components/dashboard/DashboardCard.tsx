@@ -22,6 +22,7 @@ export interface DashboardCardProps {
   title: string;
   description?: string;
   stats?: StatItem[];
+  badge?: string;
   onClick?: () => void;
 }
 
@@ -30,6 +31,7 @@ export function DashboardCard({
   title,
   description,
   stats,
+  badge,
   onClick,
 }: DashboardCardProps) {
   const { colorMode } = useColorMode();
@@ -114,16 +116,31 @@ export function DashboardCard({
         {icon}
       </Flex>
 
-      {/* Title - text-base font-semibold mt-3 */}
-      <Text
-        fontSize="md" // 16px
-        fontWeight="semibold"
-        color={titleColor}
-        mt="12px"
-        lineHeight="1.4"
-      >
-        {title}
-      </Text>
+      {/* Title with optional badge */}
+      <Flex align="center" gap="8px" mt="12px">
+        <Text
+          fontSize="md" // 16px
+          fontWeight="semibold"
+          color={titleColor}
+          lineHeight="1.4"
+        >
+          {title}
+        </Text>
+        {badge && (
+          <Flex
+            align="center"
+            justify="center"
+            px="6px"
+            py="2px"
+            bg={isDark ? 'rgba(59, 130, 246, 0.2)' : '#DBEAFE'}
+            borderRadius="full"
+          >
+            <Text fontSize="10px" fontWeight="bold" color={accentColor}>
+              {badge}
+            </Text>
+          </Flex>
+        )}
+      </Flex>
 
       {/* Description or Stats */}
       {hasStats ? (

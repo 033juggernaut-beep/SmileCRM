@@ -553,14 +553,15 @@ const en = {
   // AI Assistant
   ai: {
     title: 'AI Assistant',
-    subtitle: 'Ask about treatment methods, materials, protocols…',
-    placeholder: 'Ask a question...',
+    cardDescription: 'Treatment methods, materials, protocols',
+    pageTitle: 'Dental AI Assistant',
+    pageSubtitle: 'Reference information. Does not replace a doctor.',
+    inputPlaceholder: 'Ask a professional question…',
     ask: 'Ask',
-    limitLeft: 'left',
+    limitLeft: 'left today',
     limitReached: 'Limit reached',
     errorGeneric: 'Failed to get response. Please try later.',
-    history: 'History',
-    clearHistory: 'Clear',
+    answerTitle: 'AI Answer',
   },
 
   // Daily motivation quotes (same index = same meaning across languages)

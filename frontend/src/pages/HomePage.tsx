@@ -10,7 +10,7 @@
 
 import { Box, Flex, useColorMode } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
-import { Users, UserPlus, TrendingUp } from 'lucide-react';
+import { Users, UserPlus, TrendingUp, Bot } from 'lucide-react';
 import {
   Header,
   WelcomeBlock,
@@ -18,7 +18,6 @@ import {
   DashboardCard,
   Footer,
   BackgroundPattern,
-  AIAssistantCard,
 } from '../components/dashboard';
 import { useLanguage } from '../context/LanguageContext';
 import { useTelegramSafeArea } from '../hooks/useTelegramSafeArea';
@@ -97,7 +96,7 @@ export const HomePage = () => {
             motivationQuote={motivationQuote || undefined}
           />
 
-          {/* Dashboard Cards Grid */}
+          {/* Dashboard Cards Grid - 2x2 layout */}
           <DashboardGrid animated>
             <DashboardCard
               icon={<Users />}
@@ -120,12 +119,14 @@ export const HomePage = () => {
               ]}
               onClick={() => navigate('/stats')}
             />
+            <DashboardCard
+              icon={<Bot />}
+              title={t('ai.title')}
+              description={t('ai.cardDescription')}
+              badge="AI"
+              onClick={() => navigate('/ai-assistant')}
+            />
           </DashboardGrid>
-          
-          {/* AI Assistant Card */}
-          <Box w="full" maxW="3xl">
-            <AIAssistantCard />
-          </Box>
         </Flex>
 
         {/* Footer */}

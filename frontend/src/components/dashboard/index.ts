@@ -20,6 +20,3 @@ export type { DashboardCardProps, StatItem } from './DashboardCard';
 
 export { DashboardGrid } from './DashboardGrid';
 export type { DashboardGridProps } from './DashboardGrid';
-
-export { AIAssistantCard } from './AIAssistantCard';
-export type { AIAssistantCardProps } from './AIAssistantCard';

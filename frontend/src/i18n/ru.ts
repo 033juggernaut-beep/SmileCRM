@@ -553,14 +553,15 @@ const ru = {
   // AI Assistant
   ai: {
     title: 'AI Ассистент',
-    subtitle: 'Спросите про методы лечения, материалы, протоколы…',
-    placeholder: 'Задайте вопрос...',
+    cardDescription: 'Методы лечения, материалы, протоколы',
+    pageTitle: 'AI ассистент стоматолога',
+    pageSubtitle: 'Справочная информация. Не заменяет врача.',
+    inputPlaceholder: 'Задайте профессиональный вопрос…',
     ask: 'Спросить',
-    limitLeft: 'осталось',
+    limitLeft: 'осталось сегодня',
     limitReached: 'Лимит исчерпан',
     errorGeneric: 'Не удалось получить ответ. Попробуйте позже.',
-    history: 'История',
-    clearHistory: 'Очистить',
+    answerTitle: 'Ответ AI',
   },
 
   // Daily motivation quotes (same index = same meaning across languages)
