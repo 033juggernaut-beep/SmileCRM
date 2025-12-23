@@ -28,12 +28,27 @@ router = APIRouter(prefix="/ai/assistant", tags=["ai-assistant"])
 
 CurrentDoctor = Annotated[AuthenticatedDoctor, Depends(get_current_doctor)]
 
+# Fallback messages for different languages
+FALLBACK_MESSAGES = {
+    "ru": "Временно не удалось получить ответ. Пожалуйста, попробуйте позже.",
+    "en": "Temporarily unable to get a response. Please try again later.",
+    "am": "Jamanakavorapes chi hnaravorvum pataskhan stanalu. Xndrum enk pordzel aveli uzh.",
+}
+
+
+def _get_fallback_message(language: str) -> str:
+    """Get fallback error message in requested language."""
+    return FALLBACK_MESSAGES.get(language, FALLBACK_MESSAGES["ru"])
+
 
 def _get_doctor_subscription_status(doctor_id: str) -> str:
     """Get doctor's subscription status from database."""
-    doctor = doctors_service.get_by_id(doctor_id)
-    if doctor:
-        return doctor.get("subscription_status", "trial") or "trial"
+    try:
+        doctor = doctors_service.get_by_id(doctor_id)
+        if doctor:
+            return doctor.get("subscription_status", "trial") or "trial"
+    except Exception as e:
+        logger.warning(f"Failed to get doctor subscription status: {e}")
     return "trial"
 
 
@@ -66,19 +81,23 @@ async def ask_ai_assistant(
         
     Raises:
         429: Daily limit reached
-        503: AI service not configured
-        500: AI request failed
     """
     doctor_id = current_doctor.doctor_id
+    
+    # Validate language
+    language = request.language if request.language in ("am", "ru", "en") else "ru"
     
     # Get subscription status and determine limit
     subscription_status = _get_doctor_subscription_status(doctor_id)
     limit = ai_usage_service.get_limit_by_subscription(subscription_status)
     
+    logger.info(f"AI request from doctor {doctor_id[:8]}..., subscription={subscription_status}, limit={limit}")
+    
     # Check and increment usage
     allowed, remaining, limit = ai_usage_service.check_and_increment(doctor_id, limit)
     
     if not allowed:
+        logger.warning(f"Daily limit reached for doctor {doctor_id[:8]}...")
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail={
@@ -88,15 +107,14 @@ async def ask_ai_assistant(
             },
         )
     
+    # Get context from request
+    context = request.context or {}
+    clinic_name = context.get("clinicName")
+    specialization = context.get("specialization")
+    
+    logger.info(f"Calling OpenAI for question (len={len(request.question)})")
+    
     try:
-        # Get context from request (dict with clinicName, specialization)
-        context = request.context or {}
-        clinic_name = context.get("clinicName")
-        specialization = context.get("specialization")
-        
-        # Validate language
-        language = request.language if request.language in ("am", "ru", "en") else "ru"
-        
         # Ask AI
         answer = await ai_assistant_service.ask(
             question=request.question,
@@ -105,6 +123,8 @@ async def ask_ai_assistant(
             specialization=specialization,
         )
         
+        logger.info(f"OpenAI response received (len={len(answer)})")
+        
         return AIAssistantAskResponse(
             answer=answer,
             remainingToday=remaining,
@@ -112,22 +132,30 @@ async def ask_ai_assistant(
         )
         
     except AINotConfiguredError as e:
+        # AI not configured - return fallback message, NOT error
         logger.error(f"AI not configured: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="AI service is not configured. Please contact support.",
+        return AIAssistantAskResponse(
+            answer=f"⚠️ {_get_fallback_message(language)}\n\n(Сервис AI временно недоступен)",
+            remainingToday=remaining,
+            limitToday=limit,
         )
+        
     except AIRequestError as e:
+        # AI request failed - return fallback message, NOT error
         logger.error(f"AI request failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get AI response. Please try again later.",
+        return AIAssistantAskResponse(
+            answer=f"⚠️ {_get_fallback_message(language)}",
+            remainingToday=remaining,
+            limitToday=limit,
         )
+        
     except Exception as e:
-        logger.error(f"Unexpected error in AI assistant: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred.",
+        # Unexpected error - return fallback message, NOT error
+        logger.error(f"Unexpected error in AI assistant: {type(e).__name__}: {e}")
+        return AIAssistantAskResponse(
+            answer=f"⚠️ {_get_fallback_message(language)}",
+            remainingToday=remaining,
+            limitToday=limit,
         )
 
 
@@ -154,4 +182,3 @@ async def get_ai_limits(
         "limitToday": limit,
         "subscriptionStatus": subscription_status,
     }
-

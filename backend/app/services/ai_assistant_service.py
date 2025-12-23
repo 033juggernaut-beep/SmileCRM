@@ -58,7 +58,7 @@ SYSTEM_PROMPT_TEMPLATE = """Ты — справочный ассистент д�
 {context_info}"""
 
 LANGUAGE_NAMES = {
-    "am": "армянский (հայերdelays: delays)",
+    "am": "Armenian (Hayeren)",
     "ru": "русский",
     "en": "English",
 }
@@ -97,7 +97,7 @@ async def ask(
     language: AILanguage = "ru",
     clinic_name: Optional[str] = None,
     specialization: Optional[str] = None,
-    timeout: float = 20.0,
+    timeout: float = 30.0,
 ) -> str:
     """
     Ask the AI assistant a question.
@@ -118,14 +118,24 @@ async def ask(
     """
     settings = get_settings()
     
+    # Check if AI is configured
+    logger.info(f"Checking AI configuration: is_ai_configured={settings.is_ai_configured}")
+    
     if not settings.is_ai_configured:
+        logger.error("OpenAI API key not configured")
         raise AINotConfiguredError(
             "AI is not configured. Set OPENAI_API_KEY in environment."
         )
     
+    # Log API key presence (safely)
+    api_key = settings.OPENAI_API_KEY or ""
+    logger.info(f"OpenAI API key present: {len(api_key) > 0}, key_prefix={api_key[:8]}..." if api_key else "No API key")
+    
     try:
+        logger.info("Importing OpenAI library...")
         from openai import AsyncOpenAI
         
+        logger.info("Creating OpenAI client...")
         client = AsyncOpenAI(
             api_key=settings.OPENAI_API_KEY,
             timeout=timeout,
@@ -137,10 +147,11 @@ async def ask(
             specialization=specialization,
         )
         
-        logger.info(f"AI Assistant request: language={language}, question_len={len(question)}")
+        model = settings.AI_MODEL_TEXT
+        logger.info(f"Calling OpenAI API: model={model}, language={language}, question_len={len(question)}")
         
         response = await client.chat.completions.create(
-            model=settings.AI_MODEL_TEXT,  # gpt-4o-mini
+            model=model,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": question},
@@ -149,17 +160,25 @@ async def ask(
             max_tokens=800,
         )
         
+        logger.info(f"OpenAI response received: choices={len(response.choices)}")
+        
+        if not response.choices:
+            logger.error("OpenAI returned empty choices")
+            raise AIRequestError("OpenAI returned empty response")
+        
         answer = response.choices[0].message.content or ""
         
-        logger.info(f"AI Assistant response: answer_len={len(answer)}")
+        logger.info(f"AI response success: answer_len={len(answer)}")
         
         return answer.strip()
         
-    except ImportError:
+    except ImportError as e:
+        logger.error(f"OpenAI library not installed: {e}")
         raise AINotConfiguredError(
             "OpenAI library not installed. Run: pip install openai"
         )
     except Exception as e:
-        logger.error(f"AI Assistant error: {e}")
-        raise AIRequestError(f"Failed to get AI response: {str(e)}")
-
+        error_type = type(e).__name__
+        error_msg = str(e)
+        logger.error(f"OpenAI API error: {error_type}: {error_msg}")
+        raise AIRequestError(f"OpenAI API error: {error_type}: {error_msg}")
