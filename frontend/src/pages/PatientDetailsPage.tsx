@@ -432,7 +432,7 @@ export const PatientDetailsPage = () => {
           {/* Content Sections - Ordered per Superdesign reference */}
           <VStack spacing={4} align="stretch" pb={8}>
             {/* 1. Patient Information - Always visible */}
-            <PatientInfoCard patient={patient} />
+            <PatientInfoCard patient={patient} onPatientUpdate={setPatient} />
 
             {/* 2. Diagnosis - Expandable, default open */}
             <DiagnosisSection

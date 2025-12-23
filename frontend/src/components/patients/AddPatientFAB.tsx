@@ -3,6 +3,8 @@
  * - Fixed position bottom-right
  * - Blue background with shadow
  * - Icon + text (text hidden on mobile)
+ * - Respects safe-area-inset-bottom for Telegram
+ * - Positioned above Footer (with 24px gap)
  */
 
 import { Box, Text, useColorMode } from '@chakra-ui/react';
@@ -11,6 +13,10 @@ import { motion } from 'framer-motion';
 import { useLanguage } from '../../context/LanguageContext';
 
 const MotionBox = motion.create(Box);
+
+// Footer approximate height (py-6 = 24px*2 + content ~= 56-64px)
+const FOOTER_HEIGHT = 64;
+const GAP_ABOVE_FOOTER = 24;
 
 interface AddPatientFABProps {
   onClick: () => void;
@@ -31,7 +37,7 @@ export function AddPatientFAB({ onClick }: AddPatientFABProps) {
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       position="fixed"
-      bottom="24px"
+      bottom={`calc(env(safe-area-inset-bottom, 0px) + ${FOOTER_HEIGHT + GAP_ABOVE_FOOTER}px)`}
       right="24px"
       zIndex={50}
       display="inline-flex"
@@ -67,4 +73,3 @@ export function AddPatientFAB({ onClick }: AddPatientFABProps) {
 }
 
 export default AddPatientFAB;
-

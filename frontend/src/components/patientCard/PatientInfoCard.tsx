@@ -4,24 +4,50 @@
  * - Full name (large, prominent)
  * - Status badge (in_progress / completed)
  * - Phone number
- * - Last visit date
- * - Date of birth
+ * - Date of birth (editable)
  * - Patient segment (VIP / Regular)
  */
 
-import { Box, Flex, Text, Grid, useColorMode } from '@chakra-ui/react'
-import { Phone, User, Star } from 'lucide-react'
+import { useState, useCallback } from 'react'
+import {
+  Box,
+  Flex,
+  Text,
+  Grid,
+  useColorMode,
+  IconButton,
+  Input,
+  Button,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverBody,
+  PopoverArrow,
+  useDisclosure,
+  useToast,
+  HStack,
+} from '@chakra-ui/react'
+import { Phone, User, Star, Pencil, X, Check } from 'lucide-react'
 import { useLanguage } from '../../context/LanguageContext'
+import { apiClient } from '../../api/client'
+import { TOKEN_STORAGE_KEY } from '../../constants/storage'
 import type { Patient, PatientStatus, PatientSegment } from '../../api/patients'
 
 interface PatientInfoCardProps {
   patient: Patient
+  onPatientUpdate?: (updatedPatient: Patient) => void
 }
 
-export function PatientInfoCard({ patient }: PatientInfoCardProps) {
+export function PatientInfoCard({ patient, onPatientUpdate }: PatientInfoCardProps) {
   const { t } = useLanguage()
   const { colorMode } = useColorMode()
   const isDark = colorMode === 'dark'
+  const toast = useToast()
+  const { isOpen, onOpen, onClose } = useDisclosure()
+
+  // DOB editing state
+  const [dobValue, setDobValue] = useState(patient.birthDate || '')
+  const [isSaving, setIsSaving] = useState(false)
 
   const statusConfig: Record<PatientStatus, { label: string; bg: string; text: string }> = {
     in_progress: {
@@ -68,6 +94,61 @@ export function PatientInfoCard({ patient }: PatientInfoCardProps) {
       return input
     }
   }
+
+  // Handle DOB save
+  const handleSaveDob = useCallback(async () => {
+    setIsSaving(true)
+    try {
+      const authToken = localStorage.getItem(TOKEN_STORAGE_KEY)
+      if (!authToken) {
+        throw new Error(t('patientDetails.authRequired'))
+      }
+
+      // Send null if cleared, otherwise the ISO date
+      const birthDateValue = dobValue.trim() ? dobValue : null
+
+      await apiClient.patch(
+        `/patients/${patient.id}`,
+        { birth_date: birthDateValue },
+        { headers: { Authorization: `Bearer ${authToken}` } }
+      )
+
+      // Update local state
+      const updatedPatient = { ...patient, birthDate: birthDateValue || undefined }
+      onPatientUpdate?.(updatedPatient)
+
+      toast({
+        title: t('common.saved'),
+        status: 'success',
+        duration: 2000,
+        isClosable: true,
+      })
+
+      onClose()
+    } catch (error) {
+      console.error('Failed to save DOB:', error)
+      toast({
+        title: t('common.error'),
+        description: t('patientDetails.saveError'),
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      })
+    } finally {
+      setIsSaving(false)
+    }
+  }, [dobValue, patient, onPatientUpdate, onClose, toast, t])
+
+  // Handle cancel
+  const handleCancel = useCallback(() => {
+    setDobValue(patient.birthDate || '')
+    onClose()
+  }, [patient.birthDate, onClose])
+
+  // Theme colors for popover
+  const popoverBg = isDark ? 'gray.800' : 'white'
+  const inputBg = isDark ? 'gray.700' : 'gray.50'
+  const inputBorder = isDark ? 'gray.600' : 'gray.200'
 
   return (
     <Box
@@ -148,7 +229,7 @@ export function PatientInfoCard({ patient }: PatientInfoCardProps) {
           </Text>
         </Flex>
 
-        {/* Date of Birth */}
+        {/* Date of Birth with Edit */}
         <Flex align="center" gap={2}>
           <Box
             as={User}
@@ -157,12 +238,86 @@ export function PatientInfoCard({ patient }: PatientInfoCardProps) {
             flexShrink={0}
             color={isDark ? 'gray.500' : 'gray.400'}
           />
-          <Text fontSize="sm" color={isDark ? 'gray.300' : 'gray.600'}>
+          <Text fontSize="sm" color={isDark ? 'gray.300' : 'gray.600'} flex={1}>
             <Text as="span" color={isDark ? 'gray.500' : 'gray.400'}>
               {t('patientDetails.birthDate')}:{' '}
             </Text>
             {formatDate(patient.birthDate)}
           </Text>
+
+          {/* Edit DOB Button */}
+          <Popover
+            isOpen={isOpen}
+            onOpen={onOpen}
+            onClose={handleCancel}
+            placement="bottom-end"
+            closeOnBlur={false}
+          >
+            <PopoverTrigger>
+              <IconButton
+                aria-label={t('common.edit')}
+                icon={<Pencil size={14} />}
+                size="xs"
+                variant="ghost"
+                color={isDark ? 'gray.500' : 'gray.400'}
+                _hover={{
+                  color: isDark ? 'blue.400' : 'blue.600',
+                  bg: isDark ? 'gray.700' : 'gray.100',
+                }}
+              />
+            </PopoverTrigger>
+            <PopoverContent
+              bg={popoverBg}
+              borderColor={inputBorder}
+              borderRadius="xl"
+              boxShadow="lg"
+              w="auto"
+              minW="200px"
+            >
+              <PopoverArrow bg={popoverBg} />
+              <PopoverBody p={3}>
+                <Text fontSize="xs" fontWeight="medium" mb={2} color={isDark ? 'gray.400' : 'gray.500'}>
+                  {t('patientDetails.birthDate')}
+                </Text>
+                <Input
+                  type="date"
+                  value={dobValue}
+                  onChange={(e) => setDobValue(e.target.value)}
+                  size="sm"
+                  bg={inputBg}
+                  border="1px solid"
+                  borderColor={inputBorder}
+                  borderRadius="lg"
+                  color={isDark ? 'white' : 'gray.800'}
+                  _focus={{
+                    borderColor: 'blue.500',
+                    boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)',
+                  }}
+                  mb={3}
+                />
+                <HStack justify="flex-end" spacing={2}>
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    onClick={handleCancel}
+                    leftIcon={<X size={12} />}
+                    color={isDark ? 'gray.400' : 'gray.500'}
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                  <Button
+                    size="xs"
+                    colorScheme="blue"
+                    onClick={handleSaveDob}
+                    isLoading={isSaving}
+                    leftIcon={<Check size={12} />}
+                  >
+                    {t('common.save')}
+                  </Button>
+                </HStack>
+              </PopoverBody>
+            </PopoverContent>
+          </Popover>
         </Flex>
       </Grid>
     </Box>
@@ -170,4 +325,3 @@ export function PatientInfoCard({ patient }: PatientInfoCardProps) {
 }
 
 export default PatientInfoCard
-

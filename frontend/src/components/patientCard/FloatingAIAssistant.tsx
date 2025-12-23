@@ -17,7 +17,7 @@ import {
   useColorMode,
   IconButton,
 } from '@chakra-ui/react'
-import { Mic, MessageSquare, X, Stethoscope, Calendar, Wallet, Megaphone } from 'lucide-react'
+import { Bot, MessageSquare, X, Stethoscope, Calendar, Wallet, Megaphone } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLanguage } from '../../context/LanguageContext'
 
@@ -161,13 +161,13 @@ export function FloatingAIAssistant({ onAction }: FloatingAIAssistantProps) {
             {/* Input Methods */}
             <Box p={3}>
               <Flex gap={2} mb={3}>
-                {/* Voice Input Button */}
+                {/* Voice Input Button - Now with Bot icon */}
                 <Button
                   onClick={handleVoiceStart}
                   flex={1}
                   size="sm"
                   fontWeight="medium"
-                  leftIcon={<Box as={Mic} w={4} h={4} />}
+                  leftIcon={<Box as={Bot} w={4} h={4} />}
                   bg={
                     activeMode === 'voice'
                       ? 'blue.600'
@@ -345,4 +345,3 @@ export function FloatingAIAssistant({ onAction }: FloatingAIAssistantProps) {
 }
 
 export default FloatingAIAssistant
-
