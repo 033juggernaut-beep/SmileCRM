@@ -550,6 +550,19 @@ const ru = {
     pdfComingSoon: 'Экспорт PDF скоро будет доступен',
   },
 
+  // AI Assistant
+  ai: {
+    title: 'AI Ассистент',
+    subtitle: 'Спросите про методы лечения, материалы, протоколы…',
+    placeholder: 'Задайте вопрос...',
+    ask: 'Спросить',
+    limitLeft: 'осталось',
+    limitReached: 'Лимит исчерпан',
+    errorGeneric: 'Не удалось получить ответ. Попробуйте позже.',
+    history: 'История',
+    clearHistory: 'Очистить',
+  },
+
   // Daily motivation quotes (same index = same meaning across languages)
   motivation: {
     quotes: [

@@ -551,6 +551,19 @@ const am = {
     pdfComingSoon: 'PDF eksporte mot klini',
   },
 
+  // AI Assistant
+  ai: {
+    title: 'AI Ognakanr',
+    subtitle: 'Harcreq bujman metodneriburtey, nyuteributey, protokolneriburtey…',
+    placeholder: 'Harcreq harc...',
+    ask: 'Harcnel',
+    limitLeft: 'mnacel e',
+    limitReached: 'Limite sparvace',
+    errorGeneric: 'Chi hajoxvel pataskhan stanalutyun. Phordzek aveli uzh.',
+    history: 'Patmutyun',
+    clearHistory: 'Maqrel',
+  },
+
   // Daily motivation quotes (same index = same meaning across languages)
   motivation: {
     quotes: [

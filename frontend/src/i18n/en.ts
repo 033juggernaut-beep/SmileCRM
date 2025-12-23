@@ -550,6 +550,19 @@ const en = {
     pdfComingSoon: 'PDF export coming soon',
   },
 
+  // AI Assistant
+  ai: {
+    title: 'AI Assistant',
+    subtitle: 'Ask about treatment methods, materials, protocols…',
+    placeholder: 'Ask a question...',
+    ask: 'Ask',
+    limitLeft: 'left',
+    limitReached: 'Limit reached',
+    errorGeneric: 'Failed to get response. Please try later.',
+    history: 'History',
+    clearHistory: 'Clear',
+  },
+
   // Daily motivation quotes (same index = same meaning across languages)
   motivation: {
     quotes: [

@@ -9,6 +9,7 @@ from .subscription import router as subscription_router
 from .media import router as media_router
 from .payments import router as payments_router
 from .statistics import router as statistics_router
+from .ai_assistant import router as ai_assistant_router
 
 
 def get_api_router() -> APIRouter:
@@ -22,5 +23,6 @@ def get_api_router() -> APIRouter:
   api_router.include_router(media_router)
   api_router.include_router(payments_router)
   api_router.include_router(statistics_router)
+  api_router.include_router(ai_assistant_router)
   return api_router
 
