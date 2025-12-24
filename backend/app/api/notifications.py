@@ -21,6 +21,8 @@ from app.models.notifications import (
     MarkReadRequest,
     NotificationListOut,
     NotificationOut,
+    UpdateNotificationRequest,
+    NotificationStatus,
 )
 from app.services import notifications_service
 
@@ -40,22 +42,33 @@ def _map_notification(data: dict) -> dict:
         "createdAt": data.get("created_at"),
         "readAt": data.get("read_at"),
         "meta": data.get("meta"),
+        "status": data.get("status", "unread"),
+        "patientId": data.get("patient_id"),
+        "actionType": data.get("action_type"),
+        "actionPayload": data.get("action_payload"),
     }
 
 
 @router.get("/", response_model=NotificationListOut)
 async def list_notifications(
     current_doctor: CurrentDoctor,
+    status: NotificationStatus | None = None,
     limit: int = 20,
     offset: int = 0,
 ) -> NotificationListOut:
     """
     List notifications for the current doctor.
     
+    Args:
+        status: Filter by status (unread, read, dismissed, done). If not provided, returns all.
+        limit: Max number of notifications to return
+        offset: Number of notifications to skip
+    
     Returns notifications ordered by created_at desc, with unread count.
     """
     notifications = notifications_service.list_notifications(
         doctor_id=current_doctor.doctor_id,
+        status=status,
         limit=limit,
         offset=offset,
     )
@@ -99,6 +112,58 @@ async def mark_all_notifications_read(
     )
     
     return {"ok": True, "updatedCount": updated_count}
+
+
+@router.patch("/{notification_id}")
+async def update_notification(
+    notification_id: str,
+    payload: UpdateNotificationRequest,
+    current_doctor: CurrentDoctor,
+) -> dict:
+    """
+    Update a notification's status.
+    
+    Status can be: unread, read, dismissed, done
+    """
+    result = notifications_service.update_notification_status(
+        doctor_id=current_doctor.doctor_id,
+        notification_id=notification_id,
+        status=payload.status,
+    )
+    
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Notification not found or access denied"
+        )
+    
+    return {"ok": True, "notification": _map_notification(result)}
+
+
+@router.post("/generate")
+async def generate_notifications(
+    current_doctor: CurrentDoctor,
+) -> dict:
+    """
+    Generate birthday and inactive patient notifications.
+    
+    This endpoint is for development/testing.
+    In production, this should be triggered by a scheduled job.
+    """
+    birthday_notifications = notifications_service.generate_birthday_notifications(
+        doctor_id=current_doctor.doctor_id
+    )
+    
+    inactive_notifications = notifications_service.generate_inactive_notifications(
+        doctor_id=current_doctor.doctor_id
+    )
+    
+    return {
+        "ok": True,
+        "birthdayCount": len(birthday_notifications),
+        "inactiveCount": len(inactive_notifications),
+        "totalCreated": len(birthday_notifications) + len(inactive_notifications),
+    }
 
 
 @router.post("/seed")

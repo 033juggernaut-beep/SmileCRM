@@ -473,6 +473,18 @@ const ru = {
       copy: 'Скопировать текст',
       copied: 'Скопировано',
       deliveryHint: 'Сообщение можно отправить через WhatsApp / Telegram',
+      // Send modal & patient card
+      sendMessage: 'Отправить сообщение',
+      generating: 'Генерируем текст...',
+      messagePlaceholder: 'Введите текст сообщения...',
+      generateError: 'Ошибка генерации сообщения',
+      noTelegram: 'У пациента не указан Telegram',
+      noWhatsApp: 'У пациента не указан WhatsApp',
+      textCopied: 'Текст скопирован',
+      telegramOpening: 'Откройте Telegram и вставьте текст',
+      whatsappOpening: 'Открываем WhatsApp...',
+      sendTelegram: 'Telegram',
+      sendWhatsApp: 'WhatsApp',
     },
 
     // Finance section
@@ -542,6 +554,13 @@ const ru = {
     mockPatientOverdue: 'Напоминание о повторном визите',
     mockSystemTrial: 'Пробный период заканчивается через 3 дня',
     mockSystemSubscription: 'Подписка успешно продлена',
+    // Actions
+    openPatient: 'Открыть пациента',
+    generateMessage: 'Сгенерировать сообщение',
+    markRead: 'Прочитано',
+    dismiss: 'Скрыть',
+    generateNotifications: 'Сгенерировать уведомления',
+    notificationsGenerated: 'Уведомления созданы',
   },
 
   // Treatment Plan

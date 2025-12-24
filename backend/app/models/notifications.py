@@ -6,6 +6,8 @@ Notification types:
 - trial_warning: Trial period expiring soon
 - no_show: Patient didn't show up
 - info: General system info
+- birthday: Patient birthday reminder
+- inactive_6m: Patient inactive for 6+ months
 """
 
 from __future__ import annotations
@@ -16,7 +18,8 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 
-NotificationType = Literal["visit_reminder", "trial_warning", "no_show", "info"]
+NotificationType = Literal["visit_reminder", "trial_warning", "no_show", "info", "birthday", "inactive_6m"]
+NotificationStatus = Literal["unread", "read", "dismissed", "done"]
 
 
 class NotificationOut(BaseModel):
@@ -30,6 +33,10 @@ class NotificationOut(BaseModel):
     created_at: datetime = Field(alias="createdAt")
     read_at: datetime | None = Field(default=None, alias="readAt")
     meta: dict[str, Any] | None = None
+    status: NotificationStatus = "unread"
+    patient_id: str | None = Field(default=None, alias="patientId")
+    action_type: str | None = Field(default=None, alias="actionType")
+    action_payload: dict[str, Any] | None = Field(default=None, alias="actionPayload")
     
     class Config:
         populate_by_name = True
@@ -58,4 +65,16 @@ class CreateNotificationRequest(BaseModel):
     title: str
     body: str | None = None
     meta: dict[str, Any] | None = None
+    patient_id: str | None = Field(default=None, alias="patientId")
+    action_type: str | None = Field(default=None, alias="actionType")
+    action_payload: dict[str, Any] | None = Field(default=None, alias="actionPayload")
+    
+    class Config:
+        populate_by_name = True
+
+
+class UpdateNotificationRequest(BaseModel):
+    """Request to update notification status."""
+    
+    status: NotificationStatus
 

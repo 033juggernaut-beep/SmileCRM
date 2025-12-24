@@ -481,6 +481,9 @@ export const PatientDetailsPage = () => {
             <MarketingSection
               patientName={`${patient.firstName} ${patient.lastName}`}
               dateOfBirth={patient.birthDate ?? undefined}
+              telegramUsername={patient.telegramUsername}
+              whatsappPhone={patient.whatsappPhone}
+              phone={patient.phone}
               defaultOpen={false}
             />
 

@@ -1,131 +1,101 @@
-/**
- * Notifications API module.
- * 
- * Provides functions to interact with the notifications backend.
- * Designed for graceful fallback when API is unavailable.
- */
-
-import { apiClient } from './client'
+import { apiClient, buildAuthHeaders } from './client'
 import { getAuthToken } from './auth'
+import type { Notification, NotificationStatus } from '../components/notifications/types'
 
-// Types matching backend response
-export type NotificationType = 
-  | 'visit_reminder' 
-  | 'trial_warning' 
-  | 'no_show' 
-  | 'info'
-
-export interface ApiNotification {
+// API response types
+export type ApiNotification = {
   id: string
   doctorId: string
-  type: NotificationType
+  type: string
   title: string
-  body: string | null
+  body?: string | null
   createdAt: string
-  readAt: string | null
-  meta: Record<string, unknown> | null
+  readAt?: string | null
+  meta?: Record<string, unknown> | null
+  status: string
+  patientId?: string | null
+  actionType?: string | null
+  actionPayload?: {
+    template?: string
+    patientId?: string
+    channel?: string
+  } | null
 }
 
-export interface NotificationListResponse {
+type NotificationListResponse = {
   items: ApiNotification[]
   unreadCount: number
 }
 
-export interface MarkReadResponse {
-  ok: boolean
-  updatedCount: number
-}
+const mapNotification = (data: ApiNotification): Notification => ({
+  id: data.id,
+  type: data.type as Notification['type'],
+  message: data.body || data.title,
+  title: data.title,
+  body: data.body ?? undefined,
+  timestamp: new Date(data.createdAt),
+  read: data.status !== 'unread',
+  status: data.status as NotificationStatus,
+  patientId: data.patientId ?? undefined,
+  actionType: data.actionType ?? undefined,
+  actionPayload: data.actionPayload ?? undefined,
+})
 
-/**
- * Get notifications for the current doctor.
- * 
- * @param limit - Max number of notifications to fetch (default 20)
- * @param offset - Number of notifications to skip (default 0)
- * @returns Promise with notification list and unread count
- * @throws Error if request fails (network, auth, etc.)
- */
-export async function getNotifications(
-  limit = 20,
-  offset = 0
-): Promise<NotificationListResponse> {
-  const authToken = getAuthToken()
-  
-  const { data } = await apiClient.get<NotificationListResponse>('/notifications', {
-    params: { limit, offset },
-    headers: { Authorization: `Bearer ${authToken}` },
-  })
-  
-  return data
-}
-
-/**
- * Mark specific notifications as read.
- * 
- * @param ids - Array of notification UUIDs to mark as read
- * @returns Promise with success status and count of updated notifications
- * @throws Error if request fails
- */
-export async function markRead(ids: string[]): Promise<MarkReadResponse> {
-  const authToken = getAuthToken()
-  
-  const { data } = await apiClient.post<MarkReadResponse>(
-    '/notifications/mark-read',
-    { ids },
-    { headers: { Authorization: `Bearer ${authToken}` } }
-  )
-  
-  return data
-}
-
-/**
- * Mark all notifications as read for the current doctor.
- * 
- * @returns Promise with success status and count of updated notifications
- * @throws Error if request fails
- */
-export async function markAllRead(): Promise<MarkReadResponse> {
-  const authToken = getAuthToken()
-  
-  const { data } = await apiClient.post<MarkReadResponse>(
-    '/notifications/mark-all-read',
-    {},
-    { headers: { Authorization: `Bearer ${authToken}` } }
-  )
-  
-  return data
-}
-
-/**
- * Seed demo notifications (development only).
- * 
- * @returns Promise with created notifications
- * @throws Error if request fails or not in dev mode
- */
-export async function seedNotifications(): Promise<{
-  ok: boolean
-  createdCount: number
-  items: ApiNotification[]
-}> {
-  const authToken = getAuthToken()
-  
-  const { data } = await apiClient.post(
-    '/notifications/seed',
-    {},
-    { headers: { Authorization: `Bearer ${authToken}` } }
-  )
-  
-  return data
-}
-
-/**
- * Notifications API object for convenient access.
- */
 export const notificationsApi = {
-  getNotifications,
-  markRead,
-  markAllRead,
-  seedNotifications,
+  /**
+   * Get notifications for current doctor
+   */
+  async list(status?: NotificationStatus): Promise<{ items: Notification[]; unreadCount: number }> {
+    const authToken = getAuthToken()
+    const params = status ? { status } : {}
+    const { data } = await apiClient.get<NotificationListResponse>('/notifications', {
+      headers: buildAuthHeaders(authToken),
+      params,
+    })
+    return {
+      items: data.items.map(mapNotification),
+      unreadCount: data.unreadCount,
+    }
+  },
+
+  /**
+   * Update notification status
+   */
+  async updateStatus(notificationId: string, status: NotificationStatus): Promise<void> {
+    const authToken = getAuthToken()
+    await apiClient.patch(
+      `/notifications/${notificationId}`,
+      { status },
+      { headers: buildAuthHeaders(authToken) }
+    )
+  },
+
+  /**
+   * Mark all notifications as read
+   */
+  async markAllRead(): Promise<void> {
+    const authToken = getAuthToken()
+    await apiClient.post(
+      '/notifications/mark-all-read',
+      {},
+      { headers: buildAuthHeaders(authToken) }
+    )
+  },
+
+  /**
+   * Generate birthday and inactive patient notifications (dev only)
+   */
+  async generate(): Promise<{ birthdayCount: number; inactiveCount: number; totalCreated: number }> {
+    const authToken = getAuthToken()
+    const { data } = await apiClient.post<{
+      birthdayCount: number
+      inactiveCount: number
+      totalCreated: number
+    }>(
+      '/notifications/generate',
+      {},
+      { headers: buildAuthHeaders(authToken) }
+    )
+    return data
+  },
 }
-
-export default notificationsApi
-

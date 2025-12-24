@@ -474,6 +474,18 @@ const am = {
       copy: 'Patchenel tekste',
       copied: 'Patchenvac e',
       deliveryHint: 'Haxordagrutyune karox eq uxarkel WhatsApp / Telegram micоcov',
+      // Send modal
+      sendMessage: 'Uxarkel haxordagrutyun',
+      generating: 'Tekste generacvum e...',
+      messagePlaceholder: 'Mtenq haxordagrutyun...',
+      generateError: 'Chi hajoxvec generacnel',
+      noTelegram: 'Patsienti Telegram-y nshvac che',
+      noWhatsApp: 'Patsienti WhatsApp-y nshvac che',
+      textCopied: 'Tekste patchenvec',
+      telegramOpening: 'Bacneq Telegram-y ev tphenq tekste',
+      whatsappOpening: 'WhatsApp-y bacvum e...',
+      sendTelegram: 'Telegram',
+      sendWhatsApp: 'WhatsApp',
     },
 
     // Finance section
@@ -543,6 +555,13 @@ const am = {
     mockPatientOverdue: 'Krknvox viziti hishexutyun',
     mockSystemTrial: 'Pordznakan shrjane averanum e 3 orum',
     mockSystemSubscription: 'Bajanagrutyune hajoxutyamb norogvec',
+    // Actions
+    openPatient: 'Bacneq pacientin',
+    generateMessage: 'Generacneq haxordagrutyun',
+    markRead: 'Kardacvac e',
+    dismiss: 'Tacnel',
+    generateNotifications: 'Generacneq cafanutyunnery',
+    notificationsGenerated: 'Cafanumner stexcvecin',
   },
 
   // Treatment Plan

@@ -473,6 +473,18 @@ const en = {
       copy: 'Copy text',
       copied: 'Copied',
       deliveryHint: 'Message can be sent via WhatsApp / Telegram',
+      // Send modal
+      sendMessage: 'Send message',
+      generating: 'Generating text...',
+      messagePlaceholder: 'Enter message text...',
+      generateError: 'Failed to generate message',
+      noTelegram: 'Patient has no Telegram username',
+      noWhatsApp: 'Patient has no WhatsApp number',
+      textCopied: 'Text copied',
+      telegramOpening: 'Open Telegram and paste the text',
+      whatsappOpening: 'Opening WhatsApp...',
+      sendTelegram: 'Telegram',
+      sendWhatsApp: 'WhatsApp',
     },
 
     // Finance section
@@ -542,6 +554,13 @@ const en = {
     mockPatientOverdue: 'Follow-up visit reminder',
     mockSystemTrial: 'Trial ends in 3 days',
     mockSystemSubscription: 'Subscription renewed successfully',
+    // Actions
+    openPatient: 'Open patient',
+    generateMessage: 'Generate message',
+    markRead: 'Mark as read',
+    dismiss: 'Dismiss',
+    generateNotifications: 'Generate notifications',
+    notificationsGenerated: 'Notifications generated',
   },
 
   // Treatment Plan

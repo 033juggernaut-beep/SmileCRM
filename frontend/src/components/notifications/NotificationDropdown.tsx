@@ -31,12 +31,20 @@ export interface NotificationDropdownProps {
   notifications: Notification[]
   onNotificationClick?: (notification: Notification) => void
   onMarkAllRead?: () => void
+  onGenerateMessage?: (notification: Notification) => void
+  onOpenPatient?: (patientId: string) => void
+  onMarkRead?: (notificationId: string) => void
+  onDismiss?: (notificationId: string) => void
 }
 
 export function NotificationDropdown({
   notifications,
   onNotificationClick,
   onMarkAllRead,
+  onGenerateMessage,
+  onOpenPatient,
+  onMarkRead,
+  onDismiss,
 }: NotificationDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -219,6 +227,10 @@ export function NotificationDropdown({
                 <NotificationList
                   notifications={notifications}
                   onNotificationClick={handleNotificationClick}
+                  onGenerateMessage={onGenerateMessage}
+                  onOpenPatient={onOpenPatient}
+                  onMarkRead={onMarkRead}
+                  onDismiss={onDismiss}
                 />
               </Box>
             </MotionBox>

@@ -24,6 +24,8 @@ export type Patient = {
   treatmentPlanTotal?: number | null
   treatmentPlanCurrency?: string | null
   marketingOptIn?: boolean | null
+  telegramUsername?: string | null
+  whatsappPhone?: string | null
 }
 
 export type Visit = {
@@ -63,6 +65,20 @@ export type UpdateVisitInput = {
   medications?: string
 }
 
+export type UpdatePatientInput = {
+  firstName?: string
+  lastName?: string
+  diagnosis?: string
+  phone?: string
+  status?: PatientStatus
+  segment?: PatientSegment
+  birthDate?: string
+  treatmentPlanTotal?: number
+  treatmentPlanCurrency?: string
+  telegramUsername?: string
+  whatsappPhone?: string
+}
+
 type ApiPatient = {
   id: string
   first_name: string
@@ -77,6 +93,8 @@ type ApiPatient = {
   treatment_plan_total?: number | null
   treatment_plan_currency?: string | null
   marketing_opt_in?: boolean | null
+  telegram_username?: string | null
+  whatsapp_phone?: string | null
 }
 
 type ApiVisit = {
@@ -110,6 +128,8 @@ const mapPatient = (data: ApiPatient): Patient => ({
   treatmentPlanTotal: data.treatment_plan_total ?? undefined,
   treatmentPlanCurrency: data.treatment_plan_currency ?? undefined,
   marketingOptIn: data.marketing_opt_in ?? undefined,
+  telegramUsername: data.telegram_username ?? undefined,
+  whatsappPhone: data.whatsapp_phone ?? undefined,
 })
 
 const mapVisit = (data: ApiVisit): Visit => ({
@@ -134,6 +154,22 @@ const buildPatientPayload = (payload: CreatePatientInput) => ({
   treatment_plan_total: payload.treatmentPlanTotal,
   treatment_plan_currency: payload.treatmentPlanCurrency,
 })
+
+const buildUpdatePatientPayload = (payload: UpdatePatientInput) => {
+  const body: Record<string, unknown> = {}
+  if (payload.firstName !== undefined) body.first_name = payload.firstName
+  if (payload.lastName !== undefined) body.last_name = payload.lastName
+  if (payload.diagnosis !== undefined) body.diagnosis = payload.diagnosis
+  if (payload.phone !== undefined) body.phone = payload.phone
+  if (payload.status !== undefined) body.status = payload.status
+  if (payload.segment !== undefined) body.segment = payload.segment
+  if (payload.birthDate !== undefined) body.birth_date = payload.birthDate
+  if (payload.treatmentPlanTotal !== undefined) body.treatment_plan_total = payload.treatmentPlanTotal
+  if (payload.treatmentPlanCurrency !== undefined) body.treatment_plan_currency = payload.treatmentPlanCurrency
+  if (payload.telegramUsername !== undefined) body.telegram_username = payload.telegramUsername
+  if (payload.whatsappPhone !== undefined) body.whatsapp_phone = payload.whatsappPhone
+  return body
+}
 
 const buildVisitPayload = (payload: CreateVisitInput | UpdateVisitInput) => {
   const body: Record<string, string | undefined> = {
@@ -202,6 +238,16 @@ export const patientsApi = {
       { headers: buildAuthHeaders(authToken) },
     )
     return mapVisit(data)
+  },
+
+  async update(patientId: string, payload: UpdatePatientInput): Promise<Patient> {
+    const authToken = getAuthToken()
+    const { data } = await apiClient.patch<ApiPatient>(
+      `/patients/${patientId}`,
+      buildUpdatePatientPayload(payload),
+      { headers: buildAuthHeaders(authToken) },
+    )
+    return mapPatient(data)
   },
 }
 

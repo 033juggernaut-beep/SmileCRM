@@ -12,7 +12,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { notificationsApi, type ApiNotification } from '../api/notifications'
+import { notificationsApi } from '../api/notifications'
 import { mockNotifications } from '../components/notifications/mockNotifications'
 import type { Notification } from '../components/notifications/types'
 
@@ -102,13 +102,12 @@ export function useNotifications(
     setError(null)
     
     try {
-      const response = await notificationsApi.getNotifications()
+      const response = await notificationsApi.list()
       
       if (!isMounted.current) return
       
-      // Map API response to frontend format
-      const mapped = response.items.map(mapApiToFrontend)
-      setNotifications(mapped)
+      // API already maps to frontend format
+      setNotifications(response.items)
       setUnreadCount(response.unreadCount)
       setIsMock(false)
     } catch (err) {
@@ -135,7 +134,7 @@ export function useNotifications(
   const markRead = useCallback(async (ids: string[]) => {
     // Optimistic update
     setNotifications((prev) =>
-      prev.map((n) => (ids.includes(n.id) ? { ...n, read: true } : n))
+      prev.map((n) => (ids.includes(n.id) ? { ...n, read: true, status: 'read' } : n))
     )
     setUnreadCount((prev) => Math.max(0, prev - ids.length))
     
@@ -143,7 +142,8 @@ export function useNotifications(
     if (isMock) return
     
     try {
-      await notificationsApi.markRead(ids)
+      // Update each notification status
+      await Promise.all(ids.map(id => notificationsApi.updateStatus(id, 'read')))
     } catch (err) {
       // Revert on error
       console.error('[useNotifications] Failed to mark as read:', err)

@@ -1,140 +1,110 @@
-"""Marketing API endpoints for patient marketing events and birthday management."""
+"""
+Marketing API endpoints.
+
+Endpoints for generating marketing messages for patients.
+"""
+
 from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 
-from app.api.deps import AuthenticatedDoctor, get_current_doctor, verify_patient_ownership
-from app.models.dto import (
-    AIGenerateRequest,
-    AIGenerateResponse,
-    MarketingEventCreateRequest,
-    MarketingEventResponse,
-    PatientBirthdayResponse,
-)
-from app.services import marketing_service, patients_service
-from app.services import ai_marketing_service
+from app.api.deps import AuthenticatedDoctor, get_current_doctor
+from app.services import patients_service
 
 router = APIRouter(prefix="/marketing", tags=["marketing"])
 
 CurrentDoctor = Annotated[AuthenticatedDoctor, Depends(get_current_doctor)]
 
+MessageTemplate = Literal["birthday", "visit_reminder", "promo", "post_treatment"]
 
-@router.post("/events", response_model=MarketingEventResponse)
-async def create_marketing_event(
-    payload: MarketingEventCreateRequest,
-    current_doctor: CurrentDoctor
-) -> MarketingEventResponse:
-    """
-    Create a marketing event log entry.
+
+class MessagePreviewRequest(BaseModel):
+    patient_id: str
+    template: MessageTemplate
+
+
+class MessagePreviewResponse(BaseModel):
+    text: str
+    template: MessageTemplate
+
+
+# Simple message templates (placeholder for AI generation)
+TEMPLATES = {
+    "birthday": """Здравствуйте, {first_name}! 🎂
+
+Поздравляем вас с днём рождения! Желаем крепкого здоровья, счастья и красивой улыбки!
+
+В честь вашего праздника мы дарим вам скидку 10% на все услуги в течение недели.
+
+С наилучшими пожеланиями,
+Ваша стоматология""",
     
-    This is used to track when doctors copy/send marketing messages to patients.
-    Types: birthday_greeting, promo_offer, recall_reminder
-    """
-    # Verify patient belongs to this doctor
-    verify_patient_ownership(payload.patient_id, current_doctor)
+    "visit_reminder": """Здравствуйте, {first_name}!
+
+Мы заметили, что вы давно не были у нас на приёме. Рекомендуем пройти профилактический осмотр для поддержания здоровья полости рта.
+
+Запишитесь на удобное время — мы будем рады вас видеть!
+
+С заботой о вашем здоровье,
+Ваша стоматология""",
     
-    event = marketing_service.create_marketing_event(
-        doctor_id=current_doctor.doctor_id,
+    "promo": """Здравствуйте, {first_name}!
+
+Специальное предложение для наших пациентов: скидка 15% на профессиональную гигиену полости рта!
+
+Акция действует до конца месяца. Запишитесь прямо сейчас!
+
+С уважением,
+Ваша стоматология""",
+    
+    "post_treatment": """Здравствуйте, {first_name}!
+
+Как вы себя чувствуете после лечения? Надеемся, что всё хорошо!
+
+Если у вас есть вопросы или беспокойство — свяжитесь с нами, мы всегда готовы помочь.
+
+С заботой о вас,
+Ваша стоматология""",
+}
+
+
+@router.post("/message/preview", response_model=MessagePreviewResponse)
+async def preview_message(
+    payload: MessagePreviewRequest,
+    current_doctor: CurrentDoctor,
+) -> MessagePreviewResponse:
+    """
+    Generate a marketing message preview for a patient.
+    
+    This is a simple template-based generation.
+    In the future, this can be replaced with AI-powered generation.
+    """
+    # Get patient data
+    patient = patients_service.get_patient_by_id(
         patient_id=payload.patient_id,
-        event_type=payload.type,
-        channel=payload.channel,
-        payload=payload.payload,
-    )
-    
-    return MarketingEventResponse(**event)
-
-
-@router.get("/events", response_model=list[MarketingEventResponse])
-async def list_marketing_events(
-    current_doctor: CurrentDoctor,
-    patient_id: str | None = Query(None, description="Filter by patient ID"),
-    event_type: str | None = Query(None, description="Filter by event type"),
-    limit: int = Query(100, ge=1, le=500),
-) -> list[MarketingEventResponse]:
-    """
-    List marketing events for the current doctor.
-    """
-    events = marketing_service.list_marketing_events(
         doctor_id=current_doctor.doctor_id,
-        patient_id=patient_id,
-        event_type=event_type,
-        limit=limit,
     )
     
-    return [MarketingEventResponse(**event) for event in events]
-
-
-@router.get("/birthdays", response_model=list[PatientBirthdayResponse])
-async def get_upcoming_birthdays(
-    current_doctor: CurrentDoctor,
-    range: Literal["today", "week", "month"] = Query("month", description="Birthday range filter"),
-) -> list[PatientBirthdayResponse]:
-    """
-    Get patients with upcoming birthdays.
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient not found"
+        )
     
-    - today: Only patients whose birthday is today
-    - week: Patients with birthdays in the next 7 days
-    - month: Patients with birthdays in the next 30 days
-    """
-    patients = marketing_service.get_patients_with_upcoming_birthdays(
-        doctor_id=current_doctor.doctor_id,
-        range_type=range,
+    template_text = TEMPLATES.get(payload.template)
+    if not template_text:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unknown template: {payload.template}"
+        )
+    
+    # Format message with patient data
+    message_text = template_text.format(
+        first_name=patient.get("first_name", ""),
+        last_name=patient.get("last_name", ""),
     )
     
-    return [PatientBirthdayResponse(**patient) for patient in patients]
-
-
-@router.post("/ai-generate", response_model=AIGenerateResponse)
-async def generate_ai_marketing_text(
-    payload: AIGenerateRequest,
-    current_doctor: CurrentDoctor,
-) -> AIGenerateResponse:
-    """
-    Generate AI-powered marketing text for a patient.
-    
-    The doctor can then review, edit, and copy the text.
-    No automatic sending - copy only.
-    """
-    # Verify patient belongs to this doctor and get patient data
-    patient = verify_patient_ownership(payload.patient_id, current_doctor)
-    
-    patient_name = f"{patient.get('first_name', '')} {patient.get('last_name', '')}".strip()
-    segment = patient.get("segment", "regular")
-    
-    # Build context
-    context = {
-        "discount_percent": payload.discount_percent,
-        "birth_date": patient.get("birth_date"),
-    }
-    
-    # Generate text
-    generated_text = await ai_marketing_service.generate_marketing_text(
-        msg_type=payload.type,
-        language=payload.language,
-        segment=segment,
-        patient_name=patient_name,
-        context=context,
-    )
-    
-    # Log the generation event
-    marketing_service.create_marketing_event(
-        doctor_id=current_doctor.doctor_id,
-        patient_id=payload.patient_id,
-        event_type=f"ai_{payload.type}_generated",
-        channel="ai",
-        payload={
-            "language": payload.language,
-            "segment": segment,
-            "discount_percent": payload.discount_percent,
-        },
-    )
-    
-    return AIGenerateResponse(
-        text=generated_text,
-        type=payload.type,
-        language=payload.language,
-        segment=segment,
-        char_count=len(generated_text),
-    )
+    return MessagePreviewResponse(text=message_text, template=payload.template)

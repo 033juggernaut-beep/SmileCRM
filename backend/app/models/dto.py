@@ -28,6 +28,8 @@ class PatientBase(BaseModel):
   segment: str | None = Field(default="regular", description="Patient segment: regular, vip")
   treatment_plan_total: condecimal(max_digits=12, decimal_places=2) | None = None  # type: ignore
   treatment_plan_currency: str | None = Field(default="AMD")
+  telegram_username: str | None = Field(default=None, description="Telegram username without @")
+  whatsapp_phone: str | None = Field(default=None, description="WhatsApp phone number")
 
 
 class PatientCreateRequest(PatientBase):

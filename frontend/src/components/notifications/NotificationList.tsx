@@ -15,11 +15,19 @@ import type { Notification } from './types'
 export interface NotificationListProps {
   notifications: Notification[]
   onNotificationClick?: (notification: Notification) => void
+  onGenerateMessage?: (notification: Notification) => void
+  onOpenPatient?: (patientId: string) => void
+  onMarkRead?: (notificationId: string) => void
+  onDismiss?: (notificationId: string) => void
 }
 
 export function NotificationList({
   notifications,
   onNotificationClick,
+  onGenerateMessage,
+  onOpenPatient,
+  onMarkRead,
+  onDismiss,
 }: NotificationListProps) {
   if (notifications.length === 0) {
     return <NotificationsEmptyState />
@@ -33,6 +41,10 @@ export function NotificationList({
             key={notification.id}
             notification={notification}
             onClick={() => onNotificationClick?.(notification)}
+            onGenerateMessage={onGenerateMessage}
+            onOpenPatient={onOpenPatient}
+            onMarkRead={onMarkRead}
+            onDismiss={onDismiss}
           />
         ))}
       </AnimatePresence>

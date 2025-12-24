@@ -11,8 +11,8 @@
  * Uses LanguageMenu for mobile-friendly language dropdown
  */
 
-import { useCallback } from 'react';
-import { Box, Flex, Text, useColorMode } from '@chakra-ui/react';
+import { useCallback, useState } from 'react';
+import { Box, Flex, Text, useColorMode, useToast } from '@chakra-ui/react';
 import { Sun, Moon } from 'lucide-react';
 import { ToothLogo } from './ToothLogo';
 import { useNavigate } from 'react-router-dom';
@@ -23,6 +23,9 @@ import {
 import { useNotifications } from '../../hooks/useNotifications';
 import { useTelegramSafeArea } from '../../hooks/useTelegramSafeArea';
 import { LanguageMenu } from '../LanguageMenu';
+import { MarketingSendModal } from '../marketing';
+import { notificationsApi } from '../../api/notifications';
+import type { MessageTemplate } from '../../api/marketing';
 
 // Minimum safe padding for header controls (fallback when hook returns lower values)
 const MIN_RIGHT_SAFE = 16; // Minimum padding on right
@@ -38,6 +41,7 @@ export function getHeaderHeight(topInset: number): number {
 export function Header(_props?: { notificationCount?: number }) {
   const { colorMode, toggleColorMode } = useColorMode();
   const navigate = useNavigate();
+  const toast = useToast();
   const isDark = colorMode === 'dark';
 
   // Get safe area insets from Telegram
@@ -51,7 +55,12 @@ export function Header(_props?: { notificationCount?: number }) {
   const totalHeaderHeight = headerHeight || getHeaderHeight(topInset);
 
   // Notifications from API (with fallback to mock data)
-  const { notifications, markRead, markAllRead } = useNotifications();
+  const { notifications, markRead, markAllRead, refetch } = useNotifications();
+
+  // State for marketing send modal
+  const [marketingModalOpen, setMarketingModalOpen] = useState(false);
+  const [marketingPatientId, setMarketingPatientId] = useState<string>('');
+  const [marketingTemplate, setMarketingTemplate] = useState<MessageTemplate>('birthday');
 
   const handleNotificationClick = useCallback((notification: Notification) => {
     // Mark as read
@@ -65,6 +74,44 @@ export function Header(_props?: { notificationCount?: number }) {
   const handleMarkAllRead = useCallback(() => {
     markAllRead();
   }, [markAllRead]);
+
+  // Handle generate message action from notification
+  const handleGenerateMessage = useCallback((notification: Notification) => {
+    const patientId = notification.actionPayload?.patientId || notification.patientId;
+    const template = (notification.actionPayload?.template || 'birthday') as MessageTemplate;
+    
+    if (patientId) {
+      setMarketingPatientId(patientId);
+      setMarketingTemplate(template);
+      setMarketingModalOpen(true);
+    }
+  }, []);
+
+  // Handle open patient action from notification
+  const handleOpenPatient = useCallback((patientId: string) => {
+    navigate(`/patients/${patientId}`);
+  }, [navigate]);
+
+  // Handle mark notification as read
+  const handleMarkRead = useCallback(async (notificationId: string) => {
+    try {
+      await notificationsApi.updateStatus(notificationId, 'read');
+      markRead([notificationId]);
+    } catch (err) {
+      console.error('Failed to mark notification as read:', err);
+    }
+  }, [markRead]);
+
+  // Handle dismiss notification
+  const handleDismiss = useCallback(async (notificationId: string) => {
+    try {
+      await notificationsApi.updateStatus(notificationId, 'dismissed');
+      // Refetch to update the list
+      refetch();
+    } catch (err) {
+      console.error('Failed to dismiss notification:', err);
+    }
+  }, [refetch]);
 
   // Exact colors from reference
   const headerBg = isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)';
@@ -132,6 +179,10 @@ export function Header(_props?: { notificationCount?: number }) {
             notifications={notifications}
             onNotificationClick={handleNotificationClick}
             onMarkAllRead={handleMarkAllRead}
+            onGenerateMessage={handleGenerateMessage}
+            onOpenPatient={handleOpenPatient}
+            onMarkRead={handleMarkRead}
+            onDismiss={handleDismiss}
           />
 
           {/* Theme Toggle - with proper touch target size and visibility */}
@@ -167,6 +218,14 @@ export function Header(_props?: { notificationCount?: number }) {
           </Box>
         </Flex>
       </Flex>
+
+      {/* Marketing Send Modal */}
+      <MarketingSendModal
+        isOpen={marketingModalOpen}
+        onClose={() => setMarketingModalOpen(false)}
+        patientId={marketingPatientId}
+        template={marketingTemplate}
+      />
     </Box>
   );
 }
