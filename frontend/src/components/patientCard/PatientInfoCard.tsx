@@ -104,8 +104,14 @@ export function PatientInfoCard({ patient, onPatientUpdate }: PatientInfoCardPro
         throw new Error(t('patientDetails.authRequired'))
       }
 
-      // Send null if cleared, otherwise the ISO date
-      const birthDateValue = dobValue.trim() ? dobValue : null
+      // Validate date format - must be YYYY-MM-DD or empty
+      const trimmedValue = dobValue.trim()
+      if (trimmedValue && !/^\d{4}-\d{2}-\d{2}$/.test(trimmedValue)) {
+        throw new Error(t('patientDetails.invalidDateFormat'))
+      }
+
+      // Send null if cleared, otherwise the ISO date (YYYY-MM-DD)
+      const birthDateValue = trimmedValue || null
 
       await apiClient.patch(
         `/patients/${patient.id}`,
@@ -118,20 +124,32 @@ export function PatientInfoCard({ patient, onPatientUpdate }: PatientInfoCardPro
       onPatientUpdate?.(updatedPatient)
 
       toast({
-        title: t('common.saved'),
+        title: t('patientDetails.birthDateSaved'),
         status: 'success',
         duration: 2000,
         isClosable: true,
       })
 
       onClose()
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to save DOB:', error)
+      
+      // Extract error message from response or use generic message
+      let errorMessage = t('patientDetails.saveError')
+      if (error && typeof error === 'object') {
+        const axiosError = error as { response?: { data?: { detail?: string } }; message?: string }
+        if (axiosError.response?.data?.detail) {
+          errorMessage = axiosError.response.data.detail
+        } else if (axiosError.message) {
+          errorMessage = axiosError.message
+        }
+      }
+      
       toast({
         title: t('common.error'),
-        description: t('patientDetails.saveError'),
+        description: errorMessage,
         status: 'error',
-        duration: 3000,
+        duration: 4000,
         isClosable: true,
       })
     } finally {

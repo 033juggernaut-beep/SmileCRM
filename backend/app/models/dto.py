@@ -196,3 +196,21 @@ class AIGenerateResponse(BaseModel):
   segment: str
   char_count: int = Field(..., description="Character count for SMS estimation")
 
+
+# Patient Medication Models
+class MedicationCreateRequest(BaseModel):
+  """Request for creating a new medication prescription"""
+  name: str = Field(..., min_length=1, description="Medication name")
+  dosage: str | None = Field(default=None, description="Dosage instructions")
+  comment: str | None = Field(default=None, description="Doctor's notes")
+
+
+class MedicationResponse(BaseModel):
+  """Response with medication details"""
+  id: str
+  patient_id: str
+  doctor_id: str
+  name: str
+  dosage: str | None = None
+  comment: str | None = None
+  created_at: datetime | None = None

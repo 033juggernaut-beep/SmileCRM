@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import date
 from typing import Annotated, Any
 
@@ -14,8 +15,12 @@ from app.models.dto import (
   PatientResponse,
   VisitCreateRequest,
   VisitResponse,
+  MedicationCreateRequest,
+  MedicationResponse,
 )
-from app.services import patients_service, visits_service
+from app.services import patients_service, visits_service, medications_service
+
+logger = logging.getLogger(__name__)
 
 # Alias for backward compatibility within this module
 _get_patient_for_doctor = verify_patient_ownership
@@ -80,11 +85,18 @@ async def update_patient(
     return PatientResponse(**patient)
   
   # Update patient
-  updated_patient = patients_service.update_patient(
-    patient_id=patient_id,
-    doctor_id=current_doctor.doctor_id,
-    update_data=update_data
-  )
+  try:
+    updated_patient = patients_service.update_patient(
+      patient_id=patient_id,
+      doctor_id=current_doctor.doctor_id,
+      update_data=update_data
+    )
+  except Exception as e:
+    logger.error(f"Failed to update patient {patient_id}: {e}")
+    raise HTTPException(
+      status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+      detail=f"Failed to update patient: {str(e)}"
+    )
   
   return PatientResponse(**updated_patient)
 
@@ -113,6 +125,48 @@ async def create_patient_visit(
     payload=payload.model_dump(),
   )
   return VisitResponse(**visit)
+
+
+# ============ Medications Endpoints ============
+
+@router.get("/{patient_id}/medications", response_model=list[MedicationResponse])
+async def list_patient_medications(
+  patient_id: str,
+  current_doctor: CurrentDoctor
+) -> list[MedicationResponse]:
+  """Get all medications for a patient."""
+  _ = _get_patient_for_doctor(patient_id, current_doctor)
+  medications = medications_service.list_by_patient(patient_id, current_doctor.doctor_id)
+  return [MedicationResponse(**med) for med in medications]
+
+
+@router.post(
+  "/{patient_id}/medications",
+  response_model=MedicationResponse,
+  status_code=status.HTTP_201_CREATED,
+)
+async def create_patient_medication(
+  patient_id: str,
+  payload: MedicationCreateRequest,
+  current_doctor: CurrentDoctor,
+) -> MedicationResponse:
+  """Create a new medication prescription for a patient."""
+  _ = _get_patient_for_doctor(patient_id, current_doctor)
+  try:
+    medication = medications_service.create_medication(
+      patient_id=patient_id,
+      doctor_id=current_doctor.doctor_id,
+      name=payload.name,
+      dosage=payload.dosage,
+      comment=payload.comment,
+    )
+  except Exception as e:
+    logger.error(f"Failed to create medication for patient {patient_id}: {e}")
+    raise HTTPException(
+      status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+      detail=f"Failed to create medication: {str(e)}"
+    )
+  return MedicationResponse(**medication)
 
 
 

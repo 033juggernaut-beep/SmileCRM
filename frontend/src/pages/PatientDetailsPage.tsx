@@ -25,6 +25,10 @@ import {
   type PatientFinanceSummary,
   type PatientPayment,
 } from '../api/patientFinance'
+import {
+  medicationsApi,
+  type Medication,
+} from '../api/medications'
 import { apiClient } from '../api/client'
 import { TOKEN_STORAGE_KEY } from '../constants/storage'
 
@@ -60,13 +64,6 @@ interface PatientFinance {
   currency?: string
 }
 
-// Types for medications (mocked for now)
-interface Medication {
-  id: string
-  name: string
-  dosage: string
-  notes?: string
-}
 
 export const PatientDetailsPage = () => {
   const { t } = useLanguage()
@@ -86,8 +83,8 @@ export const PatientDetailsPage = () => {
   const [financeSummary, setFinanceSummary] = useState<PatientFinanceSummary | null>(null)
   const [payments, setPayments] = useState<PatientPayment[]>([])
 
-  // Mock state for features not yet connected to API
-  const [medications] = useState<Medication[]>([])
+  // Medications state
+  const [medications, setMedications] = useState<Medication[]>([])
 
   // Treatment plan state - mock data, ready for API integration
   const [treatmentSteps, setTreatmentSteps] = useState<TreatmentStep[]>([
@@ -150,17 +147,19 @@ export const PatientDetailsPage = () => {
       setIsLoading(true)
       setError(null)
       try {
-        const [patientData, visitsData, financeData, paymentsData] = await Promise.all([
+        const [patientData, visitsData, financeData, paymentsData, medicationsData] = await Promise.all([
           patientsApi.getById(id),
           patientsApi.getVisits(id),
           patientFinanceApi.getFinanceSummary(id),
           patientFinanceApi.listPayments(id),
+          medicationsApi.list(id),
         ])
         if (!cancelled) {
           setPatient(patientData)
           setVisits(visitsData)
           setFinanceSummary(financeData)
           setPayments(paymentsData)
+          setMedications(medicationsData)
         }
       } catch (err) {
         if (!cancelled) {
@@ -260,28 +259,21 @@ export const PatientDetailsPage = () => {
     []
   )
 
-  // Handle add medication
-  const handleAddMedication = useCallback(() => {
-    toast({
-      title: t('patientCard.addMedication'),
-      description: 'Medication form would open here',
-      status: 'info',
-      duration: 2000,
-    })
-  }, [t, toast])
-
-  // Handle save medications
-  const handleSaveMedications = useCallback(
-    async (meds: Medication[]) => {
-      // This would call the API to save medications
-      console.log('Saving medications:', meds)
-      toast({
-        title: t('common.saved'),
-        status: 'success',
-        duration: 2000,
-      })
+  // Handle create medication
+  const handleCreateMedication = useCallback(
+    async (data: { name: string; dosage?: string; comment?: string }) => {
+      if (!id) throw new Error('Patient ID is required')
+      return await medicationsApi.create(id, data)
     },
-    [t, toast]
+    [id]
+  )
+
+  // Handle medication added - update local state
+  const handleMedicationAdded = useCallback(
+    (medication: Medication) => {
+      setMedications((prev) => [medication, ...prev])
+    },
+    []
   )
 
   // Handle finance update
@@ -458,9 +450,10 @@ export const PatientDetailsPage = () => {
 
             {/* 5. Prescribed Medications */}
             <MedicationsSection
+              patientId={id}
               medications={medications}
-              onAdd={handleAddMedication}
-              onSave={handleSaveMedications}
+              onMedicationAdded={handleMedicationAdded}
+              onCreateMedication={handleCreateMedication}
               defaultOpen={false}
             />
 

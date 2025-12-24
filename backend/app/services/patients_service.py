@@ -1,17 +1,23 @@
 from __future__ import annotations
 
+import logging
+from datetime import date
 from decimal import Decimal
 from typing import Any, Mapping
 
 from .supabase_client import SupabaseNotConfiguredError, supabase_client
 
+logger = logging.getLogger(__name__)
 
-def _serialize_numeric(data: dict[str, Any]) -> dict[str, Any]:
-  """Convert Decimal objects to float for JSON serialization."""
+
+def _serialize_for_json(data: dict[str, Any]) -> dict[str, Any]:
+  """Convert Decimal and date objects for JSON serialization."""
   result = {}
   for key, value in data.items():
     if isinstance(value, Decimal):
       result[key] = float(value)
+    elif isinstance(value, date):
+      result[key] = value.isoformat()  # Convert date to YYYY-MM-DD string
     else:
       result[key] = value
   return result
@@ -46,8 +52,9 @@ def get_patient(patient_id: str) -> dict[str, Any] | None:
 
 def update_patient(patient_id: str, doctor_id: str, update_data: dict[str, Any]) -> dict[str, Any]:
   """Update patient information."""
-  # Serialize Decimal objects to float for JSON
-  serialized_data = _serialize_numeric(update_data)
+  # Serialize Decimal and date objects for JSON
+  serialized_data = _serialize_for_json(update_data)
+  logger.info(f"Updating patient {patient_id}: {serialized_data}")
   try:
     updated = supabase_client.update(
       "patients",
@@ -57,6 +64,9 @@ def update_patient(patient_id: str, doctor_id: str, update_data: dict[str, Any])
   except SupabaseNotConfiguredError:
     # Fallback for local dev without Supabase
     return {"id": patient_id, "doctor_id": doctor_id, **update_data}
+  except Exception as e:
+    logger.error(f"Failed to update patient {patient_id}: {e}")
+    raise
   
   if not updated:
     # If no rows updated, return the existing patient
@@ -69,8 +79,8 @@ def update_patient(patient_id: str, doctor_id: str, update_data: dict[str, Any])
 def create_patient(doctor_id: str, payload: Mapping[str, Any]) -> dict[str, Any]:
   """Create a patient that belongs to the provided doctor_id."""
   body = {"doctor_id": doctor_id, **payload}
-  # Serialize Decimal objects to float for JSON
-  serialized_body = _serialize_numeric(body)
+  # Serialize Decimal and date objects for JSON
+  serialized_body = _serialize_for_json(body)
   try:
     inserted = supabase_client.insert("patients", serialized_body)
   except SupabaseNotConfiguredError:
