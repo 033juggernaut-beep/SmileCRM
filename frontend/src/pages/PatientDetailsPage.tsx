@@ -33,6 +33,8 @@ import { apiClient } from '../api/client'
 import { TOKEN_STORAGE_KEY } from '../constants/storage'
 
 import { useLanguage } from '../context/LanguageContext'
+import { useTelegramBackButton } from '../hooks/useTelegramBackButton'
+import { useTelegramSafeArea } from '../hooks/useTelegramSafeArea'
 
 // New patientCard components
 import {
@@ -72,6 +74,17 @@ export const PatientDetailsPage = () => {
   const toast = useToast()
   const { colorMode } = useColorMode()
   const isDark = colorMode === 'dark'
+
+  // Telegram safe area for top padding
+  const { topInset } = useTelegramSafeArea()
+
+  // Handle back navigation
+  const handleBack = useCallback(() => {
+    navigate('/patients')
+  }, [navigate])
+
+  // Use Telegram's native BackButton when available
+  const { showFallbackButton } = useTelegramBackButton(handleBack)
 
   // Core state
   const [patient, setPatient] = useState<Patient | null>(null)
@@ -180,11 +193,6 @@ export const PatientDetailsPage = () => {
       cancelled = true
     }
   }, [id, t])
-
-  // Handle back navigation
-  const handleBack = useCallback(() => {
-    navigate('/patients')
-  }, [navigate])
 
   // Handle diagnosis save
   const handleSaveDiagnosis = useCallback(
@@ -337,10 +345,12 @@ export const PatientDetailsPage = () => {
         }}
       >
         <BackgroundPattern />
-        <Box position="relative" zIndex={10} maxW="4xl" mx="auto" px={4} py={4}>
-          <Box mb={4}>
-            <BackButton onClick={handleBack} />
-          </Box>
+        <Box position="relative" zIndex={10} maxW="4xl" mx="auto" px={4} py={4} pt={topInset > 0 ? `${topInset + 16}px` : 4}>
+          {showFallbackButton && (
+            <Box mb={4}>
+              <BackButton onClick={handleBack} />
+            </Box>
+          )}
           <VStack spacing={4} align="stretch">
             <Skeleton height="140px" borderRadius="2xl" />
             <Skeleton height="200px" borderRadius="2xl" />
@@ -369,10 +379,12 @@ export const PatientDetailsPage = () => {
         }}
       >
         <BackgroundPattern />
-        <Box position="relative" zIndex={10} maxW="4xl" mx="auto" px={4} py={4}>
-          <Box mb={4}>
-            <BackButton onClick={handleBack} />
-          </Box>
+        <Box position="relative" zIndex={10} maxW="4xl" mx="auto" px={4} py={4} pt={topInset > 0 ? `${topInset + 16}px` : 4}>
+          {showFallbackButton && (
+            <Box mb={4}>
+              <BackButton onClick={handleBack} />
+            </Box>
+          )}
           <Box
             p={6}
             borderRadius="2xl"
@@ -415,11 +427,13 @@ export const PatientDetailsPage = () => {
       {/* Main Content */}
       <Box position="relative" zIndex={10} display="flex" flexDirection="column" flex="1">
         {/* Page Content */}
-        <Box as="main" flex={1} w="full" maxW="4xl" mx="auto" px={4} py={4}>
-          {/* Back Button */}
-          <Box mb={4}>
-            <BackButton onClick={handleBack} />
-          </Box>
+        <Box as="main" flex={1} w="full" maxW="4xl" mx="auto" px={4} py={4} pt={topInset > 0 ? `${topInset + 16}px` : 4}>
+          {/* Back Button - only show if not in Telegram */}
+          {showFallbackButton && (
+            <Box mb={4}>
+              <BackButton onClick={handleBack} />
+            </Box>
+          )}
 
           {/* Content Sections - Ordered per Superdesign reference */}
           <VStack spacing={4} align="stretch" pb={8}>

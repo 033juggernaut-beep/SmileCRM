@@ -1,6 +1,6 @@
 /**
  * AddPatientHeader - page title section with back button
- * - Optional back button for navigation
+ * - Optional back button for navigation (uses Telegram native BackButton when available)
  * - Main title and optional subtitle
  * - Clean spacing
  * 
@@ -13,6 +13,8 @@
 import { Box, Heading, Text, useColorMode } from '@chakra-ui/react'
 import { BackButton } from '../patientCard/BackButton'
 import { useLanguage } from '../../context/LanguageContext'
+import { useTelegramBackButton } from '../../hooks/useTelegramBackButton'
+import { useTelegramSafeArea } from '../../hooks/useTelegramSafeArea'
 
 export interface AddPatientHeaderProps {
   title?: string
@@ -33,9 +35,18 @@ export function AddPatientHeader({
   const { t } = useLanguage()
   const isDark = colorMode === 'dark'
 
+  // Telegram integration
+  const { topInset } = useTelegramSafeArea()
+  const { showFallbackButton } = useTelegramBackButton(
+    showBackButton && onBack ? onBack : () => {}
+  )
+
   const displayTitle = title ?? t('addPatient.title')
   const displaySubtitle = subtitle ?? t('addPatient.subtitle')
   const displayBackLabel = backLabel ?? t('common.back')
+
+  // Only show UI back button if showBackButton is true AND we're not in Telegram
+  const shouldShowUIBackButton = showBackButton && showFallbackButton
 
   return (
     <Box
@@ -43,11 +54,11 @@ export function AddPatientHeader({
       maxW="2xl"
       mx="auto"
       px={4}
-      pt={4}
+      pt={topInset > 0 ? `${topInset + 16}px` : 4}
       pb={4}
     >
-      {/* Back Button */}
-      {showBackButton && (
+      {/* Back Button - only show if not in Telegram */}
+      {shouldShowUIBackButton && (
         <Box mb={3}>
           <BackButton label={displayBackLabel} onClick={onBack} />
         </Box>

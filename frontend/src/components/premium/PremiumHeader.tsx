@@ -2,6 +2,7 @@ import { Box, Flex, Heading, IconButton, Text, useColorMode } from '@chakra-ui/r
 import { useNavigate } from 'react-router-dom'
 import { Sun, Moon } from 'lucide-react'
 import { useTelegramSafeArea } from '../../hooks/useTelegramSafeArea'
+import { useTelegramBackButton } from '../../hooks/useTelegramBackButton'
 import { LanguageMenu } from '../LanguageMenu'
 
 const BASE_HEADER_HEIGHT = 56
@@ -46,6 +47,14 @@ export const PremiumHeader = ({
     }
   }
 
+  // Use Telegram's native BackButton when available
+  const { showFallbackButton } = useTelegramBackButton(
+    showBack ? handleBack : () => {}
+  )
+  
+  // Only show our UI back button if showBack is true AND we're not in Telegram
+  const shouldShowUIBackButton = showBack && showFallbackButton
+
   // Colors
   const activeColor = isDark ? '#60A5FA' : '#2563EB'
   const inactiveColor = isDark ? '#64748B' : '#94A3B8'
@@ -81,7 +90,7 @@ export const PremiumHeader = ({
       >
         {/* Left side - Back button or logo */}
         <Flex align="center" gap={2} minW="44px">
-          {showBack ? (
+          {shouldShowUIBackButton ? (
             <IconButton
               aria-label="Back"
               icon={<Text fontSize="xl">←</Text>}

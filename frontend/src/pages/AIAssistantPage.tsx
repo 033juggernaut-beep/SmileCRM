@@ -29,6 +29,8 @@ import { Footer } from '../components/dashboard/Footer'
 import { BackgroundPattern } from '../components/dashboard/BackgroundPattern'
 import { BackButton } from '../components/patientCard/BackButton'
 import { useLanguage } from '../context/LanguageContext'
+import { useTelegramBackButton } from '../hooks/useTelegramBackButton'
+import { useTelegramSafeArea } from '../hooks/useTelegramSafeArea'
 import { aiAssistantApi, type AILanguage } from '../api/aiAssistant'
 
 const MotionBox = motion.create(Box)
@@ -40,6 +42,11 @@ export const AIAssistantPage = () => {
   const toast = useToast()
   const isDark = colorMode === 'dark'
   const answerRef = useRef<HTMLDivElement>(null)
+
+  // Telegram integration
+  const { topInset } = useTelegramSafeArea()
+  const handleBack = useCallback(() => navigate('/home'), [navigate])
+  const { showFallbackButton } = useTelegramBackButton(handleBack)
 
   // State
   const [question, setQuestion] = useState('')
@@ -195,12 +202,15 @@ export const AIAssistantPage = () => {
           alignItems="center"
           px={4}
           py={{ base: 6, md: 10 }}
+          pt={topInset > 0 ? `${topInset + 24}px` : { base: 6, md: 10 }}
         >
           <Box w="full" maxW="2xl" mx="auto">
-            {/* Back Button */}
-            <Box mb={4}>
-              <BackButton onClick={() => navigate('/home')} />
-            </Box>
+            {/* Back Button - only show if not in Telegram */}
+            {showFallbackButton && (
+              <Box mb={4}>
+                <BackButton onClick={handleBack} />
+              </Box>
+            )}
 
             {/* Header Card */}
             <Box

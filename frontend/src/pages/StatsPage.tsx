@@ -9,7 +9,7 @@
  * - All styled with Chakra UI (no Tailwind)
  */
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Box, SimpleGrid, useColorMode } from '@chakra-ui/react'
 import { useNavigate } from 'react-router-dom'
 import { Users, Activity, Crown, Wallet, TrendingUp, TrendingDown, Calendar } from 'lucide-react'
@@ -20,6 +20,8 @@ import { Footer } from '../components/dashboard/Footer'
 import { BackgroundPattern } from '../components/dashboard/BackgroundPattern'
 import { BackButton } from '../components/patientCard/BackButton'
 import { useLanguage } from '../context/LanguageContext'
+import { useTelegramBackButton } from '../hooks/useTelegramBackButton'
+import { useTelegramSafeArea } from '../hooks/useTelegramSafeArea'
 
 import {
   StatCard,
@@ -38,6 +40,11 @@ export const StatsPage = () => {
   const { t } = useLanguage()
   const isDark = colorMode === 'dark'
   const [period, setPeriod] = useState<VisitPeriod>('7d')
+
+  // Telegram integration
+  const { topInset } = useTelegramSafeArea()
+  const handleBack = useCallback(() => navigate('/home'), [navigate])
+  const { showFallbackButton } = useTelegramBackButton(handleBack)
 
   // Page background
   const pageBg = isDark
@@ -105,13 +112,16 @@ export const StatsPage = () => {
           justifyContent="flex-start"
           px={4}
           py={{ base: 8, md: 12 }}
+          pt={topInset > 0 ? `${topInset + 32}px` : { base: 8, md: 12 }}
           gap={{ base: 8, md: 10 }}
         >
           <Box w="full" maxW="3xl" mx="auto" px={2}>
-            {/* Back Button */}
-            <Box mb={4}>
-              <BackButton onClick={() => navigate('/home')} />
-            </Box>
+            {/* Back Button - only show if not in Telegram */}
+            {showFallbackButton && (
+              <Box mb={4}>
+                <BackButton onClick={handleBack} />
+              </Box>
+            )}
 
             {/* Page Title Block */}
             <StatisticsHeader />
