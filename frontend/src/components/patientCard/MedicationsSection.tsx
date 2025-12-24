@@ -32,7 +32,6 @@ import { useLanguage } from '../../context/LanguageContext'
 import type { Medication } from '../../api/medications'
 
 interface MedicationsSectionProps {
-  patientId: string
   medications: Medication[]
   onMedicationAdded: (medication: Medication) => void
   onCreateMedication: (data: { name: string; dosage?: string; comment?: string }) => Promise<Medication>
@@ -40,7 +39,6 @@ interface MedicationsSectionProps {
 }
 
 export function MedicationsSection({
-  patientId,
   medications,
   onMedicationAdded,
   onCreateMedication,

@@ -450,7 +450,6 @@ export const PatientDetailsPage = () => {
 
             {/* 5. Prescribed Medications */}
             <MedicationsSection
-              patientId={id}
               medications={medications}
               onMedicationAdded={handleMedicationAdded}
               onCreateMedication={handleCreateMedication}
