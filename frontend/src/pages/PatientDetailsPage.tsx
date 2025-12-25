@@ -439,20 +439,6 @@ export const PatientDetailsPage = () => {
     [id, treatmentSteps, toast, t]
   )
 
-  // Handle AI assistant action
-  const handleAIAction = useCallback(
-    (action: { type: string; text: string }) => {
-      console.log('AI Action:', action)
-      toast({
-        title: `AI: ${action.type}`,
-        description: action.text || 'Action triggered',
-        status: 'info',
-        duration: 3000,
-      })
-    },
-    [toast]
-  )
-
   // Loading state
   if (isLoading) {
     return (
@@ -661,7 +647,13 @@ export const PatientDetailsPage = () => {
       </Box>
 
       {/* Floating AI Assistant Widget - Bottom Right */}
-      <FloatingAIAssistant onAction={handleAIAction} />
+      <FloatingAIAssistant 
+        patientId={id} 
+        onActionsApplied={() => {
+          // Refetch patient and visits data after AI actions applied
+          fetchPatient()
+        }}
+      />
 
       {/* New Visit Modal */}
       <Modal isOpen={newVisitModal.isOpen} onClose={newVisitModal.onClose} isCentered>

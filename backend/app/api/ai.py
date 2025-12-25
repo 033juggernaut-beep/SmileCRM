@@ -1,148 +1,134 @@
 """
-AI Voice Assistant API endpoints for SmileCRM.
-Provides voice-to-structured-data conversion for patient/visit/note input.
+AI Assistant API endpoints
 """
 import logging
-from typing import Annotated, Any, Literal
+from typing import Literal
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 
-from app.api.deps import AuthenticatedDoctor, get_current_doctor
-from app.config import get_settings
-from app.services.voice_ai_service import (
-    AINotConfiguredError,
-    AudioValidationError,
-    ParsingError,
-    TranscriptionError,
-    VoiceAIError,
-    process_voice_input,
-)
+from app.api.auth import get_current_doctor_id
+from app.services.ai_service import AIService, AINotConfiguredError, AIServiceError
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/ai", tags=["ai"])
-logger = logging.getLogger("smilecrm.ai")
-
-CurrentDoctor = Annotated[AuthenticatedDoctor, Depends(get_current_doctor)]
 
 
-class VoiceParseResponse(BaseModel):
-    """Response model for voice parse endpoint."""
-    mode: Literal["patient", "visit", "note"]
-    language: Literal["auto", "hy", "ru", "en"]
-    transcript: str
-    structured: dict[str, Any]
-    warnings: list[str]
-
-
-@router.post("/voice/parse", response_model=VoiceParseResponse)
-async def parse_voice_input(
-    current_doctor: CurrentDoctor,
-    mode: Literal["patient", "visit", "note"] = Form(...),
-    language: Literal["auto", "hy", "ru", "en"] = Form(default="auto"),
-    audio: UploadFile = File(...),
-    contextPatientId: str | None = Form(default=None),
-) -> VoiceParseResponse:
-    """
-    Parse voice input to structured data.
-    
-    Accepts audio recording, transcribes it using STT (Whisper),
-    then parses the transcript to structured JSON using LLM.
-    
-    **Modes:**
-    - `patient`: Extract patient info (name, phone, diagnosis, status)
-    - `visit`: Extract visit info (dates, notes, diagnosis, medications)
-    - `note`: Extract just notes/comments
-    
-    **Languages:**
-    - `auto`: Auto-detect language (supports Armenian, Russian, English, mixed)
-    - `hy`: Force Armenian
-    - `ru`: Force Russian
-    - `en`: Force English
-    
-    **Audio formats:** webm, wav, ogg, mp3, m4a (max 10MB)
-    
-    Returns:
-        VoiceParseResponse with transcript and structured data
-        
-    Raises:
-        501: AI not configured (missing OPENAI_API_KEY)
-        400: Invalid audio file or processing error
-    """
-    settings = get_settings()
-    
-    # Check if AI is configured
-    if not settings.is_ai_configured:
-        logger.warning("AI voice parse requested but AI is not configured")
-        raise HTTPException(
-            status_code=status.HTTP_501_NOT_IMPLEMENTED,
-            detail="AI is not configured. Please contact administrator."
-        )
-    
-    logger.info(
-        f"Voice parse request: doctor={current_doctor.doctor_id}, "
-        f"mode={mode}, language={language}, file={audio.filename}"
+# Request/Response models
+class AIAssistantRequest(BaseModel):
+    """Request for AI assistant"""
+    category: Literal["diagnosis", "visits", "finance", "marketing"] = Field(
+        ..., description="Category of the request"
     )
+    patient_id: str | None = Field(None, description="Patient ID if in patient context")
+    text: str = Field(..., min_length=1, description="User's text input")
+    locale: Literal["hy", "ru", "en"] = Field("ru", description="Response language")
+
+
+class AIAction(BaseModel):
+    """AI suggested action"""
+    type: str
+    patient_id: str | None = None
+    # Dynamic fields based on action type
+    diagnosis: str | None = None
+    visit_date: str | None = None
+    next_visit_date: str | None = None
+    notes: str | None = None
+    note: str | None = None  # For finance notes
+
+
+class AIDraft(BaseModel):
+    """AI draft content"""
+    marketing_message: str | None = None
+
+
+class AIAssistantResponse(BaseModel):
+    """Response from AI assistant"""
+    summary: str = Field(..., description="Brief summary of what AI understood")
+    actions: list[dict] = Field(default_factory=list, description="Suggested actions")
+    draft: dict = Field(default_factory=dict, description="Draft content")
+    warnings: list[str] = Field(default_factory=list, description="Warnings if any")
+
+
+class AIApplyRequest(BaseModel):
+    """Request to apply AI actions"""
+    actions: list[dict] = Field(..., description="Actions to apply")
+
+
+class AIApplyResult(BaseModel):
+    """Result of applying actions"""
+    applied: list[dict] = Field(default_factory=list)
+    failed: list[dict] = Field(default_factory=list)
+
+
+class AIApplyResponse(BaseModel):
+    """Response from apply endpoint"""
+    success: bool
+    results: AIApplyResult
+
+
+@router.post("/assistant", response_model=AIAssistantResponse)
+async def ai_assistant(
+    request: AIAssistantRequest,
+    doctor_id: str = Depends(get_current_doctor_id),
+):
+    """
+    Process AI assistant request
     
+    Takes user text and category, returns structured suggestions
+    """
     try:
-        # Read file data
-        file_data = await audio.read()
-        
-        # Process voice input
-        result = await process_voice_input(
-            file_data=file_data,
-            filename=audio.filename or "audio.webm",
-            content_type=audio.content_type,
-            mode=mode,
-            language=language,
-            context_patient_id=contextPatientId,
+        service = AIService(doctor_id)
+        result = await service.process_assistant_request(
+            category=request.category,
+            text=request.text,
+            patient_id=request.patient_id,
+            locale=request.locale,
         )
-        
-        logger.info(
-            f"Voice parse success: doctor={current_doctor.doctor_id}, "
-            f"transcript_len={len(result.transcript)}, warnings={len(result.warnings)}"
-        )
-        
-        return VoiceParseResponse(
-            mode=result.mode,
-            language=result.language,
-            transcript=result.transcript,
-            structured=result.structured,
-            warnings=result.warnings,
-        )
-        
-    except AudioValidationError as e:
-        logger.warning(f"Audio validation failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-    except TranscriptionError as e:
-        logger.error(f"Transcription failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Failed to transcribe audio: {str(e)}"
-        )
-    except ParsingError as e:
-        logger.error(f"Parsing failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Failed to parse transcript: {str(e)}"
-        )
+        return AIAssistantResponse(**result)
+    
     except AINotConfiguredError as e:
         logger.error(f"AI not configured: {e}")
         raise HTTPException(
-            status_code=status.HTTP_501_NOT_IMPLEMENTED,
-            detail="AI is not configured. Please contact administrator."
+            status_code=503,
+            detail="AI service is not configured. Please set OPENAI_API_KEY.",
         )
-    except VoiceAIError as e:
-        logger.error(f"Voice AI error: {e}")
+    except AIServiceError as e:
+        logger.error(f"AI service error: {e}")
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+            status_code=500,
+            detail=f"AI service error: {str(e)}",
         )
     except Exception as e:
-        logger.error(f"Unexpected error in voice parse: {e}")
+        logger.exception(f"Unexpected error in AI assistant: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred. Please try again."
+            status_code=500,
+            detail="Internal server error",
+        )
+
+
+@router.post("/apply", response_model=AIApplyResponse)
+async def apply_ai_actions(
+    request: AIApplyRequest,
+    doctor_id: str = Depends(get_current_doctor_id),
+):
+    """
+    Apply AI-suggested actions to the database
+    
+    Executes actions like updating diagnosis, creating visits, etc.
+    """
+    try:
+        service = AIService(doctor_id)
+        results = await service.apply_actions(request.actions)
+        
+        return AIApplyResponse(
+            success=len(results["failed"]) == 0,
+            results=AIApplyResult(**results),
+        )
+    
+    except Exception as e:
+        logger.exception(f"Failed to apply AI actions: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to apply actions: {str(e)}",
         )

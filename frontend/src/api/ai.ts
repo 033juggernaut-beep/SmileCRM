@@ -1,133 +1,104 @@
 /**
- * AI Voice Assistant API module.
- * Handles voice recording upload and parsing.
+ * AI Assistant API client
  */
-
 import { apiClient } from './client'
-import { getAuthToken } from './auth'
+import { buildAuthHeaders, TOKEN_STORAGE_KEY } from './patients'
 
 // Types
-export type VoiceMode = 'patient' | 'visit' | 'note'
-export type VoiceLanguage = 'auto' | 'hy' | 'ru' | 'en'
+export type AICategory = 'diagnosis' | 'visits' | 'finance' | 'marketing'
+export type AILocale = 'hy' | 'ru' | 'en'
 
-export type PatientStructured = {
-  patient: {
-    first_name: string | null
-    last_name: string | null
-    phone: string | null
-    diagnosis: string | null
-    status: 'in_progress' | 'completed' | null
-  }
+export interface AIAction {
+  type: string
+  patient_id?: string | null
+  diagnosis?: string
+  visit_date?: string
+  next_visit_date?: string | null
+  notes?: string
+  note?: string
 }
 
-export type MedicationItem = {
-  name: string
-  dose: string | null
-  frequency: string | null
-  duration: string | null
+export interface AIDraft {
+  marketing_message?: string | null
 }
 
-export type VisitStructured = {
-  visit: {
-    visit_date: string | null
-    next_visit_date: string | null
-    notes: string | null
-    diagnosis: string | null
-  }
-  medications: MedicationItem[]
+export interface AIAssistantRequest {
+  category: AICategory
+  patient_id?: string | null
+  text: string
+  locale?: AILocale
 }
 
-export type NoteStructured = {
-  note: {
-    notes: string | null
-  }
-}
-
-export type VoiceParseStructured = PatientStructured | VisitStructured | NoteStructured
-
-export type VoiceParseResponse = {
-  mode: VoiceMode
-  language: VoiceLanguage
-  transcript: string
-  structured: VoiceParseStructured
+export interface AIAssistantResponse {
+  summary: string
+  actions: AIAction[]
+  draft: AIDraft
   warnings: string[]
 }
 
-export type ParseVoiceParams = {
-  mode: VoiceMode
-  language?: VoiceLanguage
-  contextPatientId?: string
-  audioBlob: Blob
+export interface AIApplyRequest {
+  actions: AIAction[]
+}
+
+export interface AIApplyResult {
+  applied: Array<{
+    type: string
+    patient_id?: string
+    [key: string]: unknown
+  }>
+  failed: Array<{
+    action: string
+    error: string
+  }>
+}
+
+export interface AIApplyResponse {
+  success: boolean
+  results: AIApplyResult
 }
 
 /**
- * Type guard to check if structured is PatientStructured
- */
-export const isPatientStructured = (
-  structured: VoiceParseStructured
-): structured is PatientStructured => {
-  return 'patient' in structured
-}
-
-/**
- * Type guard to check if structured is VisitStructured
- */
-export const isVisitStructured = (
-  structured: VoiceParseStructured
-): structured is VisitStructured => {
-  return 'visit' in structured
-}
-
-/**
- * Type guard to check if structured is NoteStructured
- */
-export const isNoteStructured = (
-  structured: VoiceParseStructured
-): structured is NoteStructured => {
-  return 'note' in structured
-}
-
-/**
- * Parse voice recording to structured data.
- * 
- * @param params - Parse parameters
- * @returns Parsed voice response with transcript and structured data
- */
-export const parseVoice = async (params: ParseVoiceParams): Promise<VoiceParseResponse> => {
-  const authToken = getAuthToken()
-  
-  const formData = new FormData()
-  formData.append('mode', params.mode)
-  formData.append('language', params.language || 'auto')
-  
-  if (params.contextPatientId) {
-    formData.append('contextPatientId', params.contextPatientId)
-  }
-  
-  // Append audio file with proper filename
-  const filename = `recording.webm`
-  formData.append('audio', params.audioBlob, filename)
-  
-  const { data } = await apiClient.post<VoiceParseResponse>(
-    '/ai/voice/parse',
-    formData,
-    {
-      headers: {
-        Authorization: `Bearer ${authToken}`,
-        // IMPORTANT: Set Content-Type to undefined to let axios set multipart/form-data
-        // with correct boundary. The default 'application/json' from apiClient breaks FormData.
-        'Content-Type': undefined,
-      },
-      timeout: 60000, // 60 seconds for voice processing
-    }
-  )
-  
-  return data
-}
-
-/**
- * AI API module
+ * AI API client
  */
 export const aiApi = {
-  parseVoice,
+  /**
+   * Send request to AI assistant
+   */
+  async assistant(request: AIAssistantRequest): Promise<AIAssistantResponse> {
+    const token = localStorage.getItem(TOKEN_STORAGE_KEY)
+    if (!token) {
+      throw new Error('Authentication required')
+    }
+
+    const response = await apiClient.post<AIAssistantResponse>(
+      '/ai/assistant',
+      {
+        category: request.category,
+        patient_id: request.patient_id || null,
+        text: request.text,
+        locale: request.locale || 'ru',
+      },
+      { headers: buildAuthHeaders() }
+    )
+
+    return response.data
+  },
+
+  /**
+   * Apply AI-suggested actions
+   */
+  async apply(actions: AIAction[]): Promise<AIApplyResponse> {
+    const token = localStorage.getItem(TOKEN_STORAGE_KEY)
+    if (!token) {
+      throw new Error('Authentication required')
+    }
+
+    const response = await apiClient.post<AIApplyResponse>(
+      '/ai/apply',
+      { actions },
+      { headers: buildAuthHeaders() }
+    )
+
+    return response.data
+  },
 }
