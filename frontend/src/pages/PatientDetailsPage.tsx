@@ -614,10 +614,20 @@ export const PatientDetailsPage = () => {
             />
 
             {/* 9. Finance - Last section */}
-            {financeData && (
+            {financeData && id && (
               <FinanceSection
                 finance={financeData}
+                patientId={id}
                 onUpdateFinance={handleUpdateFinance}
+                onDataChange={async () => {
+                  // Refetch finance summary and payments after payment changes
+                  const [newSummary, newPayments] = await Promise.all([
+                    patientFinanceApi.getFinanceSummary(id),
+                    patientFinanceApi.listPayments(id),
+                  ])
+                  setFinanceSummary(newSummary)
+                  setPayments(newPayments)
+                }}
                 defaultOpen={false}
               />
             )}

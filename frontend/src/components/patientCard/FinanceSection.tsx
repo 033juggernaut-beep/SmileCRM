@@ -32,6 +32,7 @@ import {
 import { Wallet, Calendar, CheckCircle2, Pencil, Trash2, Plus, Check } from 'lucide-react'
 import { CollapsibleSection } from './CollapsibleSection'
 import { useLanguage } from '../../context/LanguageContext'
+import { patientFinanceApi } from '../../api/patientFinance'
 
 interface Payment {
   id: string
@@ -48,8 +49,10 @@ interface PatientFinance {
 
 interface FinanceSectionProps {
   finance: PatientFinance
+  patientId: string
   defaultOpen?: boolean
   onUpdateFinance?: (finance: PatientFinance) => void | Promise<void>
+  onDataChange?: () => void | Promise<void>
 }
 
 // Format number with thousand separators (e.g., 1,200,000 AMD)
@@ -60,8 +63,10 @@ const formatAmount = (amount: number, showCurrency = false, currency = 'AMD') =>
 
 export function FinanceSection({
   finance: initialFinance,
+  patientId,
   defaultOpen = false,
   onUpdateFinance,
+  onDataChange,
 }: FinanceSectionProps) {
   const { t } = useLanguage()
   const { colorMode } = useColorMode()
@@ -107,23 +112,47 @@ export function FinanceSection({
   }
 
   const handleAddPayment = async () => {
-    const payment: Payment = {
-      id: `payment-${Date.now()}`,
-      date: newPayment.date || new Date().toLocaleDateString('ru-RU'),
-      amount: parseFloat(newPayment.amount) || 0,
-      description: newPayment.description || undefined,
+    const amount = parseFloat(newPayment.amount)
+    if (!amount || amount <= 0) {
+      toast({ title: t('patientDetails.invalidAmount'), status: 'error', duration: 3000 })
+      return
     }
-    const updated = { ...finance, payments: [payment, ...finance.payments] }
-    setFinance(updated)
-    
+
     setIsSaving(true)
     try {
-      await onUpdateFinance?.(updated)
+      // Call the API to create the payment
+      const createdPayment = await patientFinanceApi.createPayment(patientId, {
+        amount,
+        comment: newPayment.description || undefined,
+      })
+
+      // Add the new payment to local state
+      const newPaymentLocal: Payment = {
+        id: createdPayment.id,
+        date: createdPayment.paidAt ? new Date(createdPayment.paidAt).toLocaleDateString('ru-RU', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        }) : new Date().toLocaleDateString('ru-RU'),
+        amount: createdPayment.amount,
+        description: createdPayment.comment ?? undefined,
+      }
+      
+      setFinance((prev) => ({
+        ...prev,
+        payments: [newPaymentLocal, ...prev.payments],
+      }))
+
       toast({ title: t('patientCard.finance.paymentAdded'), status: 'success', duration: 2000 })
       setNewPayment({ date: '', amount: '', description: '' })
       addPaymentModal.onClose()
+
+      // Notify parent to refetch data (updates finance summary)
+      await onDataChange?.()
     } catch (err) {
-      toast({ title: t('common.error'), status: 'error', duration: 3000 })
+      console.error('Failed to create payment:', err)
+      const errorMessage = err instanceof Error ? err.message : t('common.error')
+      toast({ title: t('common.error'), description: errorMessage, status: 'error', duration: 3000 })
     } finally {
       setIsSaving(false)
     }
@@ -131,20 +160,30 @@ export function FinanceSection({
 
   const handleUpdatePayment = async () => {
     if (!editingPayment) return
-    const updated = {
-      ...finance,
-      payments: finance.payments.map((p) =>
-        p.id === editingPayment.id ? editingPayment : p
-      ),
-    }
-    setFinance(updated)
     
     setIsSaving(true)
     try {
-      await onUpdateFinance?.(updated)
+      // Call API to update the payment
+      await patientFinanceApi.updatePayment(patientId, editingPayment.id, {
+        amount: editingPayment.amount,
+        comment: editingPayment.description,
+      })
+
+      // Update local state
+      setFinance((prev) => ({
+        ...prev,
+        payments: prev.payments.map((p) =>
+          p.id === editingPayment.id ? editingPayment : p
+        ),
+      }))
+
       toast({ title: t('common.saved'), status: 'success', duration: 2000 })
       editPaymentModal.onClose()
+
+      // Notify parent to refetch data
+      await onDataChange?.()
     } catch (err) {
+      console.error('Failed to update payment:', err)
       toast({ title: t('common.error'), status: 'error', duration: 3000 })
     } finally {
       setIsSaving(false)
@@ -153,16 +192,23 @@ export function FinanceSection({
 
   const handleDeletePayment = async () => {
     if (!deletingPaymentId) return
-    const updated = {
-      ...finance,
-      payments: finance.payments.filter((p) => p.id !== deletingPaymentId),
-    }
-    setFinance(updated)
     
     try {
-      await onUpdateFinance?.(updated)
+      // Call API to delete the payment
+      await patientFinanceApi.deletePayment(patientId, deletingPaymentId)
+
+      // Update local state
+      setFinance((prev) => ({
+        ...prev,
+        payments: prev.payments.filter((p) => p.id !== deletingPaymentId),
+      }))
+
       toast({ title: t('patientCard.finance.paymentDeleted'), status: 'success', duration: 2000 })
+
+      // Notify parent to refetch data
+      await onDataChange?.()
     } catch (err) {
+      console.error('Failed to delete payment:', err)
       toast({ title: t('common.error'), status: 'error', duration: 3000 })
     }
     deleteConfirmModal.onClose()
