@@ -1,6 +1,6 @@
 /**
- * VisitsPage - Full page view for managing visits
- * Matches CRM style with blue accent colors
+ * VisitsPage - Visits management page
+ * Matches PatientsListPage design pattern exactly
  */
 
 import { useState, useCallback, useEffect } from 'react'
@@ -29,22 +29,47 @@ import {
   Skeleton,
 } from '@chakra-ui/react'
 import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import {
   ChevronLeft,
   ChevronRight,
   Calendar,
-  Clock,
   Phone,
-  User,
   CheckCircle,
   XCircle,
   RefreshCw,
   Play,
   FileText,
 } from 'lucide-react'
-import { PremiumLayout } from '../components/layout/PremiumLayout'
+import { Header, BackgroundPattern, Footer } from '../components/dashboard'
+import { BackButton } from '../components/patientCard/BackButton'
+import { useTelegramBackButton } from '../hooks/useTelegramBackButton'
+import { useTelegramSafeArea } from '../hooks/useTelegramSafeArea'
 import { useLanguage } from '../context/LanguageContext'
 import { visitsApi, type Visit, type VisitStatus } from '../api/visits'
+
+const MotionBox = motion.create(Box)
+
+// Animation variants (matching PatientsList)
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05,
+      delayChildren: 0.1,
+    },
+  },
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.25, ease: 'easeOut' as const },
+  },
+}
 
 // Format date for display
 const formatDate = (dateStr: string, language: string): string => {
@@ -54,7 +79,6 @@ const formatDate = (dateStr: string, language: string): string => {
     day: 'numeric',
     month: 'long',
   }
-  
   const locale = language === 'ru' ? 'ru-RU' : language === 'am' ? 'hy-AM' : 'en-US'
   return date.toLocaleDateString(locale, options)
 }
@@ -70,27 +94,27 @@ const isToday = (dateStr: string): boolean => {
   return dateStr === today
 }
 
-// Get status styles - using CRM blue/neutral palette
+// Get status styles - CRM blue/neutral palette
 const getStatusStyles = (status: VisitStatus, isDark: boolean) => {
   const styles: Record<VisitStatus, { bg: string; color: string }> = {
     scheduled: {
-      bg: isDark ? 'rgba(59, 130, 246, 0.15)' : '#DBEAFE',
+      bg: isDark ? 'rgba(59, 130, 246, 0.2)' : '#DBEAFE',
       color: isDark ? '#60A5FA' : '#2563EB',
     },
     in_progress: {
-      bg: isDark ? 'rgba(245, 158, 11, 0.15)' : '#FEF3C7',
+      bg: isDark ? 'rgba(245, 158, 11, 0.2)' : '#FEF3C7',
       color: isDark ? '#FBBF24' : '#D97706',
     },
     completed: {
-      bg: isDark ? 'rgba(100, 116, 139, 0.15)' : '#F1F5F9',
+      bg: isDark ? '#334155' : '#F1F5F9',
       color: isDark ? '#94A3B8' : '#64748B',
     },
     no_show: {
-      bg: isDark ? 'rgba(239, 68, 68, 0.15)' : '#FEE2E2',
+      bg: isDark ? 'rgba(239, 68, 68, 0.2)' : '#FEE2E2',
       color: isDark ? '#F87171' : '#DC2626',
     },
     rescheduled: {
-      bg: isDark ? 'rgba(100, 116, 139, 0.15)' : '#F1F5F9',
+      bg: isDark ? '#334155' : '#F1F5F9',
       color: isDark ? '#94A3B8' : '#64748B',
     },
   }
@@ -116,54 +140,62 @@ export function VisitsPage() {
   const toast = useToast()
   const isDark = colorMode === 'dark'
   
+  // Telegram integration
+  const { topInset } = useTelegramSafeArea()
+  const { showFallbackButton } = useTelegramBackButton(() => navigate('/home'))
+  
   // State
   const [currentDate, setCurrentDate] = useState<Date>(new Date())
   const [visits, setVisits] = useState<Visit[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [selectedVisit, setSelectedVisit] = useState<Visit | null>(null)
   
-  // Reschedule modal
+  // Modals
   const rescheduleModal = useDisclosure()
   const [rescheduleDate, setRescheduleDate] = useState('')
   const [rescheduleTime, setRescheduleTime] = useState('')
   const [rescheduleNote, setRescheduleNote] = useState('')
   const [isRescheduling, setIsRescheduling] = useState(false)
   
-  // No-show modal
   const noShowModal = useDisclosure()
   const [noShowNote, setNoShowNote] = useState('')
   const [isMarkingNoShow, setIsMarkingNoShow] = useState(false)
   
-  // Formatted date string
+  // Computed
   const dateStr = formatDateApi(currentDate)
   const displayDate = formatDate(dateStr, language)
   const isTodayView = isToday(dateStr)
   
-  // CRM Colors
-  const cardBg = isDark ? 'rgba(30, 41, 59, 0.7)' : 'white'
-  const borderColor = isDark ? 'rgba(51, 65, 85, 0.5)' : '#DBEAFE'
-  const textColor = isDark ? '#E2E8F0' : '#334155'
+  // Colors (matching PatientsListPage & PatientRowCard)
+  const pageBg = isDark
+    ? '#0F172A'
+    : 'linear-gradient(to bottom right, #F8FAFC, rgba(239, 246, 255, 0.3), rgba(240, 249, 255, 0.5))'
+  
+  const titleColor = isDark ? 'white' : '#1E293B'
+  const subtitleColor = isDark ? '#94A3B8' : '#64748B'
   const mutedColor = isDark ? '#64748B' : '#94A3B8'
   const accentColor = isDark ? '#60A5FA' : '#2563EB'
   
-  // Fetch visits for current date
+  const cardBg = isDark ? 'rgba(30, 41, 59, 0.6)' : 'white'
+  const borderColor = isDark ? 'rgba(51, 65, 85, 0.5)' : '#EFF6FF'
+  const borderHover = isDark ? 'rgba(59, 130, 246, 0.5)' : '#93C5FD'
+  const shadow = isDark ? 'none' : '0 1px 2px rgba(0, 0, 0, 0.05)'
+  
+  // Fetch visits
   const fetchVisits = useCallback(async () => {
     setIsLoading(true)
+    setError(null)
     try {
       const response = await visitsApi.getVisitsByDate(dateStr)
       setVisits(response.visits)
     } catch (err) {
       console.error('Failed to fetch visits:', err)
-      toast({
-        title: t('common.error'),
-        description: t('visits.fetchError') || 'Failed to load visits',
-        status: 'error',
-        duration: 3000,
-      })
+      setError(t('visits.fetchError') || 'Failed to load visits')
     } finally {
       setIsLoading(false)
     }
-  }, [dateStr, toast, t])
+  }, [dateStr, t])
   
   useEffect(() => {
     fetchVisits()
@@ -186,30 +218,15 @@ export function VisitsPage() {
     setCurrentDate(new Date())
   }
   
-  // Status update handlers
+  // Status handlers
   const updateStatus = async (visit: Visit, status: VisitStatus, note?: string, rescheduledTo?: string, rescheduledTime?: string) => {
     try {
-      await visitsApi.updateStatus(visit.id, {
-        status,
-        note,
-        rescheduledTo,
-        rescheduledTime,
-      })
-      
-      toast({
-        title: t('visits.statusUpdated') || 'Status updated',
-        status: 'success',
-        duration: 2000,
-      })
-      
+      await visitsApi.updateStatus(visit.id, { status, note, rescheduledTo, rescheduledTime })
+      toast({ title: t('visits.statusUpdated') || 'Status updated', status: 'success', duration: 2000 })
       fetchVisits()
     } catch (err) {
       console.error('Failed to update status:', err)
-      toast({
-        title: t('common.error'),
-        status: 'error',
-        duration: 3000,
-      })
+      toast({ title: t('common.error'), status: 'error', duration: 3000 })
     }
   }
   
@@ -252,170 +269,271 @@ export function VisitsPage() {
     }
   }
   
+  const handleRetry = () => {
+    fetchVisits()
+  }
+  
+  const footerLinks = [
+    { label: t('home.subscription'), onClick: () => navigate('/subscription') },
+    { label: t('home.help'), onClick: () => navigate('/help') },
+    { label: t('home.privacy'), onClick: () => navigate('/privacy') },
+  ]
+  
   return (
-    <PremiumLayout
-      title={t('visits.pageTitle') || 'Visits'}
-      showBack
-      onBack={() => navigate('/home')}
-      background="gradient"
-      safeAreaBottom
+    <Box
+      minH="100dvh"
+      w="100%"
+      bg={pageBg}
+      display="flex"
+      flexDirection="column"
+      overflowY="auto"
+      overflowX="hidden"
+      position="relative"
+      transition="background 0.3s"
+      sx={{
+        '@supports not (min-height: 100dvh)': {
+          minH: 'var(--app-height, 100vh)',
+        },
+      }}
     >
-      <VStack spacing={4} align="stretch" pb={4} maxW="768px" mx="auto" w="100%">
-        {/* Date Navigation - Compact toolbar style */}
-        <HStack
-          justify="space-between"
-          align="center"
-          bg={cardBg}
-          px={3}
-          py={2}
-          borderRadius="lg"
-          border="1px solid"
-          borderColor={borderColor}
-        >
-          <IconButton
-            aria-label="Previous day"
-            icon={<ChevronLeft size={18} />}
-            variant="ghost"
-            size="sm"
-            onClick={goToPreviousDay}
-            color={mutedColor}
-          />
-          
-          <VStack spacing={0}>
-            <Text fontSize="sm" fontWeight="semibold" color={textColor}>
-              {displayDate}
-            </Text>
-            {!isTodayView && (
-              <Button
-                size="xs"
-                variant="link"
-                color={accentColor}
-                onClick={goToToday}
-                fontWeight="normal"
-                h="auto"
-                py={0}
-              >
-                {t('visits.goToToday') || 'Go to today'}
-              </Button>
-            )}
-          </VStack>
-          
-          <IconButton
-            aria-label="Next day"
-            icon={<ChevronRight size={18} />}
-            variant="ghost"
-            size="sm"
-            onClick={goToNextDay}
-            color={mutedColor}
-          />
-        </HStack>
-        
-        {/* Visits Count */}
-        <Text fontSize="xs" color={mutedColor} textAlign="center">
-          {isLoading ? (
-            <Skeleton height="14px" width="80px" mx="auto" />
-          ) : (
-            `${visits.length} ${t('visits.visitsCount') || 'visits'}`
+      {/* Background Pattern */}
+      <BackgroundPattern />
+
+      {/* Main Content */}
+      <Box position="relative" zIndex={10} display="flex" flexDir="column" flex="1">
+        {/* Header - Same as Dashboard/Patients */}
+        <Header notificationCount={3} />
+
+        {/* Page Header (matching PatientsHeader) */}
+        <Box w="100%" maxW="896px" mx="auto" px="16px" pt={topInset > 0 ? `${topInset + 16}px` : '16px'} pb="16px">
+          {showFallbackButton && (
+            <Box mb="12px">
+              <BackButton onClick={() => navigate('/home')} />
+            </Box>
           )}
-        </Text>
-        
-        {/* Visits List */}
-        {isLoading ? (
-          <VStack spacing={3}>
-            <Skeleton height="80px" borderRadius="lg" w="100%" />
-            <Skeleton height="80px" borderRadius="lg" w="100%" />
-            <Skeleton height="80px" borderRadius="lg" w="100%" />
-          </VStack>
-        ) : visits.length === 0 ? (
+          <Text as="h1" fontSize="2xl" fontWeight="semibold" letterSpacing="tight" color={titleColor}>
+            {t('visits.pageTitle') || 'Visits'}
+          </Text>
+          <Text fontSize="sm" color={subtitleColor} mt="4px">
+            {t('visits.subtitle') || 'Manage your appointments'}
+          </Text>
+        </Box>
+
+        {/* Date Navigation Toolbar */}
+        <Box w="100%" maxW="896px" mx="auto" px="16px" pb="16px">
           <Flex
-            direction="column"
             align="center"
-            justify="center"
-            py={10}
+            justify="space-between"
             bg={cardBg}
-            borderRadius="lg"
             border="1px solid"
             borderColor={borderColor}
+            borderRadius="xl"
+            boxShadow={shadow}
+            px="12px"
+            py="10px"
           >
-            <Calendar size={32} color={mutedColor} style={{ marginBottom: 8 }} />
-            <Text fontSize="sm" color={mutedColor}>
-              {t('visits.noVisitsOnDate') || 'No visits on this date'}
-            </Text>
+            <IconButton
+              aria-label="Previous day"
+              icon={<ChevronLeft size={18} />}
+              variant="ghost"
+              size="sm"
+              onClick={goToPreviousDay}
+              color={mutedColor}
+              _hover={{ color: accentColor }}
+            />
+            
+            <VStack spacing={0}>
+              <Text fontSize="sm" fontWeight="medium" color={titleColor}>
+                {displayDate}
+              </Text>
+              {!isTodayView && (
+                <Text
+                  as="button"
+                  fontSize="xs"
+                  color={accentColor}
+                  onClick={goToToday}
+                  _hover={{ textDecoration: 'underline' }}
+                >
+                  {t('visits.goToToday') || 'Go to today'}
+                </Text>
+              )}
+            </VStack>
+            
+            <IconButton
+              aria-label="Next day"
+              icon={<ChevronRight size={18} />}
+              variant="ghost"
+              size="sm"
+              onClick={goToNextDay}
+              color={mutedColor}
+              _hover={{ color: accentColor }}
+            />
           </Flex>
-        ) : (
-          <VStack spacing={2}>
-            {visits.map((visit) => (
-              <VisitCard
-                key={visit.id}
-                visit={visit}
-                isDark={isDark}
-                isTodayView={isTodayView}
-                t={t}
-                cardBg={cardBg}
+        </Box>
+
+        {/* Main Content Area */}
+        <Box as="main" flex="1" pb="96px">
+          {/* Loading State */}
+          {isLoading && (
+            <Box w="100%" maxW="896px" mx="auto" px="16px">
+              <VStack spacing="8px" align="stretch">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} height="80px" borderRadius="xl" />
+                ))}
+              </VStack>
+            </Box>
+          )}
+
+          {/* Error State (matching PatientsListPage) */}
+          {error && !isLoading && (
+            <Box w="100%" maxW="896px" mx="auto" px="16px" py="64px" textAlign="center">
+              <Text fontSize="4xl" mb="16px">⚠️</Text>
+              <Text fontWeight="semibold" fontSize="lg" color={isDark ? '#F87171' : '#DC2626'} mb="8px">
+                {t('visits.loadError') || 'Failed to load visits'}
+              </Text>
+              <Text fontSize="sm" color={mutedColor} mb="24px">
+                {error}
+              </Text>
+              <Box
+                as="button"
+                onClick={handleRetry}
+                px="20px"
+                py="10px"
+                bg="#3B82F6"
+                color="white"
+                fontSize="sm"
+                fontWeight="medium"
+                borderRadius="xl"
+                _hover={{ bg: '#2563EB' }}
+                sx={{ WebkitTapHighlightColor: 'transparent' }}
+              >
+                {t('common.tryAgain') || 'Try again'}
+              </Box>
+            </Box>
+          )}
+
+          {/* Empty State (matching CRM style) */}
+          {!isLoading && !error && visits.length === 0 && (
+            <Box w="100%" maxW="896px" mx="auto" px="16px">
+              <Box
+                bg={cardBg}
+                border="1px solid"
                 borderColor={borderColor}
-                textColor={textColor}
-                mutedColor={mutedColor}
-                accentColor={accentColor}
-                onMarkInProgress={() => handleMarkInProgress(visit)}
-                onMarkCompleted={() => handleMarkCompleted(visit)}
-                onMarkNoShow={() => handleOpenNoShowModal(visit)}
-                onReschedule={() => handleOpenRescheduleModal(visit)}
-                onOpenPatient={() => navigate(`/patients/${visit.patientId}`)}
-              />
-            ))}
-          </VStack>
-        )}
-      </VStack>
+                borderRadius="xl"
+                boxShadow={shadow}
+                py="48px"
+                textAlign="center"
+              >
+                <Calendar size={32} color={mutedColor} style={{ margin: '0 auto 12px' }} />
+                <Text fontSize="sm" color={mutedColor}>
+                  {t('visits.noVisitsOnDate') || 'No visits on this date'}
+                </Text>
+              </Box>
+            </Box>
+          )}
+
+          {/* Visits List (matching PatientsList) */}
+          {!isLoading && !error && visits.length > 0 && (
+            <MotionBox
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              w="100%"
+              maxW="896px"
+              mx="auto"
+              px="16px"
+            >
+              {/* Count */}
+              <Text fontSize="xs" color={mutedColor} mb="12px">
+                {visits.length} {t('visits.visitsCount') || 'visits'}
+              </Text>
+              
+              <VStack spacing="8px" align="stretch">
+                {visits.map((visit) => (
+                  <MotionBox key={visit.id} variants={itemVariants}>
+                    <VisitRowCard
+                      visit={visit}
+                      isDark={isDark}
+                      isTodayView={isTodayView}
+                      t={t}
+                      cardBg={cardBg}
+                      borderColor={borderColor}
+                      borderHover={borderHover}
+                      shadow={shadow}
+                      titleColor={titleColor}
+                      mutedColor={mutedColor}
+                      accentColor={accentColor}
+                      onMarkInProgress={() => handleMarkInProgress(visit)}
+                      onMarkCompleted={() => handleMarkCompleted(visit)}
+                      onMarkNoShow={() => handleOpenNoShowModal(visit)}
+                      onReschedule={() => handleOpenRescheduleModal(visit)}
+                      onOpenPatient={() => navigate(`/patients/${visit.patientId}`)}
+                    />
+                  </MotionBox>
+                ))}
+              </VStack>
+            </MotionBox>
+          )}
+        </Box>
+
+        {/* Footer */}
+        <Footer links={footerLinks} />
+      </Box>
       
       {/* Reschedule Modal */}
       <Modal isOpen={rescheduleModal.isOpen} onClose={rescheduleModal.onClose} isCentered>
         <ModalOverlay bg="blackAlpha.600" />
-        <ModalContent mx={4} bg={isDark ? 'gray.800' : 'white'} borderRadius="xl">
-          <ModalHeader fontSize="md">{t('visits.reschedule') || 'Reschedule Visit'}</ModalHeader>
-          <ModalCloseButton />
+        <ModalContent mx={4} bg={isDark ? '#1E293B' : 'white'} borderRadius="xl">
+          <ModalHeader fontSize="md" color={titleColor}>{t('visits.reschedule') || 'Reschedule Visit'}</ModalHeader>
+          <ModalCloseButton color={mutedColor} />
           <ModalBody>
             <VStack spacing={4}>
               <FormControl isRequired>
-                <FormLabel fontSize="sm">{t('visits.newDate') || 'New Date'}</FormLabel>
+                <FormLabel fontSize="sm" color={titleColor}>{t('visits.newDate') || 'New Date'}</FormLabel>
                 <Input
                   type="date"
                   size="sm"
                   value={rescheduleDate}
                   onChange={(e) => setRescheduleDate(e.target.value)}
                   min={new Date().toISOString().split('T')[0]}
+                  borderColor={borderColor}
                 />
               </FormControl>
               <FormControl>
-                <FormLabel fontSize="sm">{t('visits.newTime') || 'New Time'}</FormLabel>
+                <FormLabel fontSize="sm" color={titleColor}>{t('visits.newTime') || 'New Time'}</FormLabel>
                 <Input
                   type="time"
                   size="sm"
                   value={rescheduleTime}
                   onChange={(e) => setRescheduleTime(e.target.value)}
+                  borderColor={borderColor}
                 />
               </FormControl>
               <FormControl>
-                <FormLabel fontSize="sm">{t('visits.note') || 'Note'}</FormLabel>
+                <FormLabel fontSize="sm" color={titleColor}>{t('visits.note') || 'Note'}</FormLabel>
                 <Textarea
                   size="sm"
                   value={rescheduleNote}
                   onChange={(e) => setRescheduleNote(e.target.value)}
                   placeholder={t('visits.rescheduleNotePlaceholder') || 'Reason for rescheduling...'}
                   rows={2}
+                  borderColor={borderColor}
                 />
               </FormControl>
             </VStack>
           </ModalBody>
           <ModalFooter gap={2}>
-            <Button variant="ghost" size="sm" onClick={rescheduleModal.onClose}>
+            <Button variant="ghost" size="sm" onClick={rescheduleModal.onClose} color={mutedColor}>
               {t('common.cancel') || 'Cancel'}
             </Button>
             <Button
-              colorScheme="blue"
+              bg={accentColor}
+              color="white"
               size="sm"
               onClick={handleConfirmReschedule}
               isLoading={isRescheduling}
               isDisabled={!rescheduleDate}
+              _hover={{ bg: '#2563EB' }}
             >
               {t('visits.confirmReschedule') || 'Reschedule'}
             </Button>
@@ -426,49 +544,54 @@ export function VisitsPage() {
       {/* No-Show Modal */}
       <Modal isOpen={noShowModal.isOpen} onClose={noShowModal.onClose} isCentered>
         <ModalOverlay bg="blackAlpha.600" />
-        <ModalContent mx={4} bg={isDark ? 'gray.800' : 'white'} borderRadius="xl">
-          <ModalHeader fontSize="md">{t('visits.markNoShow') || 'Mark as No-Show'}</ModalHeader>
-          <ModalCloseButton />
+        <ModalContent mx={4} bg={isDark ? '#1E293B' : 'white'} borderRadius="xl">
+          <ModalHeader fontSize="md" color={titleColor}>{t('visits.markNoShow') || 'Mark as No-Show'}</ModalHeader>
+          <ModalCloseButton color={mutedColor} />
           <ModalBody>
             <FormControl>
-              <FormLabel fontSize="sm">{t('visits.note') || 'Note'}</FormLabel>
+              <FormLabel fontSize="sm" color={titleColor}>{t('visits.note') || 'Note'}</FormLabel>
               <Textarea
                 size="sm"
                 value={noShowNote}
                 onChange={(e) => setNoShowNote(e.target.value)}
                 placeholder={t('visits.noShowNotePlaceholder') || 'Reason (optional)...'}
                 rows={2}
+                borderColor={borderColor}
               />
             </FormControl>
           </ModalBody>
           <ModalFooter gap={2}>
-            <Button variant="ghost" size="sm" onClick={noShowModal.onClose}>
+            <Button variant="ghost" size="sm" onClick={noShowModal.onClose} color={mutedColor}>
               {t('common.cancel') || 'Cancel'}
             </Button>
             <Button
-              colorScheme="red"
+              bg="#DC2626"
+              color="white"
               size="sm"
               onClick={handleConfirmNoShow}
               isLoading={isMarkingNoShow}
+              _hover={{ bg: '#B91C1C' }}
             >
               {t('visits.confirmNoShow') || 'Confirm No-Show'}
             </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
-    </PremiumLayout>
+    </Box>
   )
 }
 
-// Visit Card Component
-interface VisitCardProps {
+// Visit Row Card (matching PatientRowCard style exactly)
+interface VisitRowCardProps {
   visit: Visit
   isDark: boolean
   isTodayView: boolean
   t: (key: string) => string
   cardBg: string
   borderColor: string
-  textColor: string
+  borderHover: string
+  shadow: string
+  titleColor: string
   mutedColor: string
   accentColor: string
   onMarkInProgress: () => void
@@ -478,14 +601,16 @@ interface VisitCardProps {
   onOpenPatient: () => void
 }
 
-function VisitCard({
+function VisitRowCard({
   visit,
   isDark,
   isTodayView,
   t,
   cardBg,
   borderColor,
-  textColor,
+  borderHover,
+  shadow,
+  titleColor,
   mutedColor,
   accentColor,
   onMarkInProgress,
@@ -493,8 +618,9 @@ function VisitCard({
   onMarkNoShow,
   onReschedule,
   onOpenPatient,
-}: VisitCardProps) {
+}: VisitRowCardProps) {
   const statusStyles = getStatusStyles(visit.status, isDark)
+  const shadowHover = isDark ? 'none' : '0 4px 6px -1px rgba(239, 246, 255, 1)'
   
   const patientName = visit.patient
     ? `${visit.patient.firstName} ${visit.patient.lastName}`.trim()
@@ -510,133 +636,170 @@ function VisitCard({
   const canMarkComplete = isTodayView && (visit.status === 'scheduled' || visit.status === 'in_progress')
   
   return (
-    <Box
+    <MotionBox
+      whileHover={{ scale: 1.005 }}
+      transition={{ duration: 0.15 }}
       bg={cardBg}
       border="1px solid"
       borderColor={borderColor}
-      borderRadius="lg"
-      p={3}
+      borderRadius="xl"
+      boxShadow={shadow}
+      p="16px"
       w="100%"
       opacity={isInactive ? 0.6 : 1}
+      _hover={{
+        borderColor: borderHover,
+        boxShadow: shadowHover,
+        bg: isDark ? 'rgba(30, 41, 59, 0.8)' : 'white',
+      }}
+      sx={{
+        transition: 'border-color 0.15s, box-shadow 0.15s, background 0.15s',
+      }}
     >
-      {/* Header: Time + Status */}
-      <Flex justify="space-between" align="center" mb={2}>
-        <HStack spacing={2}>
-          <Clock size={14} color={mutedColor} />
-          <Text fontSize="md" fontWeight="bold" color={textColor}>
-            {timeDisplay}
-          </Text>
-        </HStack>
-        <Text
-          fontSize="xs"
-          fontWeight="medium"
-          px={2}
-          py={0.5}
+      <Flex align="center" gap="16px">
+        {/* Time Avatar */}
+        <Flex
+          align="center"
+          justify="center"
+          w="40px"
+          h="40px"
           borderRadius="full"
-          bg={statusStyles.bg}
-          color={statusStyles.color}
+          bg={isDark ? 'rgba(59, 130, 246, 0.2)' : '#DBEAFE'}
+          color={accentColor}
+          fontSize="xs"
+          fontWeight="bold"
+          flexShrink={0}
         >
-          {getStatusLabel(visit.status, t)}
-        </Text>
-      </Flex>
-      
-      {/* Patient Info */}
-      <VStack align="stretch" spacing={1} mb={2}>
-        <HStack spacing={2} onClick={onOpenPatient} cursor="pointer" _hover={{ color: accentColor }}>
-          <User size={12} color={mutedColor} />
-          <Text
-            fontSize="sm"
-            fontWeight="medium"
-            color={textColor}
-            textDecoration={isCompleted ? 'line-through' : 'none'}
-          >
-            {patientName}
-          </Text>
-        </HStack>
-        
-        {visit.patient?.phone && (
-          <HStack spacing={2}>
-            <Phone size={12} color={mutedColor} />
-            <Text fontSize="xs" color={mutedColor}>
-              {visit.patient.phone}
+          {timeDisplay}
+        </Flex>
+
+        {/* Visit Info */}
+        <Box flex="1" minW={0}>
+          <Flex align="center" gap="8px" flexWrap="wrap">
+            {/* Patient Name */}
+            <Text
+              as="button"
+              fontWeight="medium"
+              color={titleColor}
+              onClick={onOpenPatient}
+              textDecoration={isCompleted ? 'line-through' : 'none'}
+              _hover={{ color: accentColor }}
+              maxW="200px"
+              isTruncated
+            >
+              {patientName}
             </Text>
+
+            {/* Status Badge */}
+            <Box
+              px="8px"
+              py="2px"
+              fontSize="xs"
+              fontWeight="medium"
+              borderRadius="full"
+              bg={statusStyles.bg}
+              color={statusStyles.color}
+            >
+              {getStatusLabel(visit.status, t)}
+            </Box>
+          </Flex>
+
+          {/* Secondary Info */}
+          <HStack spacing="12px" mt="4px">
+            {visit.patient?.phone && (
+              <HStack spacing="4px" fontSize="xs" color={mutedColor}>
+                <Phone size={12} />
+                <Text display={{ base: 'none', sm: 'block' }}>{visit.patient.phone}</Text>
+              </HStack>
+            )}
+            {visit.notes && (
+              <HStack spacing="4px" fontSize="xs" color={mutedColor}>
+                <FileText size={12} />
+                <Text noOfLines={1} maxW="150px">{visit.notes}</Text>
+              </HStack>
+            )}
+            {isRescheduled && visit.rescheduledTo && (
+              <HStack spacing="4px" fontSize="xs" color={mutedColor}>
+                <Calendar size={12} />
+                <Text>→ {visit.rescheduledTo}</Text>
+              </HStack>
+            )}
           </HStack>
-        )}
-        
-        {visit.notes && (
-          <HStack spacing={2} align="flex-start">
-            <FileText size={12} color={mutedColor} style={{ marginTop: 2 }} />
-            <Text fontSize="xs" color={mutedColor} noOfLines={1}>
-              {visit.notes}
-            </Text>
-          </HStack>
-        )}
-        
-        {isRescheduled && visit.rescheduledTo && (
-          <HStack spacing={2}>
-            <Calendar size={12} color={mutedColor} />
-            <Text fontSize="xs" color={mutedColor}>
-              → {visit.rescheduledTo} {visit.rescheduledTime ? visit.rescheduledTime.slice(0, 5) : ''}
-            </Text>
-          </HStack>
-        )}
-      </VStack>
-      
-      {/* Action Buttons - compact */}
-      {!isInactive && (
-        <Flex gap={1.5} flexWrap="wrap">
-          {canChangeStatus && (
-            <Button
+        </Box>
+
+        {/* Desktop Actions */}
+        {!isInactive && (
+          <HStack spacing="4px" display={{ base: 'none', md: 'flex' }}>
+            {canChangeStatus && (
+              <IconButton
+                aria-label="Start"
+                icon={<Play size={14} />}
+                size="xs"
+                variant="ghost"
+                color={mutedColor}
+                onClick={onMarkInProgress}
+                _hover={{ color: '#D97706', bg: isDark ? 'whiteAlpha.100' : 'blackAlpha.50' }}
+              />
+            )}
+            {canMarkComplete && (
+              <IconButton
+                aria-label="Complete"
+                icon={<CheckCircle size={14} />}
+                size="xs"
+                variant="ghost"
+                color={mutedColor}
+                onClick={onMarkCompleted}
+                _hover={{ color: accentColor, bg: isDark ? 'whiteAlpha.100' : 'blackAlpha.50' }}
+              />
+            )}
+            {isTodayView && (
+              <IconButton
+                aria-label="No Show"
+                icon={<XCircle size={14} />}
+                size="xs"
+                variant="ghost"
+                color={mutedColor}
+                onClick={onMarkNoShow}
+                _hover={{ color: '#DC2626', bg: isDark ? 'whiteAlpha.100' : 'blackAlpha.50' }}
+              />
+            )}
+            <IconButton
+              aria-label="Reschedule"
+              icon={<RefreshCw size={14} />}
               size="xs"
               variant="ghost"
-              leftIcon={<Play size={12} />}
-              onClick={onMarkInProgress}
               color={mutedColor}
+              onClick={onReschedule}
               _hover={{ color: accentColor, bg: isDark ? 'whiteAlpha.100' : 'blackAlpha.50' }}
-            >
+            />
+          </HStack>
+        )}
+      </Flex>
+
+      {/* Mobile Actions */}
+      {!isInactive && (
+        <Flex gap="6px" mt="12px" display={{ base: 'flex', md: 'none' }} flexWrap="wrap">
+          {canChangeStatus && (
+            <Button size="xs" variant="ghost" leftIcon={<Play size={12} />} onClick={onMarkInProgress} color={mutedColor}>
               {t('visits.actions.start') || 'Start'}
             </Button>
           )}
-          
           {canMarkComplete && (
-            <Button
-              size="xs"
-              variant="ghost"
-              leftIcon={<CheckCircle size={12} />}
-              onClick={onMarkCompleted}
-              color={mutedColor}
-              _hover={{ color: accentColor, bg: isDark ? 'whiteAlpha.100' : 'blackAlpha.50' }}
-            >
+            <Button size="xs" variant="ghost" leftIcon={<CheckCircle size={12} />} onClick={onMarkCompleted} color={mutedColor}>
               {t('visits.actions.complete') || 'Done'}
             </Button>
           )}
-          
           {isTodayView && (
-            <Button
-              size="xs"
-              variant="ghost"
-              leftIcon={<XCircle size={12} />}
-              onClick={onMarkNoShow}
-              color={mutedColor}
-              _hover={{ color: '#DC2626', bg: isDark ? 'whiteAlpha.100' : 'blackAlpha.50' }}
-            >
+            <Button size="xs" variant="ghost" leftIcon={<XCircle size={12} />} onClick={onMarkNoShow} color={mutedColor}>
               {t('visits.actions.noShow') || 'No Show'}
             </Button>
           )}
-          
-          <Button
-            size="xs"
-            variant="ghost"
-            leftIcon={<RefreshCw size={12} />}
-            onClick={onReschedule}
-            color={mutedColor}
-            _hover={{ color: accentColor, bg: isDark ? 'whiteAlpha.100' : 'blackAlpha.50' }}
-          >
+          <Button size="xs" variant="ghost" leftIcon={<RefreshCw size={12} />} onClick={onReschedule} color={mutedColor}>
             {t('visits.actions.reschedule') || 'Reschedule'}
           </Button>
         </Flex>
       )}
-    </Box>
+    </MotionBox>
   )
 }
 

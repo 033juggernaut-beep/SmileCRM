@@ -585,6 +585,8 @@ const en = {
   visits: {
     title: 'Visits',
     pageTitle: 'Visits',
+    subtitle: 'Manage your appointments',
+    loadError: 'Failed to load visits',
     today: 'Today',
     noVisitsToday: 'No visits today',
     noVisitsOnDate: 'No visits on this date',

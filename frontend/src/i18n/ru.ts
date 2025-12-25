@@ -585,6 +585,8 @@ const ru = {
   visits: {
     title: 'Визиты',
     pageTitle: 'Визиты',
+    subtitle: 'Управление записями на приём',
+    loadError: 'Ошибка загрузки визитов',
     today: 'Сегодня',
     noVisitsToday: 'Сегодня визитов нет',
     noVisitsOnDate: 'Нет визитов на эту дату',

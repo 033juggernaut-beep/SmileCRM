@@ -586,6 +586,8 @@ const am = {
   visits: {
     title: 'Vizitner',
     pageTitle: 'Vizitner',
+    subtitle: 'Karavarec dzer ayjereky',
+    loadError: 'Chi hajoxvel vizitner bernelutyun',
     today: 'Aysor',
     noVisitsToday: 'Aysor vizitner chkan',
     noVisitsOnDate: 'Ays amsvini vizitner chkan',
