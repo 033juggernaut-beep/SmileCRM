@@ -20,3 +20,5 @@ export type { DashboardCardProps, StatItem } from './DashboardCard';
 
 export { DashboardGrid } from './DashboardGrid';
 export type { DashboardGridProps } from './DashboardGrid';
+
+export { VisitsCard } from './VisitsCard';

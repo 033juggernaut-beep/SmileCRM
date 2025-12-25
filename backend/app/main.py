@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -13,6 +14,9 @@ from app.config import get_settings
 
 settings = get_settings()
 
+# Background scheduler for daily tasks
+_scheduler_task: asyncio.Task | None = None
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -21,12 +25,59 @@ logging.basicConfig(
 logger = logging.getLogger("smilecrm")
 
 
+async def run_daily_reminders_scheduler():
+    """
+    Background task that runs daily reminder processing.
+    Runs at 10:00 AM local time every day.
+    """
+    from app.services.visit_reminders_service import process_tomorrow_reminders
+    from datetime import datetime, timedelta
+    
+    logger.info("Daily reminders scheduler started")
+    
+    while True:
+        try:
+            # Calculate time until next 10:00 AM
+            now = datetime.now()
+            target_hour = 10
+            
+            if now.hour < target_hour:
+                # Today at 10:00
+                next_run = now.replace(hour=target_hour, minute=0, second=0, microsecond=0)
+            else:
+                # Tomorrow at 10:00
+                next_run = (now + timedelta(days=1)).replace(hour=target_hour, minute=0, second=0, microsecond=0)
+            
+            wait_seconds = (next_run - now).total_seconds()
+            logger.info("Next reminder run at %s (in %.0f seconds)", next_run.isoformat(), wait_seconds)
+            
+            await asyncio.sleep(wait_seconds)
+            
+            # Run reminders
+            logger.info("Running daily visit reminders...")
+            try:
+                stats = await process_tomorrow_reminders()
+                logger.info("Reminder stats: %s", stats)
+            except Exception as e:
+                logger.error("Error processing reminders: %s", e)
+            
+        except asyncio.CancelledError:
+            logger.info("Daily reminders scheduler cancelled")
+            break
+        except Exception as e:
+            logger.error("Scheduler error: %s", e)
+            # Wait 1 hour before retrying on error
+            await asyncio.sleep(3600)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """
     Lifespan context manager for application startup/shutdown events.
     Replaces deprecated @app.on_event("startup") pattern.
     """
+    global _scheduler_task
+    
     # Startup
     logger.info("SmileCRM Backend starting up...")
     
@@ -41,10 +92,22 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     else:
         logger.info("Telegram webhook not configured (missing WEBHOOK_URL or bot token)")
     
+    # Start daily reminders scheduler
+    _scheduler_task = asyncio.create_task(run_daily_reminders_scheduler())
+    logger.info("Daily reminders scheduler initialized")
+    
     yield  # Application runs here
     
     # Shutdown
     logger.info("SmileCRM Backend shutting down...")
+    
+    # Cancel scheduler
+    if _scheduler_task:
+        _scheduler_task.cancel()
+        try:
+            await _scheduler_task
+        except asyncio.CancelledError:
+            pass
 
 
 app = FastAPI(title="SmileCRM Backend", lifespan=lifespan)

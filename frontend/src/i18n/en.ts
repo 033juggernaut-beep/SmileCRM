@@ -581,6 +581,43 @@ const en = {
     pdfComingSoon: 'PDF export coming soon',
   },
 
+  // Visits
+  visits: {
+    title: 'Visits',
+    pageTitle: 'Visits',
+    today: 'Today',
+    noVisitsToday: 'No visits today',
+    noVisitsOnDate: 'No visits on this date',
+    more: 'more',
+    tapToOpen: 'Tap to open all visits',
+    visitsCount: 'visits',
+    goToToday: 'Go to today',
+    fetchError: 'Failed to load visits',
+    statusUpdated: 'Status updated',
+    reschedule: 'Reschedule Visit',
+    newDate: 'New Date',
+    newTime: 'New Time',
+    note: 'Note',
+    rescheduleNotePlaceholder: 'Reason for rescheduling...',
+    confirmReschedule: 'Reschedule',
+    markNoShow: 'Mark as No-Show',
+    noShowNotePlaceholder: 'Reason (optional)...',
+    confirmNoShow: 'Confirm No-Show',
+    status: {
+      scheduled: 'Scheduled',
+      inProgress: 'In Progress',
+      completed: 'Completed',
+      noShow: 'No Show',
+      rescheduled: 'Rescheduled',
+    },
+    actions: {
+      start: 'Start',
+      complete: 'Complete',
+      noShow: 'No Show',
+      reschedule: 'Reschedule',
+    },
+  },
+
   // AI Assistant
   ai: {
     title: 'AI Assistant',

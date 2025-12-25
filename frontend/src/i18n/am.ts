@@ -582,6 +582,43 @@ const am = {
     pdfComingSoon: 'PDF eksporte mot klini',
   },
 
+  // Visits
+  visits: {
+    title: 'Vizitner',
+    pageTitle: 'Vizitner',
+    today: 'Aysor',
+    noVisitsToday: 'Aysor vizitner chkan',
+    noVisitsOnDate: 'Ays amsvini vizitner chkan',
+    more: 'evs',
+    tapToOpen: 'Saexek bolor vizitnerey tesnelutyun hamar',
+    visitsCount: 'vizitner',
+    goToToday: 'Ancnel aysor',
+    fetchError: 'Chi hajoxvel vizitner bernelutyun',
+    statusUpdated: 'Karqavicake nornogvece',
+    reschedule: 'Phophokel vizite',
+    newDate: 'Nor amvsak',
+    newTime: 'Nor jam',
+    note: 'Caganishumn',
+    rescheduleNotePlaceholder: 'Phophoxman patchare...',
+    confirmReschedule: 'Phophokec',
+    markNoShow: 'Nshel vorpes chnekoghnutyun',
+    noShowNotePlaceholder: 'Patcharr (oc partadir)...',
+    confirmNoShow: 'Hasatatel chnekoghnutyan',
+    status: {
+      scheduled: 'Planavouvac',
+      inProgress: 'Entacqum',
+      completed: 'Avartved',
+      noShow: 'Chnekoghnutyun',
+      rescheduled: 'Phophokved',
+    },
+    actions: {
+      start: 'Sksak',
+      complete: 'Avartak',
+      noShow: 'Chnekoghnutyun',
+      reschedule: 'Phophokec',
+    },
+  },
+
   // AI Assistant
   ai: {
     title: 'AI Ognakanr',

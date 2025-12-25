@@ -581,6 +581,43 @@ const ru = {
     pdfComingSoon: 'Экспорт PDF скоро будет доступен',
   },
 
+  // Visits
+  visits: {
+    title: 'Визиты',
+    pageTitle: 'Визиты',
+    today: 'Сегодня',
+    noVisitsToday: 'Сегодня визитов нет',
+    noVisitsOnDate: 'Нет визитов на эту дату',
+    more: 'ещё',
+    tapToOpen: 'Нажмите, чтобы открыть все визиты',
+    visitsCount: 'визитов',
+    goToToday: 'Перейти к сегодня',
+    fetchError: 'Не удалось загрузить визиты',
+    statusUpdated: 'Статус обновлён',
+    reschedule: 'Перенести визит',
+    newDate: 'Новая дата',
+    newTime: 'Новое время',
+    note: 'Примечание',
+    rescheduleNotePlaceholder: 'Причина переноса...',
+    confirmReschedule: 'Перенести',
+    markNoShow: 'Отметить как неявку',
+    noShowNotePlaceholder: 'Причина (необязательно)...',
+    confirmNoShow: 'Подтвердить неявку',
+    status: {
+      scheduled: 'Запланирован',
+      inProgress: 'В процессе',
+      completed: 'Завершён',
+      noShow: 'Неявка',
+      rescheduled: 'Перенесён',
+    },
+    actions: {
+      start: 'Начать',
+      complete: 'Завершить',
+      noShow: 'Неявка',
+      reschedule: 'Перенести',
+    },
+  },
+
   // AI Assistant
   ai: {
     title: 'AI Ассистент',

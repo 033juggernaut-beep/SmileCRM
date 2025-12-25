@@ -18,6 +18,7 @@ import {
   DashboardCard,
   Footer,
   BackgroundPattern,
+  VisitsCard,
 } from '../components/dashboard';
 import { useLanguage } from '../context/LanguageContext';
 import { useTelegramSafeArea } from '../hooks/useTelegramSafeArea';
@@ -96,8 +97,11 @@ export const HomePage = () => {
             motivationQuote={motivationQuote || undefined}
           />
 
-          {/* Dashboard Cards Grid - 2x2 layout */}
+          {/* Dashboard Cards - Visits first, then 2x2 grid */}
           <DashboardGrid animated>
+            {/* Visits Card - First and prominent */}
+            <VisitsCard onClick={() => navigate('/visits')} />
+            
             <DashboardCard
               icon={<Users />}
               title={t('home.patients')}

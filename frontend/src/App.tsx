@@ -18,6 +18,7 @@ const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage').then(m 
 const MarketingPage = lazy(() => import('./pages/MarketingPage').then(m => ({ default: m.MarketingPage })))
 const StatsPage = lazy(() => import('./pages/StatsPage').then(m => ({ default: m.StatsPage })))
 const AIAssistantPage = lazy(() => import('./pages/AIAssistantPage').then(m => ({ default: m.AIAssistantPage })))
+const VisitsPage = lazy(() => import('./pages/VisitsPage').then(m => ({ default: m.VisitsPage })))
 
 // Loading fallback for lazy routes (minimal, fast-loading skeleton)
 const PageLoader = () => (
@@ -57,6 +58,7 @@ const router = createBrowserRouter([
       { path: '/privacy', element: withSuspense(PrivacyPolicyPage) },
       { path: '/stats', element: withSuspense(StatsPage) },
       { path: '/ai-assistant', element: withSuspense(AIAssistantPage) },
+      { path: '/visits', element: withSuspense(VisitsPage) },
     ],
   },
 ])

@@ -63,6 +63,7 @@ class TelegramAuthResponse(BaseModel):
 
 class VisitBase(BaseModel):
   visit_date: date
+  visit_time: str | None = Field(default=None, description="Time of visit in HH:MM format")
   next_visit_date: date | None = None
   notes: str | None = None
   medications: str | None = None
@@ -76,14 +77,56 @@ class VisitResponse(VisitBase):
   id: str
   doctor_id: str | None = None
   patient_id: str
+  status: str = Field(default="scheduled", description="Visit status")
+  status_changed_at: datetime | None = None
+  status_note: str | None = None
+  rescheduled_to: date | None = None
+  rescheduled_time: str | None = None
+  reminder_status: str | None = None
+  reminder_sent_at: datetime | None = None
+  reminder_channel: str | None = None
   created_at: datetime | None = None
+
+
+class VisitWithPatientResponse(VisitResponse):
+  """Visit response with embedded patient data"""
+  patient: "PatientSummary | None" = None
+
+
+class PatientSummary(BaseModel):
+  """Minimal patient info for embedding in visit responses"""
+  id: str
+  first_name: str
+  last_name: str
+  phone: str | None = None
+  telegram_user_id: int | None = None
+  telegram_username: str | None = None
+  whatsapp_phone: str | None = None
 
 
 class VisitUpdateRequest(BaseModel):
   visit_date: date | None = None
+  visit_time: str | None = None
   next_visit_date: date | None = None
   notes: str | None = None
   medications: str | None = None
+
+
+class VisitStatusUpdateRequest(BaseModel):
+  """Request to update visit status"""
+  status: Literal["scheduled", "in_progress", "completed", "no_show", "rescheduled"] = Field(
+    ..., description="New status for the visit"
+  )
+  note: str | None = Field(default=None, description="Optional note about status change")
+  rescheduled_to: date | None = Field(default=None, description="Required if status is 'rescheduled'")
+  rescheduled_time: str | None = Field(default=None, description="Optional time for rescheduled visit (HH:MM)")
+
+
+class TodayVisitsResponse(BaseModel):
+  """Response for today's visits endpoint"""
+  date: date
+  count: int
+  visits: list[VisitWithPatientResponse]
 
 
 class SubscriptionStatusResponse(BaseModel):
