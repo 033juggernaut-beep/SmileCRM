@@ -8,8 +8,8 @@ from typing import Any
 from openai import OpenAI
 
 from app.config import get_settings
-from app.services.patients_service import PatientsService
-from app.services.visits_service import VisitsService
+from app.services import patients_service
+from app.services import visits_service
 
 logger = logging.getLogger(__name__)
 
@@ -61,8 +61,6 @@ class AIService:
     def __init__(self, doctor_id: str):
         self.doctor_id = doctor_id
         self.settings = get_settings()
-        self.patients_service = PatientsService(doctor_id)
-        self.visits_service = VisitsService(doctor_id)
 
     def _get_openai_client(self) -> OpenAI:
         """Get OpenAI client"""
@@ -70,15 +68,12 @@ class AIService:
             raise AINotConfiguredError("OPENAI_API_KEY is not configured")
         return OpenAI(api_key=self.settings.OPENAI_API_KEY)
 
-    async def get_patient_context(self, patient_id: str) -> dict[str, Any] | None:
+    def get_patient_context(self, patient_id: str) -> dict[str, Any] | None:
         """Get patient context for AI"""
         try:
-            patient = await self.patients_service.get_patient(patient_id)
+            patient = patients_service.get_patient(patient_id)
             if not patient:
                 return None
-            
-            # Get recent visits
-            visits = await self.visits_service.list_visits(patient_id, limit=3)
             
             return {
                 "id": patient.get("id"),
@@ -86,19 +81,12 @@ class AIService:
                 "phone": patient.get("phone"),
                 "diagnosis": patient.get("diagnosis"),
                 "birth_date": patient.get("birth_date"),
-                "recent_visits": [
-                    {
-                        "date": v.get("visit_date"),
-                        "notes": v.get("notes"),
-                    }
-                    for v in (visits or [])
-                ],
             }
         except Exception as e:
             logger.warning(f"Failed to get patient context: {e}")
             return None
 
-    async def process_assistant_request(
+    def process_assistant_request(
         self,
         category: str,
         text: str,
@@ -120,7 +108,7 @@ class AIService:
         ]
 
         if patient_id:
-            patient_context = await self.get_patient_context(patient_id)
+            patient_context = self.get_patient_context(patient_id)
             if patient_context:
                 context_parts.append(f"Контекст пациента: {json.dumps(patient_context, ensure_ascii=False)}")
             context_parts.append(f"patient_id для actions: {patient_id}")
@@ -160,13 +148,13 @@ class AIService:
             logger.error(f"AI request failed: {e}")
             raise AIServiceError(str(e))
 
-    async def apply_actions(self, actions: list[dict[str, Any]]) -> dict[str, Any]:
+    def apply_actions(self, actions: list[dict[str, Any]]) -> dict[str, Any]:
         """
         Apply AI-suggested actions to the database
         
         Returns summary of applied actions
         """
-        results = {
+        results: dict[str, list] = {
             "applied": [],
             "failed": [],
         }
@@ -185,8 +173,9 @@ class AIService:
                         continue
 
                     diagnosis = action.get("diagnosis", "")
-                    await self.patients_service.update_patient(
+                    patients_service.update_patient(
                         patient_id,
+                        self.doctor_id,
                         {"diagnosis": diagnosis}
                     )
                     results["applied"].append({
@@ -211,7 +200,7 @@ class AIService:
                     # Remove None values
                     visit_data = {k: v for k, v in visit_data.items() if v is not None}
                     
-                    created = await self.visits_service.create_visit(patient_id, visit_data)
+                    created = visits_service.create_visit(self.doctor_id, patient_id, visit_data)
                     results["applied"].append({
                         "type": action_type,
                         "patient_id": patient_id,
@@ -241,4 +230,3 @@ class AIService:
                 })
 
         return results
-

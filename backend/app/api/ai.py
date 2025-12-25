@@ -2,16 +2,18 @@
 AI Assistant API endpoints
 """
 import logging
-from typing import Literal
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from app.api.auth import get_current_doctor_id
+from app.api.deps import AuthenticatedDoctor, get_current_doctor
 from app.services.ai_service import AIService, AINotConfiguredError, AIServiceError
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/ai", tags=["ai"])
+
+CurrentDoctor = Annotated[AuthenticatedDoctor, Depends(get_current_doctor)]
 
 
 # Request/Response models
@@ -70,7 +72,7 @@ class AIApplyResponse(BaseModel):
 @router.post("/assistant", response_model=AIAssistantResponse)
 async def ai_assistant(
     request: AIAssistantRequest,
-    doctor_id: str = Depends(get_current_doctor_id),
+    current_doctor: CurrentDoctor,
 ):
     """
     Process AI assistant request
@@ -78,8 +80,8 @@ async def ai_assistant(
     Takes user text and category, returns structured suggestions
     """
     try:
-        service = AIService(doctor_id)
-        result = await service.process_assistant_request(
+        service = AIService(current_doctor.doctor_id)
+        result = service.process_assistant_request(
             category=request.category,
             text=request.text,
             patient_id=request.patient_id,
@@ -110,7 +112,7 @@ async def ai_assistant(
 @router.post("/apply", response_model=AIApplyResponse)
 async def apply_ai_actions(
     request: AIApplyRequest,
-    doctor_id: str = Depends(get_current_doctor_id),
+    current_doctor: CurrentDoctor,
 ):
     """
     Apply AI-suggested actions to the database
@@ -118,8 +120,8 @@ async def apply_ai_actions(
     Executes actions like updating diagnosis, creating visits, etc.
     """
     try:
-        service = AIService(doctor_id)
-        results = await service.apply_actions(request.actions)
+        service = AIService(current_doctor.doctor_id)
+        results = service.apply_actions(request.actions)
         
         return AIApplyResponse(
             success=len(results["failed"]) == 0,
