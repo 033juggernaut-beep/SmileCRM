@@ -25,6 +25,13 @@ const WhatsAppIcon = () => (
   </svg>
 )
 
+// Viber icon component
+const ViberIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M11.4 0C9.473.028 5.333.344 3.02 2.467 1.302 4.187.623 6.747.564 9.94c-.06 3.193-.134 9.179 5.61 10.853h.003l-.004 2.482s-.038.984.632 1.183c.801.245 1.248-.496 2.01-1.327.415-.453.986-1.123 1.416-1.638 3.905.327 6.905-.419 7.244-.528.784-.253 5.216-.816 5.936-6.652.744-6.01-.358-9.807-2.354-11.503l-.002-.001c-.6-.55-2.998-2.288-8.535-2.32 0 0-.398-.027-1.121-.019zm.129 1.795c.628-.007.963.019.963.019 4.572.025 6.68 1.389 7.18 1.845 1.6 1.363 2.544 4.63 1.91 9.662-.594 4.77-4.149 5.128-4.822 5.345-.278.09-2.896.732-6.164.548 0 0-2.443 2.937-3.211 3.704-.12.122-.263.168-.357.143-.132-.035-.168-.191-.166-.422l.022-4.013c-4.738-1.378-4.665-6.286-4.617-8.904.049-2.62.602-4.722 1.996-6.1 1.908-1.724 5.39-1.957 7.266-1.827zm.557 2.537c-.123 0-.224.1-.221.224.003.124.1.221.224.221 1.03.003 1.977.416 2.663 1.086.687.672 1.115 1.612 1.118 2.64 0 .122.1.22.223.22h.003c.123 0 .222-.101.222-.224-.004-1.153-.483-2.2-1.247-2.954-.766-.755-1.82-1.212-2.983-1.214h-.002zm-3.395.553c-.27-.012-.545.088-.752.318l-.003.001c-.243.274-.477.576-.68.848-.204.272-.38.52-.503.678-.032.04-.077.101-.13.173-.114.151-.26.35-.343.51-.113.22-.115.455-.06.724.102.527.454 1.233 1.133 2.104.879 1.129 1.962 2.138 3.197 2.969.676.454 1.257.774 1.824 1.038.567.264 1.117.471 1.723.522.244.019.475-.058.69-.17.16-.083.36-.228.51-.343.072-.052.133-.097.173-.129.158-.123.406-.299.678-.503.272-.203.574-.437.848-.68l.001-.003c.462-.414.458-1.004.048-1.515-.498-.622-.934-1.058-1.464-1.536-.558-.505-1.107-.457-1.538-.025l-.545.545c-.17.17-.44.205-.44.205l-.003.002c-.113.025-.334.065-.527.004-.6-.19-1.5-.63-2.349-1.483-.85-.852-1.293-1.753-1.483-2.351-.06-.194-.02-.415.004-.528v-.003s.035-.27.205-.44l.546-.545c.432-.43.48-.98-.025-1.538-.478-.53-.914-.966-1.537-1.465-.185-.149-.389-.215-.596-.233zm3.875.416c-.123-.003-.225.093-.229.217-.003.124.093.227.217.23.6.016 1.14.264 1.545.656.405.393.663.935.678 1.536.003.124.104.221.227.218.124-.003.221-.104.218-.228-.019-.724-.33-1.373-.818-1.847-.487-.473-1.144-.767-1.838-.782zm-.114 1.31c-.123-.006-.228.088-.234.21-.007.124.088.228.21.234.323.019.602.158.81.368.207.21.343.492.362.813.01.123.115.216.238.206.123-.01.216-.115.206-.238-.025-.44-.213-.83-.5-1.12-.286-.29-.673-.445-1.092-.473z"/>
+  </svg>
+)
+
 type MessageType = 'birthday' | 'reminder' | 'discount' | 'recommendation'
 
 interface MessageConfig {
@@ -45,10 +52,11 @@ interface MarketingSectionProps {
   dateOfBirth?: string
   telegramUsername?: string | null
   whatsappPhone?: string | null
+  viberPhone?: string | null
   phone?: string | null
   defaultOpen?: boolean
   patientId?: string
-  onContactUpdate?: (field: 'telegramUsername' | 'whatsappPhone', value: string) => Promise<void>
+  onContactUpdate?: (field: 'telegramUsername' | 'whatsappPhone' | 'viberPhone', value: string) => Promise<void>
 }
 
 const messageTypes: MessageConfig[] = [
@@ -62,6 +70,7 @@ export function MarketingSection({
   patientName,
   telegramUsername,
   whatsappPhone,
+  viberPhone,
   phone,
   defaultOpen = false,
   patientId: _patientId,
@@ -82,8 +91,10 @@ export function MarketingSection({
   // Contact editing state
   const [editingTelegram, setEditingTelegram] = useState(false)
   const [editingWhatsApp, setEditingWhatsApp] = useState(false)
+  const [editingViber, setEditingViber] = useState(false)
   const [tempTelegram, setTempTelegram] = useState(telegramUsername || '')
   const [tempWhatsApp, setTempWhatsApp] = useState(whatsappPhone || '')
+  const [tempViber, setTempViber] = useState(viberPhone || '')
   const [savingContact, setSavingContact] = useState(false)
 
   // Save telegram username
@@ -133,6 +144,30 @@ export function MarketingSection({
       setSavingContact(false)
     }
   }, [onContactUpdate, tempWhatsApp, toast, t])
+
+  // Save viber phone
+  const handleSaveViber = useCallback(async () => {
+    if (!onContactUpdate) return
+    setSavingContact(true)
+    try {
+      await onContactUpdate('viberPhone', tempViber)
+      setEditingViber(false)
+      toast({
+        title: t('common.saved'),
+        status: 'success',
+        duration: 2000,
+      })
+    } catch (err) {
+      console.error('Failed to save viber:', err)
+      toast({
+        title: t('common.error'),
+        status: 'error',
+        duration: 2000,
+      })
+    } finally {
+      setSavingContact(false)
+    }
+  }, [onContactUpdate, tempViber, toast, t])
 
   // Copy to clipboard helper
   const copyToClipboard = useCallback(async (text: string) => {
@@ -449,6 +484,67 @@ export function MarketingSection({
                       color={isDark ? 'green.400' : 'green.600'}
                     >
                       {whatsappPhone ? t('common.edit') : t('common.add') || 'Добавить'}
+                    </Button>
+                  )}
+                </Flex>
+              )}
+            </Flex>
+
+            {/* Viber */}
+            <Flex align="center" gap={2}>
+              <Flex
+                w={6}
+                h={6}
+                borderRadius="md"
+                align="center"
+                justify="center"
+                bg={isDark ? 'rgba(124, 58, 237, 0.2)' : 'purple.50'}
+                color={isDark ? 'purple.400' : 'purple.500'}
+                flexShrink={0}
+              >
+                <ViberIcon />
+              </Flex>
+              {editingViber ? (
+                <HStack flex={1} spacing={2}>
+                  <input
+                    type="text"
+                    value={tempViber}
+                    onChange={(e) => setTempViber(e.target.value)}
+                    placeholder="+374..."
+                    style={{
+                      flex: 1,
+                      padding: '4px 8px',
+                      fontSize: '14px',
+                      borderRadius: '6px',
+                      border: `1px solid ${isDark ? '#475569' : '#e2e8f0'}`,
+                      background: isDark ? '#1e293b' : '#fff',
+                      color: isDark ? '#fff' : '#1e293b',
+                    }}
+                  />
+                  <Button size="xs" colorScheme="purple" onClick={handleSaveViber} isLoading={savingContact}>
+                    {t('common.save')}
+                  </Button>
+                  <Button size="xs" variant="ghost" onClick={() => setEditingViber(false)}>
+                    ✕
+                  </Button>
+                </HStack>
+              ) : (
+                <Flex flex={1} align="center" justify="space-between">
+                  <Text fontSize="sm" color={viberPhone ? (isDark ? 'white' : 'gray.700') : (isDark ? 'gray.500' : 'gray.400')}>
+                    {viberPhone || phone || t('patientCard.marketing.notSet') || 'Не указан'}
+                  </Text>
+                  {onContactUpdate && (
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      leftIcon={<Pencil size={12} />}
+                      onClick={() => {
+                        setTempViber(viberPhone || phone || '')
+                        setEditingViber(true)
+                      }}
+                      color={isDark ? 'purple.400' : 'purple.600'}
+                    >
+                      {viberPhone ? t('common.edit') : t('common.add') || 'Добавить'}
                     </Button>
                   )}
                 </Flex>

@@ -609,6 +609,7 @@ export const PatientDetailsPage = () => {
               dateOfBirth={patient.birthDate ?? undefined}
               telegramUsername={patient.telegramUsername}
               whatsappPhone={patient.whatsappPhone}
+              viberPhone={patient.viberPhone}
               phone={patient.phone}
               defaultOpen={false}
               patientId={id}
@@ -616,9 +617,12 @@ export const PatientDetailsPage = () => {
                 const authToken = localStorage.getItem(TOKEN_STORAGE_KEY)
                 if (!authToken) throw new Error(t('patientDetails.authRequired'))
                 
-                const payload = field === 'telegramUsername' 
-                  ? { telegram_username: value }
-                  : { whatsapp_phone: value }
+                const payloadMap: Record<string, string> = {
+                  telegramUsername: 'telegram_username',
+                  whatsappPhone: 'whatsapp_phone',
+                  viberPhone: 'viber_phone',
+                }
+                const payload = { [payloadMap[field]]: value }
                 
                 await apiClient.patch(
                   `/patients/${id}`,

@@ -27,6 +27,7 @@ export type Patient = {
   marketingOptIn?: boolean | null
   telegramUsername?: string | null
   whatsappPhone?: string | null
+  viberPhone?: string | null
 }
 
 export type Visit = {
@@ -79,6 +80,7 @@ export type UpdatePatientInput = {
   treatmentPlanCurrency?: string
   telegramUsername?: string
   whatsappPhone?: string
+  viberPhone?: string
 }
 
 type ApiPatient = {
@@ -98,6 +100,7 @@ type ApiPatient = {
   marketing_opt_in?: boolean | null
   telegram_username?: string | null
   whatsapp_phone?: string | null
+  viber_phone?: string | null
 }
 
 type ApiVisit = {
@@ -135,6 +138,7 @@ const mapPatient = (data: ApiPatient): Patient => ({
   marketingOptIn: data.marketing_opt_in ?? undefined,
   telegramUsername: data.telegram_username ?? undefined,
   whatsappPhone: data.whatsapp_phone ?? undefined,
+  viberPhone: data.viber_phone ?? undefined,
 })
 
 const mapVisit = (data: ApiVisit): Visit => ({
@@ -173,6 +177,7 @@ const buildUpdatePatientPayload = (payload: UpdatePatientInput) => {
   if (payload.treatmentPlanCurrency !== undefined) body.treatment_plan_currency = payload.treatmentPlanCurrency
   if (payload.telegramUsername !== undefined) body.telegram_username = payload.telegramUsername
   if (payload.whatsappPhone !== undefined) body.whatsapp_phone = payload.whatsappPhone
+  if (payload.viberPhone !== undefined) body.viber_phone = payload.viberPhone
   return body
 }
 

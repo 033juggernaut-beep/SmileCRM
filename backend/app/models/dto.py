@@ -31,6 +31,7 @@ class PatientBase(BaseModel):
   treatment_plan_currency: str | None = Field(default="AMD")
   telegram_username: str | None = Field(default=None, description="Telegram username without @")
   whatsapp_phone: str | None = Field(default=None, description="WhatsApp phone number")
+  viber_phone: str | None = Field(default=None, description="Viber phone number")
 
 
 class PatientCreateRequest(PatientBase):
@@ -103,6 +104,7 @@ class PatientSummary(BaseModel):
   telegram_user_id: int | None = None
   telegram_username: str | None = None
   whatsapp_phone: str | None = None
+  viber_phone: str | None = None
 
 
 class VisitUpdateRequest(BaseModel):
