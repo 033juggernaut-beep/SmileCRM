@@ -1,18 +1,16 @@
 /**
- * Floating AI Assistant Widget - Real AI integration
- * - Text input with category selection
- * - Calls OpenAI backend for structured suggestions
- * - Shows draft/actions and Apply button
+ * Floating Voice AI Assistant - Voice-first dental assistant
+ * - Doctor speaks → AI fills fields
+ * - Shows transcription and suggested changes
+ * - Apply button to save changes
  */
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import {
   Box,
   Flex,
   Text,
   Button,
-  Textarea,
-  Grid,
   VStack,
   HStack,
   useColorMode,
@@ -21,8 +19,9 @@ import {
   Spinner,
   Badge,
   Divider,
+  Progress,
 } from '@chakra-ui/react'
-import { X, Stethoscope, Calendar, Wallet, Megaphone, Send, Check, AlertCircle } from 'lucide-react'
+import { X, Mic, MicOff, Check, RotateCcw, Stethoscope, Calendar, Wallet, Megaphone } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLanguage } from '../../context/LanguageContext'
 import { aiApi } from '../../api/ai'
@@ -59,10 +58,21 @@ function AssistantIcon({ className }: { className?: string }) {
 const MotionBox = motion(Box)
 const MotionButton = motion(Button)
 
-// Map frontend category IDs to API categories
+// Supported MIME types for recording
+const SUPPORTED_MIME_TYPES = [
+  'audio/webm',
+  'audio/webm;codecs=opus',
+  'audio/ogg',
+  'audio/mp4',
+  'audio/wav',
+]
+
+type RecordingState = 'idle' | 'recording' | 'processing' | 'done' | 'error'
+
+// Category mapping
 const categoryMap: Record<string, AICategory> = {
   diagnosis: 'diagnosis',
-  visit: 'visits',
+  visits: 'visits',
   finance: 'finance',
   marketing: 'marketing',
 }
@@ -74,83 +84,196 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
   const toast = useToast()
 
   const [isOpen, setIsOpen] = useState(false)
-  const [inputText, setInputText] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState<string>('diagnosis')
+  const [recordingState, setRecordingState] = useState<RecordingState>('idle')
+  const [recordingSeconds, setRecordingSeconds] = useState(0)
+  const [transcript, setTranscript] = useState('')
   const [isApplying, setIsApplying] = useState(false)
   const [aiResponse, setAiResponse] = useState<AIAssistantResponse | null>(null)
-  const [validationError, setValidationError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  // Refs for recording
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
+  const timerRef = useRef<number | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const recognitionRef = useRef<SpeechRecognition | null>(null)
 
   const capabilities = [
-    {
-      id: 'diagnosis',
-      icon: Stethoscope,
-      labelKey: 'patientCard.ai.diagnosis',
-      descKey: 'patientCard.ai.diagnosisDesc',
-    },
-    {
-      id: 'visit',
-      icon: Calendar,
-      labelKey: 'patientCard.ai.visits',
-      descKey: 'patientCard.ai.visitsDesc',
-    },
-    {
-      id: 'finance',
-      icon: Wallet,
-      labelKey: 'patientCard.ai.finance',
-      descKey: 'patientCard.ai.financeDesc',
-    },
-    {
-      id: 'marketing',
-      icon: Megaphone,
-      labelKey: 'patientCard.ai.marketing',
-      descKey: 'patientCard.ai.marketingDesc',
-    },
+    { id: 'diagnosis', icon: Stethoscope, label: 'Диагноз' },
+    { id: 'visits', icon: Calendar, label: 'Визит' },
+    { id: 'finance', icon: Wallet, label: 'Оплата' },
+    { id: 'marketing', icon: Megaphone, label: 'Сообщение' },
   ]
 
-  const handleCategorySelect = (capId: string) => {
-    setSelectedCategory(selectedCategory === capId ? null : capId)
-    setValidationError(null)
+  // Cleanup function
+  const cleanup = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current)
+      timerRef.current = null
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop()
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop())
+      streamRef.current = null
+    }
+    if (recognitionRef.current) {
+      recognitionRef.current.stop()
+      recognitionRef.current = null
+    }
+    audioChunksRef.current = []
+  }, [])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => cleanup()
+  }, [cleanup])
+
+  // Get supported MIME type
+  const getSupportedMimeType = (): string => {
+    for (const mimeType of SUPPORTED_MIME_TYPES) {
+      if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(mimeType)) {
+        return mimeType
+      }
+    }
+    return 'audio/webm'
   }
 
-  const handleAskAI = useCallback(async () => {
-    // Validation
-    if (!inputText.trim()) {
-      setValidationError(t('patientCard.ai.enterText') || 'Введите текст запроса')
-      return
+  // Start recording with Web Speech API for real-time transcription
+  const startRecording = async () => {
+    try {
+      cleanup()
+      setError(null)
+      setTranscript('')
+      setAiResponse(null)
+      
+      // Request microphone access
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      streamRef.current = stream
+
+      // Setup MediaRecorder for audio capture (backup)
+      const mimeType = getSupportedMimeType()
+      const mediaRecorder = new MediaRecorder(stream, { mimeType })
+      mediaRecorderRef.current = mediaRecorder
+      audioChunksRef.current = []
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data)
+        }
+      }
+
+      mediaRecorder.start(100)
+
+      // Setup Web Speech API for real-time transcription
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition()
+        recognitionRef.current = recognition
+        
+        recognition.continuous = true
+        recognition.interimResults = true
+        recognition.lang = language === 'hy' ? 'hy-AM' : language === 'en' ? 'en-US' : 'ru-RU'
+        
+        recognition.onresult = (event) => {
+          let finalTranscript = ''
+          let interimTranscript = ''
+          
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const result = event.results[i]
+            if (result.isFinal) {
+              finalTranscript += result[0].transcript + ' '
+            } else {
+              interimTranscript += result[0].transcript
+            }
+          }
+          
+          setTranscript(prev => {
+            const base = prev.replace(/\[.*\]$/, '').trim()
+            const newText = finalTranscript || ''
+            const interim = interimTranscript ? ` [${interimTranscript}]` : ''
+            return (base + ' ' + newText + interim).trim()
+          })
+        }
+        
+        recognition.onerror = (event) => {
+          console.warn('Speech recognition error:', event.error)
+        }
+        
+        recognition.start()
+      }
+
+      // Start timer
+      setRecordingSeconds(0)
+      timerRef.current = window.setInterval(() => {
+        setRecordingSeconds(prev => prev + 1)
+      }, 1000)
+
+      setRecordingState('recording')
+    } catch (err) {
+      console.error('Failed to start recording:', err)
+      setError('Не удалось получить доступ к микрофону')
+      setRecordingState('error')
     }
-    if (!selectedCategory) {
-      setValidationError(t('patientCard.ai.selectCategory') || 'Выберите категорию')
+  }
+
+  // Stop recording and process
+  const stopRecording = async () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current)
+      timerRef.current = null
+    }
+    
+    if (recognitionRef.current) {
+      recognitionRef.current.stop()
+    }
+
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop()
+    }
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop())
+    }
+
+    // Clean up interim markers from transcript
+    setTranscript(prev => prev.replace(/\[.*\]$/, '').trim())
+    
+    setRecordingState('processing')
+    
+    // Small delay to ensure transcript is finalized
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    // Get final transcript
+    const finalTranscript = transcript.replace(/\[.*\]$/, '').trim()
+    
+    if (!finalTranscript) {
+      setError('Не удалось распознать речь. Попробуйте снова.')
+      setRecordingState('error')
       return
     }
 
-    setValidationError(null)
-    setIsLoading(true)
-    setAiResponse(null)
-
+    // Send to AI
     try {
       const response = await aiApi.assistant({
         category: categoryMap[selectedCategory],
         patient_id: patientId || null,
-        text: inputText,
+        text: finalTranscript,
         locale: language as 'ru' | 'hy' | 'en',
       })
 
       setAiResponse(response)
-    } catch (error) {
-      console.error('AI request failed:', error)
-      const message = error instanceof Error ? error.message : 'AI service error'
-      toast({
-        title: t('common.error'),
-        description: message,
-        status: 'error',
-        duration: 5000,
-      })
-    } finally {
-      setIsLoading(false)
+      setRecordingState('done')
+    } catch (err) {
+      console.error('AI request failed:', err)
+      setError('Ошибка AI. Попробуйте снова.')
+      setRecordingState('error')
     }
-  }, [inputText, selectedCategory, patientId, language, toast, t])
+  }
 
+  // Apply AI actions
   const handleApply = useCallback(async () => {
     if (!aiResponse?.actions?.length) return
 
@@ -161,62 +284,69 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
 
       if (result.success) {
         toast({
-          title: t('common.saved') || 'Сохранено',
-          description: `${result.results.applied.length} действий применено`,
+          title: '✅ Сохранено',
+          description: `${result.results.applied.length} изменений применено`,
           status: 'success',
           duration: 3000,
         })
         // Reset state
         setAiResponse(null)
-        setInputText('')
-        setSelectedCategory(null)
-        // Notify parent to refresh data
+        setTranscript('')
+        setRecordingState('idle')
         onActionsApplied?.()
       } else {
         toast({
-          title: t('common.error'),
-          description: `${result.results.failed.length} действий не удалось применить`,
+          title: 'Ошибка',
+          description: `${result.results.failed.length} изменений не применено`,
           status: 'warning',
           duration: 5000,
         })
       }
-    } catch (error) {
-      console.error('Apply failed:', error)
+    } catch (err) {
+      console.error('Apply failed:', err)
       toast({
-        title: t('common.error'),
-        description: error instanceof Error ? error.message : 'Failed to apply',
+        title: 'Ошибка',
+        description: 'Не удалось сохранить изменения',
         status: 'error',
         duration: 5000,
       })
     } finally {
       setIsApplying(false)
     }
-  }, [aiResponse, toast, t, onActionsApplied])
+  }, [aiResponse, toast, onActionsApplied])
 
-  const formatActionType = (type: string): string => {
-    const typeLabels: Record<string, string> = {
-      update_patient_diagnosis: '📋 Обновить диагноз',
-      create_visit: '📅 Создать визит',
-      add_finance_note: '💰 Заметка по оплате',
-    }
-    return typeLabels[type] || type
+  // Reset to try again
+  const handleReset = () => {
+    cleanup()
+    setRecordingState('idle')
+    setTranscript('')
+    setAiResponse(null)
+    setError(null)
   }
 
-  const renderActionDetails = (action: AIAction): string => {
+  // Format time
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
+
+  // Format action for display
+  const formatAction = (action: AIAction): { label: string; value: string } => {
     if (action.type === 'update_patient_diagnosis') {
-      return action.diagnosis || ''
+      return { label: '📋 Диагноз', value: action.diagnosis || '' }
     }
     if (action.type === 'create_visit') {
       const parts = []
-      if (action.visit_date) parts.push(`Дата: ${action.visit_date}`)
-      if (action.next_visit_date) parts.push(`След. визит: ${action.next_visit_date}`)
-      if (action.notes) parts.push(`Заметки: ${action.notes}`)
-      return parts.join(' | ')
+      if (action.visit_date) parts.push(`📅 ${action.visit_date}`)
+      if (action.next_visit_date) parts.push(`➡️ ${action.next_visit_date}`)
+      if (action.notes) parts.push(action.notes)
+      return { label: '🗓️ Визит', value: parts.join(' • ') }
     }
     if (action.type === 'add_finance_note') {
-      return action.note || ''
+      return { label: '💰 Оплата', value: action.note || '' }
     }
-    return JSON.stringify(action)
+    return { label: action.type, value: JSON.stringify(action) }
   }
 
   return (
@@ -232,8 +362,8 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
             position="absolute"
             bottom={16}
             right={0}
-            w="80"
-            maxH="500px"
+            w="320px"
+            maxH="480px"
             overflowY="auto"
             borderRadius="2xl"
             boxShadow="2xl"
@@ -255,219 +385,234 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
               zIndex={1}
             >
               <Flex align="center" gap={2}>
-                <Box w={5} h={5} color={isDark ? 'blue.400' : 'blue.600'}>
+                <Box w={5} h={5} color="blue.500">
                   <AssistantIcon />
                 </Box>
                 <Text fontSize="sm" fontWeight="semibold" color={isDark ? 'white' : 'gray.800'}>
-                  {t('patientCard.ai.title')}
+                  🎤 Голосовой AI
                 </Text>
               </Flex>
               <IconButton
-                aria-label={t('common.close')}
+                aria-label="Закрыть"
                 icon={<Box as={X} w={4} h={4} />}
                 size="xs"
                 variant="ghost"
-                color={isDark ? 'gray.400' : 'gray.500'}
-                _hover={{ bg: isDark ? 'gray.700' : 'gray.100' }}
-                onClick={() => setIsOpen(false)}
+                onClick={() => {
+                  cleanup()
+                  setIsOpen(false)
+                }}
               />
             </Flex>
 
-            <Box p={3}>
-              {/* Text Input */}
-              <Box mb={3}>
-                <Textarea
-                  value={inputText}
-                  onChange={(e) => {
-                    setInputText(e.target.value)
-                    setValidationError(null)
-                  }}
-                  placeholder={t('patientCard.ai.placeholder')}
-                  rows={3}
-                  resize="none"
-                  fontSize="sm"
-                  borderRadius="xl"
-                  bg={isDark ? 'rgba(51, 65, 85, 0.5)' : 'gray.50'}
-                  color={isDark ? 'white' : 'gray.800'}
-                  border="1px solid"
-                  borderColor={validationError && !inputText.trim() ? 'red.500' : (isDark ? 'gray.600' : 'gray.200')}
-                  _placeholder={{ color: isDark ? 'gray.500' : 'gray.400' }}
-                  _focus={{
-                    borderColor: 'blue.500',
-                    boxShadow: isDark ? '0 0 0 2px rgba(59, 130, 246, 0.5)' : '0 0 0 2px rgba(59, 130, 246, 0.3)',
-                  }}
-                />
-              </Box>
-
+            <Box p={4}>
               {/* Category Selection */}
-              <Box mb={3}>
-                <Text fontSize="xs" mb={2} color={isDark ? 'gray.500' : 'gray.400'}>
-                  {t('patientCard.ai.helpWith')}
-                </Text>
-                <Grid templateColumns="repeat(2, 1fr)" gap={2}>
-                  {capabilities.map((cap) => {
-                    const isSelected = selectedCategory === cap.id
-                    return (
-                      <Button
-                        key={cap.id}
-                        onClick={() => handleCategorySelect(cap.id)}
-                        variant="ghost"
-                        size="sm"
-                        justifyContent="flex-start"
-                        gap={2}
-                        p={2.5}
-                        h="auto"
-                        borderRadius="xl"
-                        border="2px solid"
-                        borderColor={isSelected ? 'blue.500' : 'transparent'}
-                        bg={isSelected ? (isDark ? 'rgba(59, 130, 246, 0.2)' : 'blue.50') : 'transparent'}
-                        _hover={{ bg: isDark ? 'rgba(51, 65, 85, 0.5)' : 'gray.50' }}
-                      >
-                        <Box
-                          as={cap.icon}
-                          w={4}
-                          h={4}
-                          flexShrink={0}
-                          color={isSelected ? 'blue.500' : (isDark ? 'blue.400' : 'blue.600')}
-                        />
-                        <Box textAlign="left">
-                          <Text fontSize="xs" fontWeight="medium" color={isDark ? 'gray.300' : 'gray.600'}>
-                            {t(cap.labelKey)}
-                          </Text>
-                          <Text fontSize="10px" color={isDark ? 'gray.500' : 'gray.400'}>
-                            {t(cap.descKey)}
-                          </Text>
-                        </Box>
-                      </Button>
-                    )
-                  })}
-                </Grid>
-              </Box>
+              <HStack spacing={2} mb={4} flexWrap="wrap">
+                {capabilities.map((cap) => {
+                  const isSelected = selectedCategory === cap.id
+                  return (
+                    <Button
+                      key={cap.id}
+                      size="xs"
+                      leftIcon={<Box as={cap.icon} w={3} h={3} />}
+                      variant={isSelected ? 'solid' : 'outline'}
+                      colorScheme={isSelected ? 'blue' : 'gray'}
+                      borderRadius="full"
+                      onClick={() => setSelectedCategory(cap.id)}
+                      isDisabled={recordingState === 'recording'}
+                    >
+                      {cap.label}
+                    </Button>
+                  )
+                })}
+              </HStack>
 
-              {/* Validation Error */}
-              {validationError && (
-                <Flex align="center" gap={2} mb={3} p={2} borderRadius="lg" bg={isDark ? 'red.900' : 'red.50'}>
-                  <Box as={AlertCircle} w={4} h={4} color="red.500" />
-                  <Text fontSize="xs" color="red.500">{validationError}</Text>
-                </Flex>
+              {/* Recording Area */}
+              {recordingState === 'idle' && (
+                <VStack spacing={4}>
+                  <Text fontSize="sm" color={isDark ? 'gray.400' : 'gray.500'} textAlign="center">
+                    Нажмите и говорите. AI заполнит данные.
+                  </Text>
+                  <Button
+                    size="lg"
+                    colorScheme="blue"
+                    borderRadius="full"
+                    w="80px"
+                    h="80px"
+                    onClick={startRecording}
+                    _hover={{ transform: 'scale(1.05)' }}
+                    transition="transform 0.2s"
+                  >
+                    <Box as={Mic} w={8} h={8} />
+                  </Button>
+                </VStack>
               )}
 
-              {/* Ask AI Button */}
-              <Button
-                onClick={handleAskAI}
-                isLoading={isLoading}
-                loadingText="Думаю..."
-                leftIcon={<Box as={Send} w={4} h={4} />}
-                colorScheme="blue"
-                size="sm"
-                w="full"
-                borderRadius="xl"
-                mb={3}
-                isDisabled={!inputText.trim() || !selectedCategory}
-              >
-                {t('patientCard.ai.ask') || 'Спросить AI'}
-              </Button>
+              {/* Recording State */}
+              {recordingState === 'recording' && (
+                <VStack spacing={4}>
+                  <HStack>
+                    <Box w={3} h={3} borderRadius="full" bg="red.500" animation="pulse 1s infinite" />
+                    <Text fontSize="lg" fontWeight="bold" color="red.500">
+                      {formatTime(recordingSeconds)}
+                    </Text>
+                  </HStack>
+                  
+                  {transcript && (
+                    <Box 
+                      p={3} 
+                      borderRadius="lg" 
+                      bg={isDark ? 'gray.700' : 'gray.100'}
+                      w="full"
+                      maxH="120px"
+                      overflowY="auto"
+                    >
+                      <Text fontSize="sm" color={isDark ? 'white' : 'gray.800'}>
+                        {transcript}
+                      </Text>
+                    </Box>
+                  )}
 
-              {/* AI Response */}
-              {aiResponse && (
+                  <Button
+                    size="lg"
+                    colorScheme="red"
+                    borderRadius="full"
+                    w="80px"
+                    h="80px"
+                    onClick={stopRecording}
+                  >
+                    <Box as={MicOff} w={8} h={8} />
+                  </Button>
+                  <Text fontSize="xs" color={isDark ? 'gray.500' : 'gray.400'}>
+                    Нажмите чтобы остановить
+                  </Text>
+                </VStack>
+              )}
+
+              {/* Processing State */}
+              {recordingState === 'processing' && (
+                <VStack spacing={4} py={6}>
+                  <Spinner size="lg" color="blue.500" />
+                  <Text fontSize="sm" color={isDark ? 'gray.400' : 'gray.500'}>
+                    AI обрабатывает...
+                  </Text>
+                  <Progress size="sm" isIndeterminate colorScheme="blue" w="full" borderRadius="full" />
+                </VStack>
+              )}
+
+              {/* Error State */}
+              {recordingState === 'error' && (
+                <VStack spacing={4}>
+                  <Box 
+                    p={3} 
+                    borderRadius="lg" 
+                    bg={isDark ? 'red.900' : 'red.50'}
+                    w="full"
+                  >
+                    <Text fontSize="sm" color="red.500">{error}</Text>
+                  </Box>
+                  <Button
+                    leftIcon={<Box as={RotateCcw} w={4} h={4} />}
+                    onClick={handleReset}
+                    size="sm"
+                  >
+                    Попробовать снова
+                  </Button>
+                </VStack>
+              )}
+
+              {/* Results State */}
+              {recordingState === 'done' && aiResponse && (
                 <VStack spacing={3} align="stretch">
-                  <Divider borderColor={isDark ? 'gray.700' : 'gray.200'} />
+                  {/* Transcript */}
+                  <Box 
+                    p={3} 
+                    borderRadius="lg" 
+                    bg={isDark ? 'gray.700' : 'gray.100'}
+                  >
+                    <Text fontSize="xs" color={isDark ? 'gray.400' : 'gray.500'} mb={1}>
+                      Вы сказали:
+                    </Text>
+                    <Text fontSize="sm" color={isDark ? 'white' : 'gray.800'}>
+                      "{transcript}"
+                    </Text>
+                  </Box>
 
-                  {/* Summary */}
-                  <Box p={3} borderRadius="lg" bg={isDark ? 'rgba(51, 65, 85, 0.5)' : 'gray.50'}>
-                    <Text fontSize="xs" fontWeight="medium" color={isDark ? 'gray.400' : 'gray.500'} mb={1}>
-                      {t('patientCard.ai.summary') || 'Понял:'}
+                  <Divider />
+
+                  {/* AI Summary */}
+                  <Box>
+                    <Text fontSize="xs" fontWeight="medium" color={isDark ? 'gray.400' : 'gray.500'} mb={2}>
+                      AI понял:
                     </Text>
                     <Text fontSize="sm" color={isDark ? 'white' : 'gray.800'}>
                       {aiResponse.summary}
                     </Text>
                   </Box>
 
-                  {/* Actions */}
+                  {/* Actions Preview */}
                   {aiResponse.actions.length > 0 && (
-                    <Box>
-                      <Text fontSize="xs" fontWeight="medium" color={isDark ? 'gray.400' : 'gray.500'} mb={2}>
-                        {t('patientCard.ai.actions') || 'Действия:'}
+                    <VStack spacing={2} align="stretch">
+                      <Text fontSize="xs" fontWeight="medium" color={isDark ? 'gray.400' : 'gray.500'}>
+                        Изменения:
                       </Text>
-                      <VStack spacing={2} align="stretch">
-                        {aiResponse.actions.map((action, idx) => (
+                      {aiResponse.actions.map((action, idx) => {
+                        const { label, value } = formatAction(action as AIAction)
+                        return (
                           <Box
                             key={idx}
                             p={2}
                             borderRadius="lg"
-                            bg={isDark ? 'rgba(34, 197, 94, 0.1)' : 'green.50'}
+                            bg={isDark ? 'green.900' : 'green.50'}
                             border="1px solid"
-                            borderColor={isDark ? 'green.800' : 'green.200'}
+                            borderColor={isDark ? 'green.700' : 'green.200'}
                           >
                             <Badge colorScheme="green" fontSize="10px" mb={1}>
-                              {formatActionType(action.type)}
+                              {label}
                             </Badge>
-                            <Text fontSize="xs" color={isDark ? 'gray.300' : 'gray.600'}>
-                              {renderActionDetails(action as AIAction)}
+                            <Text fontSize="sm" color={isDark ? 'white' : 'gray.800'}>
+                              {value}
                             </Text>
                           </Box>
-                        ))}
-                      </VStack>
-                    </Box>
+                        )
+                      })}
+                    </VStack>
                   )}
 
                   {/* Marketing Draft */}
                   {aiResponse.draft?.marketing_message && (
-                    <Box p={3} borderRadius="lg" bg={isDark ? 'rgba(168, 85, 247, 0.1)' : 'purple.50'}>
-                      <Text fontSize="xs" fontWeight="medium" color={isDark ? 'purple.400' : 'purple.600'} mb={1}>
-                        📨 Маркетинговое сообщение:
-                      </Text>
-                      <Text fontSize="sm" color={isDark ? 'white' : 'gray.800'} whiteSpace="pre-wrap">
+                    <Box p={3} borderRadius="lg" bg={isDark ? 'purple.900' : 'purple.50'}>
+                      <Text fontSize="xs" color="purple.500" mb={1}>📨 Сообщение:</Text>
+                      <Text fontSize="sm" color={isDark ? 'white' : 'gray.800'}>
                         {aiResponse.draft.marketing_message}
                       </Text>
                     </Box>
                   )}
 
-                  {/* Warnings */}
-                  {aiResponse.warnings.length > 0 && (
-                    <Box p={2} borderRadius="lg" bg={isDark ? 'rgba(251, 191, 36, 0.1)' : 'yellow.50'}>
-                      {aiResponse.warnings.map((warning, idx) => (
-                        <Text key={idx} fontSize="xs" color={isDark ? 'yellow.400' : 'yellow.700'}>
-                          ⚠️ {warning}
-                        </Text>
-                      ))}
-                    </Box>
-                  )}
-
-                  {/* Apply Button */}
-                  {aiResponse.actions.length > 0 && (
-                    <HStack spacing={2}>
-                      <Button
-                        onClick={handleApply}
-                        isLoading={isApplying}
-                        loadingText="Сохраняю..."
-                        leftIcon={<Box as={Check} w={4} h={4} />}
-                        colorScheme="green"
-                        size="sm"
-                        flex={1}
-                        borderRadius="xl"
-                      >
-                        {t('patientCard.ai.apply') || 'Применить'}
-                      </Button>
-                      <Button
-                        onClick={() => setAiResponse(null)}
-                        variant="ghost"
-                        size="sm"
-                        borderRadius="xl"
-                        color={isDark ? 'gray.400' : 'gray.600'}
-                      >
-                        {t('common.cancel') || 'Отмена'}
-                      </Button>
-                    </HStack>
-                  )}
+                  {/* Action Buttons */}
+                  <HStack spacing={2} pt={2}>
+                    <Button
+                      flex={1}
+                      colorScheme="green"
+                      leftIcon={<Box as={Check} w={4} h={4} />}
+                      onClick={handleApply}
+                      isLoading={isApplying}
+                      loadingText="Сохраняю..."
+                      size="sm"
+                      borderRadius="lg"
+                    >
+                      Сохранить
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      leftIcon={<Box as={RotateCcw} w={4} h={4} />}
+                      onClick={handleReset}
+                      size="sm"
+                      borderRadius="lg"
+                    >
+                      Заново
+                    </Button>
+                  </HStack>
                 </VStack>
-              )}
-
-              {/* Loading State */}
-              {isLoading && (
-                <Flex justify="center" py={4}>
-                  <Spinner size="sm" color="blue.500" />
-                </Flex>
               )}
             </Box>
           </MotionBox>
@@ -484,20 +629,8 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
         alignItems="center"
         justifyContent="center"
         boxShadow="lg"
-        bg={
-          isOpen
-            ? 'blue.600'
-            : isDark
-            ? 'gray.700'
-            : 'white'
-        }
-        color={
-          isOpen
-            ? 'white'
-            : isDark
-            ? 'blue.400'
-            : 'blue.600'
-        }
+        bg={isOpen ? 'blue.600' : isDark ? 'gray.700' : 'white'}
+        color={isOpen ? 'white' : 'blue.500'}
         border={isOpen ? 'none' : '1px solid'}
         borderColor={isDark ? 'gray.600' : 'gray.200'}
         _hover={{
@@ -505,11 +638,9 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
         }}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        aria-label="AI Assistant"
+        aria-label="Voice AI Assistant"
       >
-        <Box w={6} h={6}>
-          <AssistantIcon />
-        </Box>
+        <Box as={Mic} w={6} h={6} />
       </MotionButton>
     </Box>
   )
