@@ -240,8 +240,6 @@ export const PatientDetailsPage = () => {
   // Handle notes save
   const handleSaveNotes = useCallback(
     async (notes: string) => {
-      // Notes are stored on the patient level or can be separate
-      // For now, we'll update a 'notes' field if it exists
       if (!patient || !id) return
 
       const authToken = localStorage.getItem(TOKEN_STORAGE_KEY)
@@ -253,8 +251,8 @@ export const PatientDetailsPage = () => {
         { headers: { Authorization: `Bearer ${authToken}` } }
       )
 
-      // Notes would need to be added to Patient type if needed
-      setPatient({ ...patient })
+      // Update local patient state with new notes
+      setPatient({ ...patient, notes })
     },
     [patient, id, t]
   )
@@ -600,7 +598,7 @@ export const PatientDetailsPage = () => {
 
             {/* 7. Doctor Notes - Free text notes */}
             <NotesSection
-              notes={(patient as any).notes ?? ''}
+              notes={patient.notes ?? ''}
               onSave={handleSaveNotes}
               defaultOpen={false}
             />

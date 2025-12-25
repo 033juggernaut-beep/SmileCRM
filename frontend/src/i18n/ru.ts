@@ -455,9 +455,9 @@ const ru = {
     notesPlaceholder: 'Добавьте заметки о пациенте...',
     notesEmpty: 'Заметки не добавлены',
 
-    // Marketing section
+    // Patient Communication section (formerly Marketing)
     marketing: {
-      title: 'Маркетинг',
+      title: 'Связь с пациентом',
       hint: 'Персональные сообщения для пациента',
       aiAssistant: 'AI ассистент',
       aiHint: 'Генерация персональных сообщений для пациента',

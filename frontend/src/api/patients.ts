@@ -21,6 +21,7 @@ export type Patient = {
   doctorId?: string
   createdAt?: string
   birthDate?: string | null
+  notes?: string | null
   treatmentPlanTotal?: number | null
   treatmentPlanCurrency?: string | null
   marketingOptIn?: boolean | null
@@ -91,6 +92,7 @@ type ApiPatient = {
   doctor_id?: string | null
   created_at?: string
   birth_date?: string | null
+  notes?: string | null
   treatment_plan_total?: number | null
   treatment_plan_currency?: string | null
   marketing_opt_in?: boolean | null
@@ -127,6 +129,7 @@ const mapPatient = (data: ApiPatient): Patient => ({
   doctorId: data.doctor_id ?? undefined,
   createdAt: data.created_at,
   birthDate: data.birth_date ?? undefined,
+  notes: data.notes ?? undefined,
   treatmentPlanTotal: data.treatment_plan_total ?? undefined,
   treatmentPlanCurrency: data.treatment_plan_currency ?? undefined,
   marketingOptIn: data.marketing_opt_in ?? undefined,

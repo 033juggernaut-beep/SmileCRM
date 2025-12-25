@@ -115,6 +115,7 @@ export function NotesSection({
                 leftIcon={<Box as={Save} w={4} h={4} />}
                 bg={hasChanges ? 'blue.600' : (isDark ? 'gray.700' : 'gray.200')}
                 color={hasChanges ? 'white' : (isDark ? 'gray.500' : 'gray.400')}
+                borderRadius="lg"
                 _hover={hasChanges ? {
                   bg: isDark ? 'blue.500' : 'blue.700',
                 } : {}}
@@ -123,7 +124,7 @@ export function NotesSection({
                   opacity: 1,
                 }}
               >
-                💾 {t('patientCard.saveNotes')}
+                {t('patientCard.saveNotes')}
               </Button>
             </Flex>
           </Flex>

@@ -454,9 +454,9 @@ const am = {
     notesPlaceholder: 'Avelacreq notaner pacienti masin...',
     notesEmpty: 'Notaner chen avelacvel',
 
-    // Marketing section
+    // Patient Communication section (formerly Marketing)
     marketing: {
-      title: 'Marqueting',
+      title: 'Kap pacienti het',
       hint: 'Anhatakan haxordagrutyunner pacienti hamar',
       aiAssistant: 'AI օgnakan',
       aiHint: 'Generacnel anhatakan haxordagrutyunner pacienti hamar',

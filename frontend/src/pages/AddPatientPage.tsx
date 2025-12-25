@@ -15,7 +15,6 @@ import { useState, useCallback } from 'react'
 import { Box, SimpleGrid, VStack, Alert, AlertIcon, useToast, useColorMode } from '@chakra-ui/react'
 import { useNavigate } from 'react-router-dom'
 import { patientsApi } from '../api/patients'
-import type { PatientStatus } from '../api/patients'
 import { type VoiceParseStructured, isPatientStructured } from '../api/ai'
 import { VoiceAssistantButton } from '../components/VoiceAssistantButton'
 import { BackgroundPattern } from '../components/dashboard/BackgroundPattern'
@@ -147,16 +146,14 @@ export const AddPatientPage = () => {
     setIsSubmitting(true)
 
     try {
-      // Map segment to status for API compatibility
-      const status: PatientStatus = form.segment === 'vip' ? 'completed' : 'in_progress'
-
-      // Step 1: Create patient
+      // Step 1: Create patient (status always starts as in_progress, segment is separate)
       const newPatient = await patientsApi.create({
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         diagnosis: form.diagnosis.trim() || undefined,
         phone: form.phone.trim() || undefined,
-        status,
+        status: 'in_progress',
+        segment: form.segment,
         birthDate: form.birthDate || undefined,
       })
 

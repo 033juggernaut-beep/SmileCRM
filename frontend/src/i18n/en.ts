@@ -455,9 +455,9 @@ const en = {
     notesPlaceholder: 'Add notes about the patient...',
     notesEmpty: 'No notes added',
 
-    // Marketing section
+    // Patient Communication section (formerly Marketing)
     marketing: {
-      title: 'Marketing',
+      title: 'Patient Communication',
       hint: 'Personalized messages for the patient',
       aiAssistant: 'AI Assistant',
       aiHint: 'Generate personalized messages for the patient',

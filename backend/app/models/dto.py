@@ -26,6 +26,7 @@ class PatientBase(BaseModel):
   status: str | None = None
   birth_date: date | None = None
   segment: str | None = Field(default="regular", description="Patient segment: regular, vip")
+  notes: str | None = Field(default=None, description="Doctor notes for the patient")
   treatment_plan_total: condecimal(max_digits=12, decimal_places=2) | None = None  # type: ignore
   treatment_plan_currency: str | None = Field(default="AMD")
   telegram_username: str | None = Field(default=None, description="Telegram username without @")

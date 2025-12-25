@@ -6,7 +6,7 @@
  * - Balance summary (paid / remaining)
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Box,
   Flex,
@@ -52,9 +52,10 @@ interface FinanceSectionProps {
   onUpdateFinance?: (finance: PatientFinance) => void | Promise<void>
 }
 
-// Format number with spaces as thousand separators
-const formatAmount = (amount: number) => {
-  return amount.toLocaleString('ru-RU').replace(/,/g, ' ')
+// Format number with thousand separators (e.g., 1,200,000 AMD)
+const formatAmount = (amount: number, showCurrency = false, currency = 'AMD') => {
+  const formatted = Math.round(amount).toLocaleString('en-US')
+  return showCurrency ? `${formatted} ${currency}` : formatted
 }
 
 export function FinanceSection({
@@ -78,6 +79,12 @@ export function FinanceSection({
   const [newPayment, setNewPayment] = useState({ date: '', amount: '', description: '' })
   const [deletingPaymentId, setDeletingPaymentId] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+
+  // Sync state with prop changes (e.g., after treatment plan is modified)
+  useEffect(() => {
+    setFinance(initialFinance)
+    setEditTotalAmount(initialFinance.totalCost.toString())
+  }, [initialFinance])
 
   const totalPaid = finance.payments.reduce((sum, p) => sum + p.amount, 0)
   const remaining = finance.totalCost - totalPaid
@@ -222,7 +229,7 @@ export function FinanceSection({
               />
             </Flex>
             <Text fontSize="2xl" fontWeight="bold" letterSpacing="tight" color={isDark ? 'white' : 'gray.800'}>
-              {formatAmount(finance.totalCost)}
+              {formatAmount(finance.totalCost, true, finance.currency || 'AMD')}
             </Text>
           </Box>
 
