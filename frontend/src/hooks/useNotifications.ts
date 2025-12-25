@@ -55,14 +55,33 @@ export function useNotifications(
   // Track if component is mounted to avoid state updates after unmount
   const isMounted = useRef(true)
   
+  // Track if we've already generated notifications this session
+  const hasGenerated = useRef(false)
+
   /**
    * Fetch notifications from API, fallback to mock on error.
+   * Also generates birthday/inactive notifications on first load.
    */
   const fetchNotifications = useCallback(async () => {
     setIsLoading(true)
     setError(null)
     
     try {
+      // Generate birthday/inactive notifications once per session
+      if (!hasGenerated.current) {
+        try {
+          const result = await notificationsApi.generate()
+          if (result.totalCreated > 0) {
+            console.log('[useNotifications] Generated notifications:', result)
+          }
+          hasGenerated.current = true
+        } catch (genErr) {
+          // Ignore generate errors - not critical
+          console.log('[useNotifications] Generate failed (non-critical):', genErr)
+          hasGenerated.current = true
+        }
+      }
+
       const response = await notificationsApi.list()
       
       if (!isMounted.current) return
