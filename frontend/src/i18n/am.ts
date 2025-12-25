@@ -581,6 +581,7 @@ const am = {
     completed: 'Katarvac',
     add: 'Avelacnel',
     stepAdded: 'Qayle avelacvac e',
+    addError: 'Chi hajoxvel qayly avelacnel',
     fillRequired: 'Xndrum enq lracnel bolor partadir dashere',
     invalidPrice: 'Xndrum enq mutqagrel chisht gin',
     pdfComingSoon: 'PDF eksporte mot klini',

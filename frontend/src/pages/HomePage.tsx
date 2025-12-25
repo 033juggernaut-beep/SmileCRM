@@ -8,6 +8,7 @@
  * Displays personalized daily motivation for the doctor (i18n support)
  */
 
+import { useState, useEffect } from 'react';
 import { Box, Flex, Grid, useColorMode } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { Users, UserPlus, TrendingUp, Bot } from 'lucide-react';
@@ -23,6 +24,7 @@ import {
 import { useLanguage } from '../context/LanguageContext';
 import { useTelegramSafeArea } from '../hooks/useTelegramSafeArea';
 import { useDailyMotivation } from '../hooks/useDailyMotivation';
+import { statsApi, type StatsOverview } from '../api/stats';
 
 const MotionDiv = motion.div;
 
@@ -60,6 +62,31 @@ export const HomePage = () => {
   
   // Get daily personalized motivation (i18n aware)
   const { prefix: motivationPrefix, quote: motivationQuote, hasName } = useDailyMotivation();
+  
+  // Stats data from API
+  const [stats, setStats] = useState<StatsOverview | null>(null);
+  const [isStatsLoading, setIsStatsLoading] = useState(true);
+  
+  // Fetch stats on mount
+  useEffect(() => {
+    let cancelled = false;
+    const fetchStats = async () => {
+      try {
+        const data = await statsApi.getOverview('7d');
+        if (!cancelled) {
+          setStats(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch stats:', err);
+      } finally {
+        if (!cancelled) {
+          setIsStatsLoading(false);
+        }
+      }
+    };
+    void fetchStats();
+    return () => { cancelled = true; };
+  }, []);
   
   // Log Telegram info for debugging (only in development)
   if (import.meta.env.DEV && isInTelegram) {
@@ -160,10 +187,11 @@ export const HomePage = () => {
               <DashboardCard
                 icon={<TrendingUp />}
                 title={t('home.statistics')}
-                stats={[
-                  { label: t('home.totalPatients'), value: 1247 },
-                  { label: t('home.todayVisits'), value: 12 },
+                stats={isStatsLoading ? undefined : [
+                  { label: t('home.totalPatients'), value: stats?.patients_total ?? 0 },
+                  { label: t('home.todayVisits'), value: stats?.visits_today ?? 0 },
                 ]}
+                isLoading={isStatsLoading}
                 onClick={() => navigate('/stats')}
               />
             </MotionDiv>

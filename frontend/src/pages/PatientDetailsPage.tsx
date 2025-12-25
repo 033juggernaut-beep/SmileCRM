@@ -42,6 +42,7 @@ import {
   medicationsApi,
   type Medication,
 } from '../api/medications'
+import { treatmentPlanApi } from '../api/treatmentPlan'
 import { apiClient } from '../api/client'
 import { TOKEN_STORAGE_KEY } from '../constants/storage'
 
@@ -119,13 +120,8 @@ export const PatientDetailsPage = () => {
   const [newVisitNotes, setNewVisitNotes] = useState('')
   const [isCreatingVisit, setIsCreatingVisit] = useState(false)
 
-  // Treatment plan state - mock data, ready for API integration
-  const [treatmentSteps, setTreatmentSteps] = useState<TreatmentStep[]>([
-    // Mock data for demonstration
-    { id: 'step-1', title: 'Professional cleaning', priceAmd: 15000, done: true },
-    { id: 'step-2', title: 'Dental filling (tooth #16)', priceAmd: 25000, done: false },
-    { id: 'step-3', title: 'Root canal treatment', priceAmd: 45000, done: false },
-  ])
+  // Treatment plan state - loaded from API
+  const [treatmentSteps, setTreatmentSteps] = useState<TreatmentStep[]>([])
 
   // Page background
   const pageBg = isDark
@@ -180,12 +176,13 @@ export const PatientDetailsPage = () => {
       setIsLoading(true)
       setError(null)
       try {
-        const [patientData, visitsData, financeData, paymentsData, medicationsData] = await Promise.all([
+        const [patientData, visitsData, financeData, paymentsData, medicationsData, treatmentData] = await Promise.all([
           patientsApi.getById(id),
           patientsApi.getVisits(id),
           patientFinanceApi.getFinanceSummary(id),
           patientFinanceApi.listPayments(id),
           medicationsApi.list(id),
+          treatmentPlanApi.list(id),
         ])
         if (!cancelled) {
           setPatient(patientData)
@@ -193,6 +190,13 @@ export const PatientDetailsPage = () => {
           setFinanceSummary(financeData)
           setPayments(paymentsData)
           setMedications(medicationsData)
+          // Map treatment plan items to TreatmentStep format
+          setTreatmentSteps(treatmentData.map((item) => ({
+            id: item.id,
+            title: item.title,
+            priceAmd: item.priceAmd,
+            done: item.isDone,
+          })))
         }
       } catch (err) {
         if (!cancelled) {
@@ -365,6 +369,78 @@ export const PatientDetailsPage = () => {
     [id, t]
   )
 
+  // Handle treatment steps change - called from TreatmentPlanBlock
+  const handleTreatmentStepsChange = useCallback(
+    async (newSteps: TreatmentStep[]) => {
+      if (!id) return
+      
+      // Find what changed
+      const oldIds = new Set(treatmentSteps.map((s) => s.id))
+      const newIds = new Set(newSteps.map((s) => s.id))
+      
+      // Deleted items
+      for (const oldStep of treatmentSteps) {
+        if (!newIds.has(oldStep.id)) {
+          try {
+            await treatmentPlanApi.deleteItem(oldStep.id)
+          } catch (err) {
+            console.error('Failed to delete treatment item:', err)
+          }
+        }
+      }
+      
+      // Added items (new items have temp IDs starting with 'step-')
+      for (const newStep of newSteps) {
+        if (!oldIds.has(newStep.id) && newStep.id.startsWith('step-')) {
+          try {
+            const created = await treatmentPlanApi.createItem(id, {
+              title: newStep.title,
+              priceAmd: newStep.priceAmd,
+            })
+            // Update the step with the real ID
+            newStep.id = created.id
+          } catch (err) {
+            console.error('Failed to create treatment item:', err)
+            toast({
+              title: t('common.error'),
+              description: t('treatmentPlan.addError') || 'Failed to add treatment step',
+              status: 'error',
+              duration: 3000,
+            })
+          }
+        }
+      }
+      
+      // Updated items (toggle done or other changes)
+      for (const newStep of newSteps) {
+        const oldStep = treatmentSteps.find((s) => s.id === newStep.id)
+        if (oldStep && (oldStep.done !== newStep.done || oldStep.title !== newStep.title || oldStep.priceAmd !== newStep.priceAmd)) {
+          try {
+            await treatmentPlanApi.updateItem(newStep.id, {
+              isDone: newStep.done,
+              title: newStep.title,
+              priceAmd: newStep.priceAmd,
+            })
+          } catch (err) {
+            console.error('Failed to update treatment item:', err)
+          }
+        }
+      }
+      
+      // Update local state
+      setTreatmentSteps(newSteps)
+      
+      // Refetch finance summary to update totals
+      try {
+        const newSummary = await patientFinanceApi.getFinanceSummary(id)
+        setFinanceSummary(newSummary)
+      } catch (err) {
+        console.error('Failed to refetch finance summary:', err)
+      }
+    },
+    [id, treatmentSteps, toast, t]
+  )
+
   // Handle AI assistant action
   const handleAIAction = useCallback(
     (action: { type: string; text: string }) => {
@@ -492,18 +568,18 @@ export const PatientDetailsPage = () => {
             {/* 1. Patient Information - Always visible */}
             <PatientInfoCard patient={patient} onPatientUpdate={setPatient} />
 
-            {/* 2. Diagnosis - Expandable, default open */}
+            {/* 2. Diagnosis - Expandable, default closed */}
             <DiagnosisSection
               diagnosis={patient.diagnosis ?? ''}
               onSave={handleSaveDiagnosis}
-              defaultOpen={true}
+              defaultOpen={false}
             />
 
             {/* 3. Treatment Plan - Interactive step list */}
             <TreatmentPlanBlock
               steps={treatmentSteps}
-              onStepsChange={setTreatmentSteps}
-              defaultOpen={true}
+              onStepsChange={handleTreatmentStepsChange}
+              defaultOpen={false}
             />
 
             {/* 4. Visits - Chronological list (latest first) */}
@@ -511,7 +587,7 @@ export const PatientDetailsPage = () => {
               visits={sortedVisits as Visit[]}
               onAddVisit={handleAddVisit}
               onEditVisit={handleEditVisit}
-              defaultOpen={true}
+              defaultOpen={false}
             />
 
             {/* 5. Prescribed Medications */}

@@ -18,7 +18,7 @@ from app.models.dto import (
   MedicationCreateRequest,
   MedicationResponse,
 )
-from app.services import patients_service, visits_service, medications_service
+from app.services import patients_service, visits_service, medications_service, treatment_plan_service
 
 logger = logging.getLogger(__name__)
 
@@ -168,5 +168,133 @@ async def create_patient_medication(
     )
   return MedicationResponse(**medication)
 
+
+# ============ Treatment Plan Endpoints ============
+
+class TreatmentPlanItemRequest(BaseModel):
+  """Request body for creating/updating treatment plan item."""
+  title: str
+  price_amd: float = 0
+  tooth: str | None = None
+
+
+class TreatmentPlanItemUpdateRequest(BaseModel):
+  """Request body for updating treatment plan item."""
+  title: str | None = None
+  price_amd: float | None = None
+  is_done: bool | None = None
+  tooth: str | None = None
+
+
+class TreatmentPlanItemResponse(BaseModel):
+  """Response model for treatment plan item."""
+  id: str
+  patient_id: str
+  doctor_id: str
+  title: str
+  price_amd: float
+  is_done: bool
+  tooth: str | None = None
+  sort_order: int = 0
+  created_at: str | None = None
+  updated_at: str | None = None
+
+
+class TreatmentTotalResponse(BaseModel):
+  """Response model for treatment plan totals."""
+  total_amd: float
+  completed_amd: float
+  pending_amd: float
+
+
+@router.get("/{patient_id}/treatment-plan", response_model=list[TreatmentPlanItemResponse])
+async def list_treatment_plan(
+  patient_id: str,
+  current_doctor: CurrentDoctor,
+) -> list[TreatmentPlanItemResponse]:
+  """Get all treatment plan items for a patient."""
+  _ = _get_patient_for_doctor(patient_id, current_doctor)
+  items = treatment_plan_service.list_by_patient(patient_id, current_doctor.doctor_id)
+  return [TreatmentPlanItemResponse(**item) for item in items]
+
+
+@router.post(
+  "/{patient_id}/treatment-plan/items",
+  response_model=TreatmentPlanItemResponse,
+  status_code=status.HTTP_201_CREATED,
+)
+async def create_treatment_plan_item(
+  patient_id: str,
+  payload: TreatmentPlanItemRequest,
+  current_doctor: CurrentDoctor,
+) -> TreatmentPlanItemResponse:
+  """Create a new treatment plan item for a patient."""
+  _ = _get_patient_for_doctor(patient_id, current_doctor)
+  item = treatment_plan_service.create_item(
+    patient_id=patient_id,
+    doctor_id=current_doctor.doctor_id,
+    title=payload.title,
+    price_amd=payload.price_amd,
+    tooth=payload.tooth,
+  )
+  return TreatmentPlanItemResponse(**item)
+
+
+@router.get("/{patient_id}/treatment-plan/total", response_model=TreatmentTotalResponse)
+async def get_treatment_plan_total(
+  patient_id: str,
+  current_doctor: CurrentDoctor,
+) -> TreatmentTotalResponse:
+  """Get treatment plan totals for a patient."""
+  _ = _get_patient_for_doctor(patient_id, current_doctor)
+  totals = treatment_plan_service.get_treatment_total(patient_id, current_doctor.doctor_id)
+  return TreatmentTotalResponse(**totals)
+
+
+@router.patch(
+  "/treatment-plan/items/{item_id}",
+  response_model=TreatmentPlanItemResponse,
+)
+async def update_treatment_plan_item(
+  item_id: str,
+  payload: TreatmentPlanItemUpdateRequest,
+  current_doctor: CurrentDoctor,
+) -> TreatmentPlanItemResponse:
+  """Update a treatment plan item."""
+  item = treatment_plan_service.get_by_id(item_id)
+  if not item:
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
+  
+  # Verify ownership
+  if item.get("doctor_id") != current_doctor.doctor_id:
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+  
+  update_values = payload.model_dump(exclude_unset=True)
+  if not update_values:
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No update data provided")
+  
+  updated = treatment_plan_service.update_item(item_id, update_values)
+  if not updated:
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
+  
+  return TreatmentPlanItemResponse(**updated)
+
+
+@router.delete("/treatment-plan/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_treatment_plan_item(
+  item_id: str,
+  current_doctor: CurrentDoctor,
+) -> None:
+  """Delete a treatment plan item."""
+  item = treatment_plan_service.get_by_id(item_id)
+  if not item:
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
+  
+  # Verify ownership
+  if item.get("doctor_id") != current_doctor.doctor_id:
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+  
+  if not treatment_plan_service.delete_item(item_id):
+    raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to delete")
 
 

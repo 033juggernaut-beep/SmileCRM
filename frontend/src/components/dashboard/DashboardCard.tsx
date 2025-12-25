@@ -7,7 +7,7 @@
  */
 
 import type { ReactElement } from 'react';
-import { Box, Flex, Text, useColorMode } from '@chakra-ui/react';
+import { Box, Flex, Text, useColorMode, Skeleton } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
 
 const MotionBox = motion.create(Box);
@@ -23,6 +23,7 @@ export interface DashboardCardProps {
   description?: string;
   stats?: StatItem[];
   badge?: string;
+  isLoading?: boolean;
   onClick?: () => void;
 }
 
@@ -32,6 +33,7 @@ export function DashboardCard({
   description,
   stats,
   badge,
+  isLoading = false,
   onClick,
 }: DashboardCardProps) {
   const { colorMode } = useColorMode();
@@ -143,7 +145,18 @@ export function DashboardCard({
       </Flex>
 
       {/* Description or Stats */}
-      {hasStats ? (
+      {isLoading ? (
+        <Box mt="auto" pt="8px">
+          <Flex justify="space-between" align="center" mb="4px">
+            <Skeleton height="14px" width="80px" />
+            <Skeleton height="16px" width="40px" />
+          </Flex>
+          <Flex justify="space-between" align="center">
+            <Skeleton height="14px" width="70px" />
+            <Skeleton height="16px" width="30px" />
+          </Flex>
+        </Box>
+      ) : hasStats ? (
         <Box mt="auto" pt="8px">
           {stats.map((stat, index) => (
             <Flex

@@ -582,6 +582,7 @@ const en = {
     completed: 'Completed',
     add: 'Add',
     stepAdded: 'Step added',
+    addError: 'Failed to add step',
     fillRequired: 'Please fill in all required fields',
     invalidPrice: 'Please enter a valid price',
     pdfComingSoon: 'PDF export coming soon',

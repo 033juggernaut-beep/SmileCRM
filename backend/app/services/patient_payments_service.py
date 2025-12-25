@@ -55,19 +55,22 @@ def create_payment(
 def get_finance_summary(patient_id: str, doctor_id: str) -> dict[str, Any]:
   """
   Calculate financial summary for a patient:
-  - treatment_plan_total: from patients table
+  - treatment_plan_total: sum of all treatment_plan_items.price_amd
   - total_paid: sum of all payments
-  - remaining: plan total - paid (or None if no plan set)
+  - remaining: plan total - paid
   """
-  # 1. Get patient to fetch treatment plan total
+  # 1. Calculate treatment plan total from treatment_plan_items table
+  treatment_plan_total = Decimal(0)
   try:
-    patient_rows = supabase_client.select("patients", filters={"id": patient_id}, limit=1)
-    patient = patient_rows[0] if patient_rows else {}
+    items = supabase_client.select(
+      "treatment_plan_items",
+      filters={"patient_id": patient_id, "doctor_id": doctor_id},
+    )
+    treatment_plan_total = sum(
+      Decimal(str(item.get("price_amd", 0) or 0)) for item in items
+    )
   except SupabaseNotConfiguredError:
-    patient = {}
-  
-  treatment_plan_total = patient.get("treatment_plan_total")
-  treatment_plan_currency = patient.get("treatment_plan_currency", "AMD")
+    pass
   
   # 2. Sum all payments for this patient
   try:
@@ -80,17 +83,13 @@ def get_finance_summary(patient_id: str, doctor_id: str) -> dict[str, Any]:
     total_paid = Decimal(0)
   
   # 3. Calculate remaining
-  if treatment_plan_total is not None:
-    plan_decimal = Decimal(str(treatment_plan_total))
-    remaining = plan_decimal - total_paid
-  else:
-    remaining = None
+  remaining = treatment_plan_total - total_paid
   
   return {
-    "treatment_plan_total": treatment_plan_total,
-    "treatment_plan_currency": treatment_plan_currency,
-    "total_paid": float(total_paid),  # Convert to float for JSON
-    "remaining": float(remaining) if remaining is not None else None,
+    "treatment_plan_total": float(treatment_plan_total),
+    "treatment_plan_currency": "AMD",
+    "total_paid": float(total_paid),
+    "remaining": float(remaining),
   }
 
 
