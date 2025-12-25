@@ -150,6 +150,7 @@ export const AddPatientPage = () => {
       // Map segment to status for API compatibility
       const status: PatientStatus = form.segment === 'vip' ? 'completed' : 'in_progress'
 
+      // Step 1: Create patient
       const newPatient = await patientsApi.create({
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
@@ -159,13 +160,45 @@ export const AddPatientPage = () => {
         birthDate: form.birthDate || undefined,
       })
 
-      toast({
-        title: t('addPatient.successTitle'),
-        description: `${newPatient.firstName} ${newPatient.lastName} ${t('addPatient.successDescription')}`,
-        status: 'success',
-        duration: 4000,
-        isClosable: true,
-      })
+      // Step 2: Create first visit if visitDate is filled
+      let visitCreated = false
+      let visitError: string | null = null
+      
+      if (form.visitDate) {
+        try {
+          await patientsApi.createVisit(newPatient.id, {
+            visitDate: form.visitDate,
+            notes: form.visitDescription.trim() || undefined,
+            nextVisitDate: form.nextVisitDate || undefined,
+          })
+          visitCreated = true
+        } catch (visitErr) {
+          console.error('[AddPatient] Failed to create visit:', visitErr)
+          visitError = visitErr instanceof Error ? visitErr.message : 'Visit creation failed'
+        }
+      }
+
+      // Show success message
+      if (visitError) {
+        // Patient created, but visit failed
+        toast({
+          title: t('addPatient.successTitle'),
+          description: t('addPatient.visitNotSaved') || 'Patient created, but visit was not saved. Please add it manually.',
+          status: 'warning',
+          duration: 6000,
+          isClosable: true,
+        })
+      } else {
+        toast({
+          title: t('addPatient.successTitle'),
+          description: visitCreated 
+            ? t('addPatient.successWithVisit') || `${newPatient.firstName} ${newPatient.lastName} added with first visit`
+            : `${newPatient.firstName} ${newPatient.lastName} ${t('addPatient.successDescription')}`,
+          status: 'success',
+          duration: 4000,
+          isClosable: true,
+        })
+      }
 
       navigate(`/patients/${newPatient.id}`, { replace: true })
     } catch (err) {

@@ -149,6 +149,8 @@ const am = {
     validationError: 'Xndrum enq lracnel anune, azganune ev heraxose.',
     successTitle: 'Paciente avelacvac e',
     successDescription: 'stexcvac e hamakargum',
+    successWithVisit: 'avelacvac e arajin aycelutyan het',
+    visitNotSaved: 'Paciente stexcvac e, bayc aycelutyune chi pahpanvel. Avelacreq dzerq.',
     errorCreate: 'Chhajoxvec stexcel paciente. Porceq krkin.',
   },
 

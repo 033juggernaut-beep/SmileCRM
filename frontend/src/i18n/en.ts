@@ -148,6 +148,8 @@ const en = {
     validationError: 'Please fill in first name, last name, and phone.',
     successTitle: 'Patient added',
     successDescription: 'created in system',
+    successWithVisit: 'added with first visit',
+    visitNotSaved: 'Patient created, but visit was not saved. Please add it manually.',
     errorCreate: 'Failed to create patient. Please try again.',
   },
 
