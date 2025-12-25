@@ -1,10 +1,12 @@
 -- Migration 017: Add messaging fields to patients
 -- Created: 2024-12-24
 
--- Add telegram_username and whatsapp_phone for direct messaging
+-- Add telegram_user_id, telegram_username and whatsapp_phone for direct messaging
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS telegram_user_id BIGINT;
 ALTER TABLE patients ADD COLUMN IF NOT EXISTS telegram_username TEXT;
 ALTER TABLE patients ADD COLUMN IF NOT EXISTS whatsapp_phone TEXT;
 
+COMMENT ON COLUMN patients.telegram_user_id IS 'Patient Telegram user ID for bot messaging';
 COMMENT ON COLUMN patients.telegram_username IS 'Patient Telegram username (without @) for direct messaging';
 COMMENT ON COLUMN patients.whatsapp_phone IS 'Patient WhatsApp phone number for direct messaging';
 
