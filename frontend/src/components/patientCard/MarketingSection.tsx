@@ -64,9 +64,10 @@ export function MarketingSection({
   whatsappPhone,
   phone,
   defaultOpen = false,
-  patientId,
+  patientId: _patientId,
   onContactUpdate,
 }: MarketingSectionProps) {
+  // patientId available as _patientId for future use (e.g., API calls)
   const { t } = useLanguage()
   const { colorMode } = useColorMode()
   const isDark = colorMode === 'dark'
