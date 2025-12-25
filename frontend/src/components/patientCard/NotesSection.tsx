@@ -7,7 +7,7 @@
 
 import { useState } from 'react'
 import { Box, Flex, Text, Textarea, Button, useColorMode, useToast } from '@chakra-ui/react'
-import { Save, Edit2 } from 'lucide-react'
+import { Edit2 } from 'lucide-react'
 import { CollapsibleSection } from './CollapsibleSection'
 import { useLanguage } from '../../context/LanguageContext'
 
@@ -112,7 +112,6 @@ export function NotesSection({
                 isDisabled={!hasChanges}
                 size="sm"
                 fontWeight="medium"
-                leftIcon={<Box as={Save} w={4} h={4} />}
                 bg={hasChanges ? 'blue.600' : (isDark ? 'gray.700' : 'gray.200')}
                 color={hasChanges ? 'white' : (isDark ? 'gray.500' : 'gray.400')}
                 borderRadius="lg"
