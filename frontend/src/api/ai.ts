@@ -3,7 +3,10 @@
  */
 import { apiClient } from './client'
 
-// Types
+// ============================================================================
+// AI Assistant types (for FloatingAIAssistant component)
+// ============================================================================
+
 export type AICategory = 'diagnosis' | 'visits' | 'finance' | 'marketing'
 export type AILocale = 'hy' | 'ru' | 'en'
 
@@ -56,60 +59,114 @@ export interface AIApplyResponse {
   results: AIApplyResult
 }
 
-// Voice types (for compatibility with VoiceAssistantButton)
-export type VoiceLanguage = 'hy' | 'ru' | 'en'
-export type VoiceMode = 'free' | 'patient_add' | 'visit_add'
+// ============================================================================
+// Voice Assistant types (for VoiceAssistantButton component)
+// ============================================================================
 
-export interface VoiceParseStructured {
+export type VoiceLanguage = 'auto' | 'hy' | 'ru' | 'en'
+export type VoiceMode = 'patient' | 'visit' | 'note'
+
+// Structured data for patient creation
+export interface VoicePatientStructured {
   first_name?: string
   last_name?: string
   phone?: string
   diagnosis?: string
   birth_date?: string
+}
+
+// Structured data for visit creation
+export interface VoiceVisitStructured {
   visit_date?: string
   next_visit_date?: string
   notes?: string
+  diagnosis?: string
 }
 
+// Structured data for note
+export interface VoiceNoteStructured {
+  notes?: string
+}
+
+// Medication item
+export interface VoiceMedication {
+  name: string
+  dosage?: string
+  frequency?: string
+}
+
+// Union type for all structured data
+export type VoiceParseStructured = 
+  | { patient: VoicePatientStructured }
+  | { visit: VoiceVisitStructured; medications?: VoiceMedication[] }
+  | { note: VoiceNoteStructured }
+
 export interface VoiceParseResponse {
-  text: string
+  transcript: string
   language: VoiceLanguage
   mode: VoiceMode
-  structured?: VoiceParseStructured
+  structured: VoiceParseStructured
+  warnings: string[]
+}
+
+export interface VoiceParseRequest {
+  mode: VoiceMode
+  language: VoiceLanguage
+  contextPatientId?: string
+  audioBlob: Blob
 }
 
 /**
- * Parse voice input (placeholder - returns mock for now)
+ * Parse voice input via backend API
  */
-export async function parseVoice(
-  _audioBlob: Blob,
-  _mode: VoiceMode = 'free',
-  _language: VoiceLanguage = 'ru'
-): Promise<VoiceParseResponse> {
-  // TODO: Implement real voice parsing with Whisper API
-  return {
-    text: '',
-    language: 'ru',
-    mode: 'free',
+export async function parseVoice(request: VoiceParseRequest): Promise<VoiceParseResponse> {
+  const formData = new FormData()
+  formData.append('mode', request.mode)
+  formData.append('language', request.language)
+  if (request.contextPatientId) {
+    formData.append('context_patient_id', request.contextPatientId)
   }
+  formData.append('audio', request.audioBlob, 'recording.webm')
+
+  const response = await apiClient.post<VoiceParseResponse>('/voice/parse', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
+
+  return response.data
 }
 
 /**
  * Check if structured data is patient data
  */
-export function isPatientStructured(data: VoiceParseStructured | undefined): data is VoiceParseStructured {
-  return !!(data && (data.first_name || data.last_name || data.phone))
+export function isPatientStructured(data: VoiceParseStructured | undefined): data is { patient: VoicePatientStructured } {
+  return !!data && 'patient' in data
 }
 
 /**
- * AI API client
+ * Check if structured data is visit data
  */
+export function isVisitStructured(data: VoiceParseStructured | undefined): data is { visit: VoiceVisitStructured; medications?: VoiceMedication[] } {
+  return !!data && 'visit' in data
+}
+
+/**
+ * Check if structured data is note data
+ */
+export function isNoteStructured(data: VoiceParseStructured | undefined): data is { note: VoiceNoteStructured } {
+  return !!data && 'note' in data
+}
+
+// ============================================================================
+// AI Assistant API client
+// ============================================================================
+
 export const aiApi = {
   /**
    * Send request to AI assistant
    */
   async assistant(request: AIAssistantRequest): Promise<AIAssistantResponse> {
-    // apiClient interceptor handles auth token automatically
     const response = await apiClient.post<AIAssistantResponse>(
       '/ai/assistant',
       {
@@ -127,7 +184,6 @@ export const aiApi = {
    * Apply AI-suggested actions
    */
   async apply(actions: AIAction[]): Promise<AIApplyResponse> {
-    // apiClient interceptor handles auth token automatically
     const response = await apiClient.post<AIApplyResponse>(
       '/ai/apply',
       { actions }
