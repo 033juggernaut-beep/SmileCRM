@@ -14,11 +14,12 @@ from .supabase_client import SupabaseNotConfiguredError, supabase_client
 def list_by_patient(patient_id: str, doctor_id: str) -> List[Dict[str, Any]]:
     """Get all treatment plan items for a patient."""
     try:
-        return supabase_client.select(
+        items = supabase_client.select(
             "treatment_plan_items",
             filters={"patient_id": patient_id, "doctor_id": doctor_id},
-            order_by="sort_order",
         )
+        # Sort by sort_order in Python
+        return sorted(items, key=lambda x: x.get("sort_order", 0))
     except SupabaseNotConfiguredError:
         return []
 
