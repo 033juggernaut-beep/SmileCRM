@@ -22,10 +22,11 @@ import {
   Badge,
   Divider,
 } from '@chakra-ui/react'
-import { MessageSquare, X, Stethoscope, Calendar, Wallet, Megaphone, Send, Check, AlertCircle } from 'lucide-react'
+import { X, Stethoscope, Calendar, Wallet, Megaphone, Send, Check, AlertCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLanguage } from '../../context/LanguageContext'
-import { aiApi, AICategory, AIAction, AIAssistantResponse } from '../../api/ai'
+import { aiApi } from '../../api/ai'
+import type { AICategory, AIAction, AIAssistantResponse } from '../../api/ai'
 
 interface FloatingAIAssistantProps {
   patientId?: string

@@ -105,6 +105,7 @@ export const PatientDetailsPage = () => {
   const [visits, setVisits] = useState<Visit[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   // Finance state
   const [financeSummary, setFinanceSummary] = useState<PatientFinanceSummary | null>(null)
@@ -216,7 +217,7 @@ export const PatientDetailsPage = () => {
     return () => {
       cancelled = true
     }
-  }, [id, t])
+  }, [id, t, refreshKey])
 
   // Handle diagnosis save
   const handleSaveDiagnosis = useCallback(
@@ -650,8 +651,8 @@ export const PatientDetailsPage = () => {
       <FloatingAIAssistant 
         patientId={id} 
         onActionsApplied={() => {
-          // Refetch patient and visits data after AI actions applied
-          fetchPatient()
+          // Trigger refetch of patient and visits data after AI actions applied
+          setRefreshKey(prev => prev + 1)
         }}
       />
 

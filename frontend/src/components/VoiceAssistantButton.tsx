@@ -565,7 +565,7 @@ export const VoiceAssistantButton = ({
                   {parseResult.warnings.length > 0 && (
                     <Box>
                       <HStack spacing={2} flexWrap="wrap">
-                        {parseResult.warnings.map((w, i) => (
+                        {parseResult.warnings.map((w: string, i: number) => (
                           <Tag 
                             key={i} 
                             size="sm" 

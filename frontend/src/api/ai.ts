@@ -2,7 +2,6 @@
  * AI Assistant API client
  */
 import { apiClient } from './client'
-import { buildAuthHeaders, TOKEN_STORAGE_KEY } from './patients'
 
 // Types
 export type AICategory = 'diagnosis' | 'visits' | 'finance' | 'marketing'
@@ -57,6 +56,51 @@ export interface AIApplyResponse {
   results: AIApplyResult
 }
 
+// Voice types (for compatibility with VoiceAssistantButton)
+export type VoiceLanguage = 'hy' | 'ru' | 'en'
+export type VoiceMode = 'free' | 'patient_add' | 'visit_add'
+
+export interface VoiceParseStructured {
+  first_name?: string
+  last_name?: string
+  phone?: string
+  diagnosis?: string
+  birth_date?: string
+  visit_date?: string
+  next_visit_date?: string
+  notes?: string
+}
+
+export interface VoiceParseResponse {
+  text: string
+  language: VoiceLanguage
+  mode: VoiceMode
+  structured?: VoiceParseStructured
+}
+
+/**
+ * Parse voice input (placeholder - returns mock for now)
+ */
+export async function parseVoice(
+  _audioBlob: Blob,
+  _mode: VoiceMode = 'free',
+  _language: VoiceLanguage = 'ru'
+): Promise<VoiceParseResponse> {
+  // TODO: Implement real voice parsing with Whisper API
+  return {
+    text: '',
+    language: 'ru',
+    mode: 'free',
+  }
+}
+
+/**
+ * Check if structured data is patient data
+ */
+export function isPatientStructured(data: VoiceParseStructured | undefined): data is VoiceParseStructured {
+  return !!(data && (data.first_name || data.last_name || data.phone))
+}
+
 /**
  * AI API client
  */
@@ -65,11 +109,7 @@ export const aiApi = {
    * Send request to AI assistant
    */
   async assistant(request: AIAssistantRequest): Promise<AIAssistantResponse> {
-    const token = localStorage.getItem(TOKEN_STORAGE_KEY)
-    if (!token) {
-      throw new Error('Authentication required')
-    }
-
+    // apiClient interceptor handles auth token automatically
     const response = await apiClient.post<AIAssistantResponse>(
       '/ai/assistant',
       {
@@ -77,8 +117,7 @@ export const aiApi = {
         patient_id: request.patient_id || null,
         text: request.text,
         locale: request.locale || 'ru',
-      },
-      { headers: buildAuthHeaders() }
+      }
     )
 
     return response.data
@@ -88,15 +127,10 @@ export const aiApi = {
    * Apply AI-suggested actions
    */
   async apply(actions: AIAction[]): Promise<AIApplyResponse> {
-    const token = localStorage.getItem(TOKEN_STORAGE_KEY)
-    if (!token) {
-      throw new Error('Authentication required')
-    }
-
+    // apiClient interceptor handles auth token automatically
     const response = await apiClient.post<AIApplyResponse>(
       '/ai/apply',
-      { actions },
-      { headers: buildAuthHeaders() }
+      { actions }
     )
 
     return response.data
