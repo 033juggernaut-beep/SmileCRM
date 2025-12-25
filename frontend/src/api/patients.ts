@@ -53,6 +53,7 @@ export type CreatePatientInput = {
 
 export type CreateVisitInput = {
   visitDate: string
+  visitTime?: string
   nextVisitDate?: string
   notes?: string
   medications?: string
@@ -120,7 +121,8 @@ const mapPatient = (data: ApiPatient): Patient => ({
   lastName: data.last_name,
   diagnosis: data.diagnosis ?? undefined,
   phone: data.phone ?? undefined,
-  status: isKnownStatus(data.status) ? data.status : undefined,
+  // Default to 'in_progress' if status is null/undefined (new patients should be in progress)
+  status: isKnownStatus(data.status) ? data.status : 'in_progress',
   segment: isKnownSegment(data.segment) ? data.segment : 'regular',
   doctorId: data.doctor_id ?? undefined,
   createdAt: data.created_at,
@@ -174,6 +176,7 @@ const buildUpdatePatientPayload = (payload: UpdatePatientInput) => {
 const buildVisitPayload = (payload: CreateVisitInput | UpdateVisitInput) => {
   const body: Record<string, string | undefined> = {
     visit_date: payload.visitDate,
+    visit_time: 'visitTime' in payload ? payload.visitTime : undefined,
     next_visit_date: payload.nextVisitDate,
     notes: payload.notes,
     medications: payload.medications,

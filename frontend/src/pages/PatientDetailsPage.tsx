@@ -7,10 +7,23 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   Box,
+  Button,
+  FormControl,
+  FormLabel,
   Heading,
+  Input,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
   Skeleton,
   Text,
+  Textarea,
   useColorMode,
+  useDisclosure,
   useToast,
   VStack,
 } from '@chakra-ui/react'
@@ -98,6 +111,13 @@ export const PatientDetailsPage = () => {
 
   // Medications state
   const [medications, setMedications] = useState<Medication[]>([])
+
+  // New Visit modal state
+  const newVisitModal = useDisclosure()
+  const [newVisitDate, setNewVisitDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [newVisitTime, setNewVisitTime] = useState('')
+  const [newVisitNotes, setNewVisitNotes] = useState('')
+  const [isCreatingVisit, setIsCreatingVisit] = useState(false)
 
   // Treatment plan state - mock data, ready for API integration
   const [treatmentSteps, setTreatmentSteps] = useState<TreatmentStep[]>([
@@ -235,17 +255,49 @@ export const PatientDetailsPage = () => {
     [patient, id, t]
   )
 
-  // Handle add visit
+  // Handle open new visit modal
   const handleAddVisit = useCallback(() => {
-    // Navigate to visit creation or open modal
-    // For now, we'll show a toast
-    toast({
-      title: t('patientCard.newVisit'),
-      description: 'Visit creation modal would open here',
-      status: 'info',
-      duration: 2000,
-    })
-  }, [t, toast])
+    // Reset form fields
+    setNewVisitDate(new Date().toISOString().split('T')[0])
+    setNewVisitTime('')
+    setNewVisitNotes('')
+    newVisitModal.onOpen()
+  }, [newVisitModal])
+
+  // Handle create new visit
+  const handleCreateVisit = useCallback(async () => {
+    if (!id || !newVisitDate) return
+
+    setIsCreatingVisit(true)
+    try {
+      const newVisit = await patientsApi.createVisit(id, {
+        visitDate: newVisitDate,
+        visitTime: newVisitTime || undefined,
+        notes: newVisitNotes || undefined,
+      })
+      
+      // Add new visit to the list
+      setVisits((prev) => [newVisit, ...prev])
+      
+      // Close modal and show success
+      newVisitModal.onClose()
+      toast({
+        title: t('patientCard.visitAdded') || 'Visit added',
+        status: 'success',
+        duration: 2000,
+      })
+    } catch (err) {
+      console.error('Failed to create visit:', err)
+      toast({
+        title: t('common.error'),
+        description: t('patientCard.visitAddError') || 'Failed to create visit',
+        status: 'error',
+        duration: 3000,
+      })
+    } finally {
+      setIsCreatingVisit(false)
+    }
+  }, [id, newVisitDate, newVisitTime, newVisitNotes, newVisitModal, toast, t])
 
   // Handle edit visit
   const handleEditVisit = useCallback(
@@ -501,6 +553,82 @@ export const PatientDetailsPage = () => {
 
       {/* Floating AI Assistant Widget - Bottom Right */}
       <FloatingAIAssistant onAction={handleAIAction} />
+
+      {/* New Visit Modal */}
+      <Modal isOpen={newVisitModal.isOpen} onClose={newVisitModal.onClose} isCentered>
+        <ModalOverlay bg="blackAlpha.600" />
+        <ModalContent mx={4} bg={isDark ? '#1E293B' : 'white'} borderRadius="xl">
+          <ModalHeader fontSize="md" color={isDark ? 'white' : 'gray.800'}>
+            {t('patientCard.newVisit')}
+          </ModalHeader>
+          <ModalCloseButton color={isDark ? 'gray.400' : 'gray.500'} />
+          <ModalBody>
+            <VStack spacing={4}>
+              <FormControl isRequired>
+                <FormLabel fontSize="sm" color={isDark ? 'gray.300' : 'gray.700'}>
+                  {t('patientCard.visitDate')}
+                </FormLabel>
+                <Input
+                  type="date"
+                  size="sm"
+                  value={newVisitDate}
+                  onChange={(e) => setNewVisitDate(e.target.value)}
+                  borderColor={isDark ? 'gray.600' : 'gray.200'}
+                  bg={isDark ? 'gray.700' : 'white'}
+                />
+              </FormControl>
+              <FormControl>
+                <FormLabel fontSize="sm" color={isDark ? 'gray.300' : 'gray.700'}>
+                  {t('visits.newTime') || 'Time'}
+                </FormLabel>
+                <Input
+                  type="time"
+                  size="sm"
+                  value={newVisitTime}
+                  onChange={(e) => setNewVisitTime(e.target.value)}
+                  borderColor={isDark ? 'gray.600' : 'gray.200'}
+                  bg={isDark ? 'gray.700' : 'white'}
+                />
+              </FormControl>
+              <FormControl>
+                <FormLabel fontSize="sm" color={isDark ? 'gray.300' : 'gray.700'}>
+                  {t('patientCard.description')}
+                </FormLabel>
+                <Textarea
+                  size="sm"
+                  value={newVisitNotes}
+                  onChange={(e) => setNewVisitNotes(e.target.value)}
+                  placeholder={t('patientCard.visitNotesPlaceholder')}
+                  rows={3}
+                  borderColor={isDark ? 'gray.600' : 'gray.200'}
+                  bg={isDark ? 'gray.700' : 'white'}
+                />
+              </FormControl>
+            </VStack>
+          </ModalBody>
+          <ModalFooter gap={2}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={newVisitModal.onClose}
+              color={isDark ? 'gray.300' : 'gray.600'}
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button
+              bg="#3B82F6"
+              color="white"
+              size="sm"
+              onClick={handleCreateVisit}
+              isLoading={isCreatingVisit}
+              isDisabled={!newVisitDate}
+              _hover={{ bg: '#2563EB' }}
+            >
+              {t('common.save')}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   )
 }

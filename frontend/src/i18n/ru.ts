@@ -421,6 +421,8 @@ const ru = {
     visitDate: 'Дата визита',
     description: 'Описание',
     visitNotesPlaceholder: 'Описание визита...',
+    visitAdded: 'Визит добавлен',
+    visitAddError: 'Не удалось создать визит',
     nextVisitDate: 'Следующий визит',
     nextVisit: 'Следующий визит',
 

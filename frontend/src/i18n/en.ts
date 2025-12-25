@@ -421,6 +421,8 @@ const en = {
     visitDate: 'Visit date',
     description: 'Description',
     visitNotesPlaceholder: 'Visit description...',
+    visitAdded: 'Visit added',
+    visitAddError: 'Failed to create visit',
     nextVisitDate: 'Next visit',
     nextVisit: 'Next visit',
 
