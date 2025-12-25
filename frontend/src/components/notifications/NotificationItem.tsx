@@ -183,7 +183,7 @@ export function NotificationItem({
       _hover={{
         bg: isDark ? 'rgba(51, 65, 85, 0.5)' : 'rgba(241, 245, 249, 1)',
       }}
-      transition="background 0.2s"
+      style={{ transition: 'background 0.2s' }}
       cursor={onClick ? 'pointer' : 'default'}
       onClick={onClick}
     >

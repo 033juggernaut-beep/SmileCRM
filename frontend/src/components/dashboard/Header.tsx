@@ -12,7 +12,7 @@
  */
 
 import { useCallback, useState } from 'react';
-import { Box, Flex, Text, useColorMode, useToast } from '@chakra-ui/react';
+import { Box, Flex, Text, useColorMode } from '@chakra-ui/react';
 import { Sun, Moon } from 'lucide-react';
 import { ToothLogo } from './ToothLogo';
 import { useNavigate } from 'react-router-dom';
@@ -41,7 +41,6 @@ export function getHeaderHeight(topInset: number): number {
 export function Header(_props?: { notificationCount?: number }) {
   const { colorMode, toggleColorMode } = useColorMode();
   const navigate = useNavigate();
-  const toast = useToast();
   const isDark = colorMode === 'dark';
 
   // Get safe area insets from Telegram

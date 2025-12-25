@@ -7,7 +7,7 @@
 
 import { useState, useCallback } from 'react'
 import { Box, Flex, Text, Button, Textarea, VStack, HStack, useColorMode, useToast } from '@chakra-ui/react'
-import { Sparkles, RefreshCw, Copy, Check, Pencil, MessageCircle, Send } from 'lucide-react'
+import { Sparkles, RefreshCw, Copy, Check, Pencil, MessageCircle } from 'lucide-react'
 import { CollapsibleSection } from './CollapsibleSection'
 import { useLanguage } from '../../context/LanguageContext'
 

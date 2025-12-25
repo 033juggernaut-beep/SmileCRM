@@ -30,10 +30,8 @@ import {
   Alert,
   AlertIcon,
   Input,
-  FormControl,
-  FormLabel,
 } from '@chakra-ui/react'
-import { Send, Copy, Check, MessageCircle, AlertTriangle } from 'lucide-react'
+import { Copy, Check, MessageCircle, AlertTriangle } from 'lucide-react'
 import { useLanguage } from '../../context/LanguageContext'
 import { marketingApi, type MessageTemplate } from '../../api/marketing'
 import { patientsApi, type Patient } from '../../api/patients'
@@ -275,9 +273,6 @@ export function MarketingSendModal({
       })
     }
   }, [tempWhatsApp, patientId, handleWhatsAppSend, toast, t])
-
-  const patientHasTelegram = !!patient?.telegramUsername
-  const patientHasWhatsApp = !!(patient?.whatsappPhone || patient?.phone)
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="lg" isCentered>

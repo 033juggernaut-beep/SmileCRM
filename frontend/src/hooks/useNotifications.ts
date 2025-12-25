@@ -35,45 +35,6 @@ interface UseNotificationsResult {
   refetch: () => Promise<void>
 }
 
-/**
- * Map API notification to frontend Notification type.
- */
-function mapApiToFrontend(api: ApiNotification): Notification {
-  // Map backend types to frontend types
-  const typeMap: Record<string, Notification['type']> = {
-    visit_reminder: 'visit_upcoming',
-    trial_warning: 'system_trial',
-    no_show: 'patient_no_show',
-    info: 'system_subscription',
-  }
-
-  return {
-    id: api.id,
-    type: typeMap[api.type] || 'system_subscription',
-    message: api.title,
-    timestamp: new Date(api.createdAt),
-    read: api.readAt !== null,
-    targetPath: getTargetPath(api),
-    patientName: (api.meta?.patient_name as string) || undefined,
-  }
-}
-
-/**
- * Get navigation path based on notification type and meta.
- */
-function getTargetPath(api: ApiNotification): string | undefined {
-  const patientId = api.meta?.patient_id as string | undefined
-
-  switch (api.type) {
-    case 'visit_reminder':
-    case 'no_show':
-      return patientId ? `/patients/${patientId}` : '/patients'
-    case 'trial_warning':
-      return '/subscription'
-    default:
-      return undefined
-  }
-}
 
 /**
  * Hook to fetch and manage notifications with API fallback to mock data.
