@@ -7,7 +7,7 @@
  * - Breakdown: list items with border-b
  */
 
-import { Box, Flex, Text, useColorMode } from '@chakra-ui/react'
+import { Box, Flex, Text, useColorMode, Skeleton } from '@chakra-ui/react'
 import { useLanguage } from '../../context/LanguageContext'
 
 export type VisitPeriod = '7d' | '30d'
@@ -18,14 +18,16 @@ export interface VisitsCardProps {
   todayVisits?: number
   weekVisits?: number
   monthVisits?: number
+  isLoading?: boolean
 }
 
 export function VisitsCard({
   period,
   onPeriodChange,
-  todayVisits = 14,
-  weekVisits = 84,
-  monthVisits = 345,
+  todayVisits = 0,
+  weekVisits = 0,
+  monthVisits = 0,
+  isLoading = false,
 }: VisitsCardProps) {
   const { colorMode } = useColorMode()
   const { t } = useLanguage()
@@ -54,14 +56,18 @@ export function VisitsCard({
       {/* Header Row */}
       <Flex align="center" justify="space-between" mb={2}>
         <Box>
-          <Text
-            fontSize="3xl"
-            fontWeight="bold"
-            letterSpacing="tight"
-            color={isDark ? 'white' : 'slate.800'}
-          >
-            {totalVisits}
-          </Text>
+          {isLoading ? (
+            <Skeleton height="36px" width="80px" mb={1} />
+          ) : (
+            <Text
+              fontSize="3xl"
+              fontWeight="bold"
+              letterSpacing="tight"
+              color={isDark ? 'white' : 'slate.800'}
+            >
+              {totalVisits.toLocaleString()}
+            </Text>
+          )}
           <Text
             fontSize="xs"
             fontWeight="medium"
@@ -138,9 +144,13 @@ export function VisitsCard({
           <Text fontSize="sm" color={isDark ? 'slate.400' : 'slate.500'}>
             {t('stats.todayVisits')}
           </Text>
-          <Text fontSize="sm" fontWeight="semibold" color={isDark ? 'white' : 'slate.800'}>
-            {todayVisits}
-          </Text>
+          {isLoading ? (
+            <Skeleton height="20px" width="40px" />
+          ) : (
+            <Text fontSize="sm" fontWeight="semibold" color={isDark ? 'white' : 'slate.800'}>
+              {todayVisits.toLocaleString()}
+            </Text>
+          )}
         </Flex>
         <Flex
           align="center"
@@ -152,9 +162,13 @@ export function VisitsCard({
           <Text fontSize="sm" color={isDark ? 'slate.400' : 'slate.500'}>
             {t('stats.visitsLast7Days')}
           </Text>
-          <Text fontSize="sm" fontWeight="semibold" color={isDark ? 'white' : 'slate.800'}>
-            {weekVisits}
-          </Text>
+          {isLoading ? (
+            <Skeleton height="20px" width="40px" />
+          ) : (
+            <Text fontSize="sm" fontWeight="semibold" color={isDark ? 'white' : 'slate.800'}>
+              {weekVisits.toLocaleString()}
+            </Text>
+          )}
         </Flex>
         <Flex
           align="center"
@@ -164,9 +178,13 @@ export function VisitsCard({
           <Text fontSize="sm" color={isDark ? 'slate.400' : 'slate.500'}>
             {t('stats.visitsLast30Days')}
           </Text>
-          <Text fontSize="sm" fontWeight="semibold" color={isDark ? 'white' : 'slate.800'}>
-            {monthVisits}
-          </Text>
+          {isLoading ? (
+            <Skeleton height="20px" width="40px" />
+          ) : (
+            <Text fontSize="sm" fontWeight="semibold" color={isDark ? 'white' : 'slate.800'}>
+              {monthVisits.toLocaleString()}
+            </Text>
+          )}
         </Flex>
       </Box>
     </Box>

@@ -80,6 +80,8 @@ const ru = {
     monthRevenue: 'Доход за месяц',
     monthExpenses: 'Расходы за месяц',
     month: 'Месяц',
+    // Error states
+    loadError: 'Не удалось загрузить статистику',
     // Mock data labels
     placeholder: 'Статистика скоро будет доступна',
   },

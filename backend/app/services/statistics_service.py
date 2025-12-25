@@ -54,7 +54,8 @@ def get_patients_stats(doctor_id: str) -> Dict[str, int]:
     
     total = len(patients)
     active = sum(1 for p in patients if p.get("status") == "in_progress")
-    vip = sum(1 for p in patients if p.get("segment") == "vip")
+    # Check both is_vip boolean and segment='vip'
+    vip = sum(1 for p in patients if p.get("is_vip") is True or p.get("segment") == "vip")
     
     return {"total": total, "active": active, "vip": vip}
 
@@ -64,12 +65,13 @@ def get_visits_stats(doctor_id: str) -> Dict[str, int]:
     try:
         visits = supabase_client.select("visits", filters={"doctor_id": doctor_id})
     except SupabaseNotConfiguredError:
-        return {"today": 0, "last_7_days": 0, "last_30_days": 0}
+        return {"total": 0, "today": 0, "last_7_days": 0, "last_30_days": 0}
     
     today = date.today()
-    seven_days_ago = today - timedelta(days=7)
-    thirty_days_ago = today - timedelta(days=30)
+    seven_days_ago = today - timedelta(days=6)  # Include today = 7 days
+    thirty_days_ago = today - timedelta(days=29)  # Include today = 30 days
     
+    total_count = len(visits)
     today_count = 0
     week_count = 0
     month_count = 0
@@ -86,7 +88,12 @@ def get_visits_stats(doctor_id: str) -> Dict[str, int]:
         if visit_date >= thirty_days_ago:
             month_count += 1
     
-    return {"today": today_count, "last_7_days": week_count, "last_30_days": month_count}
+    return {
+        "total": total_count,
+        "today": today_count,
+        "last_7_days": week_count,
+        "last_30_days": month_count
+    }
 
 
 def get_finance_stats(doctor_id: str) -> Dict[str, float]:
@@ -115,19 +122,20 @@ def get_finance_stats(doctor_id: str) -> Dict[str, float]:
         if payment_date >= month_start:
             income_month += amount
     
+    # TODO: Add expenses table support when available
     return {
         "income_today": float(income_today),
         "income_month": float(income_month),
-        "expenses_month": 0,
+        "expenses_month": 0,  # No expenses table yet
     }
 
 
-def get_visits_chart(doctor_id: str, period: str = "7d") -> Dict[str, Any]:
-    """Generate visits chart data for visualizing trends."""
+def get_visits_series(doctor_id: str, period: str = "7d") -> List[Dict[str, Any]]:
+    """Generate visits series data for chart visualization."""
     try:
         visits = supabase_client.select("visits", filters={"doctor_id": doctor_id})
     except SupabaseNotConfiguredError:
-        return {"period": period, "points": []}
+        return []
     
     today = date.today()
     days = 7 if period == "7d" else 30
@@ -142,24 +150,58 @@ def get_visits_chart(doctor_id: str, period: str = "7d") -> Dict[str, Any]:
         if start_date <= visit_date <= today:
             visits_by_date[visit_date] += 1
     
-    points: List[Dict[str, Any]] = []
+    # Build series with all days (including zeros for empty days)
+    series: List[Dict[str, Any]] = []
     current_date = start_date
     
     while current_date <= today:
-        points.append({
+        series.append({
             "date": current_date.isoformat(),
             "count": visits_by_date.get(current_date, 0),
         })
         current_date += timedelta(days=1)
     
-    return {"period": period, "points": points}
+    return series
 
 
 def get_statistics_overview(doctor_id: str, chart_period: str = "7d") -> Dict[str, Any]:
-    """Get complete statistics overview for a doctor."""
+    """
+    Get complete statistics overview for a doctor.
+    
+    Returns flat JSON structure:
+    {
+        "patients_total": 0,
+        "patients_active": 0,
+        "patients_vip": 0,
+        "visits_total": 0,
+        "visits_today": 0,
+        "visits_last_7d": 0,
+        "visits_last_30d": 0,
+        "finance_today_income_amd": 0,
+        "finance_month_income_amd": 0,
+        "finance_month_expense_amd": 0,
+        "visits_series": [{"date": "...", "count": 0}, ...]
+    }
+    """
+    patients = get_patients_stats(doctor_id)
+    visits = get_visits_stats(doctor_id)
+    finance = get_finance_stats(doctor_id)
+    series = get_visits_series(doctor_id, chart_period)
+    
     return {
-        "patients": get_patients_stats(doctor_id),
-        "visits": get_visits_stats(doctor_id),
-        "finance": get_finance_stats(doctor_id),
-        "visits_chart": get_visits_chart(doctor_id, chart_period),
+        # Patients
+        "patients_total": patients["total"],
+        "patients_active": patients["active"],
+        "patients_vip": patients["vip"],
+        # Visits
+        "visits_total": visits["total"],
+        "visits_today": visits["today"],
+        "visits_last_7d": visits["last_7_days"],
+        "visits_last_30d": visits["last_30_days"],
+        # Finance (AMD currency)
+        "finance_today_income_amd": finance["income_today"],
+        "finance_month_income_amd": finance["income_month"],
+        "finance_month_expense_amd": finance["expenses_month"],
+        # Chart series
+        "visits_series": series,
     }

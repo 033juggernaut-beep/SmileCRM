@@ -8,15 +8,23 @@
  * - Animated line drawing
  */
 
-import { Box, Flex, Text, useColorMode } from '@chakra-ui/react'
+import { Box, Flex, Text, useColorMode, Skeleton } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
 import { useLanguage } from '../../context/LanguageContext'
 
 export type VisitPeriod = '7d' | '30d'
 
+export type VisitSeriesPoint = {
+  date: string
+  count: number
+}
+
 export interface VisitDynamicsChartProps {
   period: VisitPeriod
   onPeriodChange: (period: VisitPeriod) => void
+  visitsSeries?: VisitSeriesPoint[]
+  totalVisits?: number
+  isLoading?: boolean
 }
 
 const MotionPath = motion.path
@@ -24,17 +32,21 @@ const MotionPath = motion.path
 export function VisitDynamicsChart({
   period,
   onPeriodChange,
+  visitsSeries = [],
+  totalVisits,
+  isLoading = false,
 }: VisitDynamicsChartProps) {
   const { colorMode } = useColorMode()
   const { t } = useLanguage()
   const isDark = colorMode === 'dark'
 
-  // Mock data
-  const data = period === '7d'
-    ? [12, 18, 15, 22, 28, 24, 32]
-    : [15, 18, 12, 15, 18, 22, 20, 25, 28, 30, 28, 25, 22, 20, 18, 22, 25, 28, 32, 35, 30, 28, 32, 35, 38, 40, 38, 35, 32, 36]
+  // Extract counts from series
+  const data = visitsSeries.length > 0 
+    ? visitsSeries.map(p => p.count) 
+    : [0]
 
-  const totalVisits = period === '7d' ? 84 : 345
+  // Calculate total from series if not provided
+  const displayTotal = totalVisits ?? data.reduce((sum, n) => sum + n, 0)
 
   const max = Math.max(...data)
   const min = Math.min(...data)
@@ -42,17 +54,19 @@ export function VisitDynamicsChart({
   const height = 120
   const width = 100
 
-  const points = data.map((val, i) => {
-    const x = (i / (data.length - 1)) * width
-    const y = height - ((val - min) / range) * (height * 0.7) - (height * 0.15)
-    return `${x},${y}`
-  }).join(' ')
+  const points = data.length > 1 
+    ? data.map((val, i) => {
+        const x = (i / (data.length - 1)) * width
+        const y = height - ((val - min) / range) * (height * 0.7) - (height * 0.15)
+        return `${x},${y}`
+      }).join(' ')
+    : `50,${height / 2}` // Single point in the middle
 
   const strokeColor = isDark ? '#60a5fa' : '#3b82f6'
   const gradientStart = isDark ? 'rgba(96, 165, 250, 0.25)' : 'rgba(59, 130, 246, 0.25)'
 
   const lastPoint = points.split(' ').slice(-1)[0]
-  const [lastX, lastY] = lastPoint ? lastPoint.split(',') : ['0', '0']
+  const [lastX, lastY] = lastPoint ? lastPoint.split(',') : ['50', '60']
 
   return (
     <Box
@@ -75,22 +89,31 @@ export function VisitDynamicsChart({
       {/* Header Row */}
       <Flex align="center" justify="space-between" mb={2}>
         <Box>
-          <Text
-            fontSize="3xl"
-            fontWeight="bold"
-            letterSpacing="tight"
-            color={isDark ? 'white' : 'slate.800'}
-          >
-            {totalVisits}
-          </Text>
-          <Text
-            fontSize="xs"
-            fontWeight="medium"
-            mt={1}
-            color={isDark ? 'slate.400' : 'slate.500'}
-          >
-            {t('stats.visitsForPeriod')}
-          </Text>
+          {isLoading ? (
+            <>
+              <Skeleton height="36px" width="80px" mb={1} />
+              <Skeleton height="16px" width="120px" />
+            </>
+          ) : (
+            <>
+              <Text
+                fontSize="3xl"
+                fontWeight="bold"
+                letterSpacing="tight"
+                color={isDark ? 'white' : 'slate.800'}
+              >
+                {displayTotal.toLocaleString()}
+              </Text>
+              <Text
+                fontSize="xs"
+                fontWeight="medium"
+                mt={1}
+                color={isDark ? 'slate.400' : 'slate.500'}
+              >
+                {t('stats.visitsForPeriod')}
+              </Text>
+            </>
+          )}
         </Box>
 
         {/* Period Toggle */}
@@ -149,52 +172,60 @@ export function VisitDynamicsChart({
 
       {/* Chart */}
       <Box w="full" h="120px" position="relative" mt={6} mb={2}>
-        <Box
-          as="svg"
-          w="full"
-          h="full"
-          overflow="visible"
-          viewBox={`0 0 ${width} ${height}`}
-          preserveAspectRatio="none"
-        >
-          <defs>
-            <linearGradient id="chartGradientBlue" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={gradientStart} stopOpacity="1" />
-              <stop offset="100%" stopColor={gradientStart} stopOpacity="0" />
-            </linearGradient>
-          </defs>
+        {isLoading ? (
+          <Skeleton height="100%" width="100%" borderRadius="md" />
+        ) : (
+          <Box
+            as="svg"
+            w="full"
+            h="full"
+            overflow="visible"
+            viewBox={`0 0 ${width} ${height}`}
+            preserveAspectRatio="none"
+          >
+            <defs>
+              <linearGradient id="chartGradientBlue" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={gradientStart} stopOpacity="1" />
+                <stop offset="100%" stopColor={gradientStart} stopOpacity="0" />
+              </linearGradient>
+            </defs>
 
-          {/* Area fill */}
-          <path
-            d={`M0,${height} L${points.split(' ')[0]} ${points} L${width},${height} Z`}
-            fill="url(#chartGradientBlue)"
-          />
+            {/* Area fill */}
+            {data.length > 1 && (
+              <path
+                d={`M0,${height} L${points.split(' ')[0]} ${points} L${width},${height} Z`}
+                fill="url(#chartGradientBlue)"
+              />
+            )}
 
-          {/* Line */}
-          <MotionPath
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 1.5, ease: 'easeOut' }}
-            d={`M${points.split(' ').join(' L')}`}
-            fill="none"
-            stroke={strokeColor}
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            vectorEffect="non-scaling-stroke"
-          />
+            {/* Line */}
+            {data.length > 1 && (
+              <MotionPath
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 1.5, ease: 'easeOut' }}
+                d={`M${points.split(' ').join(' L')}`}
+                fill="none"
+                stroke={strokeColor}
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                vectorEffect="non-scaling-stroke"
+              />
+            )}
 
-          {/* End dot */}
-          <circle
-            cx={lastX}
-            cy={lastY}
-            r="3"
-            fill={isDark ? '#0F172A' : 'white'}
-            stroke={isDark ? '#60a5fa' : '#2563EB'}
-            strokeWidth="2.5"
-            vectorEffect="non-scaling-stroke"
-          />
-        </Box>
+            {/* End dot */}
+            <circle
+              cx={lastX}
+              cy={lastY}
+              r="3"
+              fill={isDark ? '#0F172A' : 'white'}
+              stroke={isDark ? '#60a5fa' : '#2563EB'}
+              strokeWidth="2.5"
+              vectorEffect="non-scaling-stroke"
+            />
+          </Box>
+        )}
 
         {/* X-axis labels */}
         <Flex
@@ -214,4 +245,3 @@ export function VisitDynamicsChart({
 }
 
 export default VisitDynamicsChart
-

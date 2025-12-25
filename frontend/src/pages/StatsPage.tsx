@@ -1,18 +1,18 @@
 /**
- * StatsPage - Statistics page matching Superdesign reference 1:1
+ * StatsPage - Statistics page with real data from API
  * 
  * Features:
  * - General metrics: Total patients, Active, VIP
- * - Finance: Today revenue, Month revenue, Month expenses
+ * - Finance: Today revenue, Month revenue, Month expenses (AMD)
  * - Visits: Period breakdown with toggle
  * - Visit dynamics: Line chart with animation
  * - All styled with Chakra UI (no Tailwind)
  */
 
-import { useState, useCallback } from 'react'
-import { Box, SimpleGrid, useColorMode } from '@chakra-ui/react'
+import { useState, useCallback, useEffect } from 'react'
+import { Box, SimpleGrid, useColorMode, Skeleton, VStack, Text, Button, Flex } from '@chakra-ui/react'
 import { useNavigate } from 'react-router-dom'
-import { Users, Activity, Crown, Wallet, TrendingUp, TrendingDown, Calendar } from 'lucide-react'
+import { Users, Activity, Crown, Wallet, TrendingUp, TrendingDown, Calendar, RefreshCw, AlertTriangle } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 import { Header } from '../components/dashboard/Header'
@@ -22,6 +22,7 @@ import { BackButton } from '../components/patientCard/BackButton'
 import { useLanguage } from '../context/LanguageContext'
 import { useTelegramBackButton } from '../hooks/useTelegramBackButton'
 import { useTelegramSafeArea } from '../hooks/useTelegramSafeArea'
+import { statsApi, type StatsOverview, type StatsRange } from '../api/stats'
 
 import {
   StatCard,
@@ -34,12 +35,34 @@ import type { VisitPeriod } from '../components/statistics'
 
 const MotionMain = motion.create(Box)
 
+/**
+ * Format AMD currency with thousands separator, no decimals
+ */
+function formatAMD(amount: number): string {
+  return new Intl.NumberFormat('hy-AM', {
+    style: 'decimal',
+    maximumFractionDigits: 0,
+  }).format(amount) + ' ֏'
+}
+
+/**
+ * Format number with thousands separator
+ */
+function formatNumber(n: number): string {
+  return new Intl.NumberFormat('en-US').format(n)
+}
+
 export const StatsPage = () => {
   const navigate = useNavigate()
   const { colorMode } = useColorMode()
   const { t } = useLanguage()
   const isDark = colorMode === 'dark'
   const [period, setPeriod] = useState<VisitPeriod>('7d')
+  
+  // API state
+  const [data, setData] = useState<StatsOverview | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   // Telegram integration
   const { topInset } = useTelegramSafeArea()
@@ -58,18 +81,94 @@ export const StatsPage = () => {
     { label: t('home.privacy'), onClick: () => navigate('/privacy') },
   ]
 
-  // Mock data - ready to be replaced with real API data
-  const mockData = {
-    totalPatients: '1,247',
-    activePatients: '854',
-    vipPatients: '87',
-    todayRevenue: '42,500 ₽',
-    monthRevenue: '1.24 M ₽',
-    monthExpenses: '486,200 ₽',
-    todayVisits: 14,
-    weekVisits: 84,
-    monthVisits: 345,
+  // Fetch statistics
+  const fetchStats = useCallback(async () => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const result = await statsApi.getOverview(period as StatsRange)
+      setData(result)
+    } catch (err) {
+      console.error('Failed to fetch statistics:', err)
+      setError(t('stats.loadError') || 'Failed to load statistics')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [period, t])
+
+  // Fetch on mount and when period changes
+  useEffect(() => {
+    fetchStats()
+  }, [fetchStats])
+
+  // Handle period change - refetch data
+  const handlePeriodChange = (newPeriod: VisitPeriod) => {
+    setPeriod(newPeriod)
+    // Data will be refetched via useEffect
   }
+
+  // Error state component
+  const ErrorState = () => (
+    <Box 
+      textAlign="center" 
+      py={12}
+      px={4}
+    >
+      <Flex
+        w="64px"
+        h="64px"
+        mx="auto"
+        mb={4}
+        borderRadius="full"
+        bg={isDark ? 'rgba(239, 68, 68, 0.15)' : '#FEE2E2'}
+        alignItems="center"
+        justifyContent="center"
+      >
+        <AlertTriangle 
+          size={28} 
+          color={isDark ? '#F87171' : '#DC2626'}
+        />
+      </Flex>
+      <Text
+        fontSize="md"
+        fontWeight="medium"
+        color={isDark ? 'slate.300' : 'slate.700'}
+        mb={2}
+      >
+        {error}
+      </Text>
+      <Button
+        leftIcon={<RefreshCw size={16} />}
+        onClick={fetchStats}
+        size="sm"
+        colorScheme="blue"
+        variant="ghost"
+        mt={4}
+      >
+        {t('common.retry') || 'Retry'}
+      </Button>
+    </Box>
+  )
+
+  // Skeleton loading for stat cards
+  const StatCardSkeleton = () => (
+    <Box
+      borderRadius="xl"
+      p={5}
+      bg={isDark ? 'rgba(30, 41, 59, 0.7)' : 'white'}
+      border="1px solid"
+      borderColor={isDark ? 'rgba(51, 65, 85, 0.5)' : '#DBEAFE'}
+    >
+      <Flex align="flex-start" justify="space-between" mb={4}>
+        <Skeleton w="40px" h="40px" borderRadius="lg" />
+        <Skeleton w="50px" h="24px" borderRadius="full" />
+      </Flex>
+      <VStack align="start" spacing={2}>
+        <Skeleton h="16px" w="80px" />
+        <Skeleton h="32px" w="100px" />
+      </VStack>
+    </Box>
+  )
 
   return (
     <Box
@@ -126,103 +225,132 @@ export const StatsPage = () => {
             {/* Page Title Block */}
             <StatisticsHeader />
 
+            {/* Error State */}
+            {error && !isLoading && <ErrorState />}
+
             {/* Stats Grid - Two columns on large screens */}
-            <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6} maxW="3xl" mx="auto">
-              {/* Left Column */}
-              <Box>
-                {/* Section 1: General Metrics */}
-                <StatsSection
-                  title={t('stats.generalMetrics')}
-                  icon={<Activity />}
-                  delay={0.1}
-                >
-                  <SimpleGrid columns={{ base: 1, sm: 3 }} spacing={3}>
-                    <StatCard
-                      icon={<Users />}
-                      badge={t('stats.total')}
-                      value={mockData.totalPatients}
-                      label={t('stats.totalPatients')}
-                      color="blue"
-                    />
-                    <StatCard
-                      icon={<Activity />}
-                      badge={t('stats.active')}
-                      value={mockData.activePatients}
-                      label={t('stats.activePatients')}
-                      color="emerald"
-                    />
-                    <StatCard
-                      icon={<Crown />}
-                      badge={t('stats.vip')}
-                      value={mockData.vipPatients}
-                      label={t('stats.vipPatients')}
-                      color="amber"
-                    />
-                  </SimpleGrid>
-                </StatsSection>
+            {!error && (
+              <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6} maxW="3xl" mx="auto">
+                {/* Left Column */}
+                <Box>
+                  {/* Section 1: General Metrics */}
+                  <StatsSection
+                    title={t('stats.generalMetrics')}
+                    icon={<Activity />}
+                    delay={0.1}
+                  >
+                    <SimpleGrid columns={{ base: 1, sm: 3 }} spacing={3}>
+                      {isLoading ? (
+                        <>
+                          <StatCardSkeleton />
+                          <StatCardSkeleton />
+                          <StatCardSkeleton />
+                        </>
+                      ) : (
+                        <>
+                          <StatCard
+                            icon={<Users />}
+                            badge={t('stats.total')}
+                            value={formatNumber(data?.patients_total ?? 0)}
+                            label={t('stats.totalPatients')}
+                            color="blue"
+                          />
+                          <StatCard
+                            icon={<Activity />}
+                            badge={t('stats.active')}
+                            value={formatNumber(data?.patients_active ?? 0)}
+                            label={t('stats.activePatients')}
+                            color="emerald"
+                          />
+                          <StatCard
+                            icon={<Crown />}
+                            badge={t('stats.vip')}
+                            value={formatNumber(data?.patients_vip ?? 0)}
+                            label={t('stats.vipPatients')}
+                            color="amber"
+                          />
+                        </>
+                      )}
+                    </SimpleGrid>
+                  </StatsSection>
 
-                {/* Section 2: Finance */}
-                <StatsSection
-                  title={t('stats.finance')}
-                  icon={<Wallet />}
-                  delay={0.2}
-                >
-                  <SimpleGrid columns={{ base: 1, sm: 3 }} spacing={3}>
-                    <StatCard
-                      icon={<Wallet />}
-                      badge="+12%"
-                      value={mockData.todayRevenue}
-                      label={t('stats.todayRevenue')}
-                      color="emerald"
-                    />
-                    <StatCard
-                      icon={<TrendingUp />}
-                      badge={t('stats.month')}
-                      value={mockData.monthRevenue}
-                      label={t('stats.monthRevenue')}
-                      color="slate"
-                    />
-                    <StatCard
-                      icon={<TrendingDown />}
-                      badge="-3%"
-                      value={mockData.monthExpenses}
-                      label={t('stats.monthExpenses')}
-                      color="red"
-                    />
-                  </SimpleGrid>
-                </StatsSection>
-              </Box>
+                  {/* Section 2: Finance */}
+                  <StatsSection
+                    title={t('stats.finance')}
+                    icon={<Wallet />}
+                    delay={0.2}
+                  >
+                    <SimpleGrid columns={{ base: 1, sm: 3 }} spacing={3}>
+                      {isLoading ? (
+                        <>
+                          <StatCardSkeleton />
+                          <StatCardSkeleton />
+                          <StatCardSkeleton />
+                        </>
+                      ) : (
+                        <>
+                          <StatCard
+                            icon={<Wallet />}
+                            badge={t('stats.today')}
+                            value={formatAMD(data?.finance_today_income_amd ?? 0)}
+                            label={t('stats.todayRevenue')}
+                            color="emerald"
+                          />
+                          <StatCard
+                            icon={<TrendingUp />}
+                            badge={t('stats.month')}
+                            value={formatAMD(data?.finance_month_income_amd ?? 0)}
+                            label={t('stats.monthRevenue')}
+                            color="slate"
+                          />
+                          <StatCard
+                            icon={<TrendingDown />}
+                            badge={t('stats.month')}
+                            value={formatAMD(data?.finance_month_expense_amd ?? 0)}
+                            label={t('stats.monthExpenses')}
+                            color="red"
+                          />
+                        </>
+                      )}
+                    </SimpleGrid>
+                  </StatsSection>
+                </Box>
 
-              {/* Right Column */}
-              <Box>
-                {/* Section 3: Visits */}
-                <StatsSection
-                  title={t('stats.visits')}
-                  icon={<Calendar />}
-                  delay={0.3}
-                >
-                  <VisitsCard
-                    period={period}
-                    onPeriodChange={setPeriod}
-                    todayVisits={mockData.todayVisits}
-                    weekVisits={mockData.weekVisits}
-                    monthVisits={mockData.monthVisits}
-                  />
-                </StatsSection>
+                {/* Right Column */}
+                <Box>
+                  {/* Section 3: Visits */}
+                  <StatsSection
+                    title={t('stats.visits')}
+                    icon={<Calendar />}
+                    delay={0.3}
+                  >
+                    <VisitsCard
+                      period={period}
+                      onPeriodChange={handlePeriodChange}
+                      todayVisits={data?.visits_today ?? 0}
+                      weekVisits={data?.visits_last_7d ?? 0}
+                      monthVisits={data?.visits_last_30d ?? 0}
+                      isLoading={isLoading}
+                    />
+                  </StatsSection>
 
-                {/* Section 4: Visit Dynamics */}
-                <StatsSection
-                  title={t('stats.visitDynamics')}
-                  icon={<TrendingUp />}
-                  delay={0.4}
-                >
-                  <VisitDynamicsChart
-                    period={period}
-                    onPeriodChange={setPeriod}
-                  />
-                </StatsSection>
-              </Box>
-            </SimpleGrid>
+                  {/* Section 4: Visit Dynamics */}
+                  <StatsSection
+                    title={t('stats.visitDynamics')}
+                    icon={<TrendingUp />}
+                    delay={0.4}
+                  >
+                    <VisitDynamicsChart
+                      period={period}
+                      onPeriodChange={handlePeriodChange}
+                      visitsSeries={data?.visits_series ?? []}
+                      totalVisits={period === '7d' ? data?.visits_last_7d : data?.visits_last_30d}
+                      isLoading={isLoading}
+                    />
+                  </StatsSection>
+                </Box>
+              </SimpleGrid>
+            )}
           </Box>
         </MotionMain>
 

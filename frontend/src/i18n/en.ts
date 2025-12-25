@@ -80,6 +80,8 @@ const en = {
     monthRevenue: 'Month revenue',
     monthExpenses: 'Month expenses',
     month: 'Month',
+    // Error states
+    loadError: 'Failed to load statistics',
     // Mock data labels
     placeholder: 'Statistics coming soon',
   },

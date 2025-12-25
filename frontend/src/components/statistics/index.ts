@@ -15,5 +15,5 @@ export { VisitsCard } from './VisitsCard'
 export type { VisitsCardProps, VisitPeriod } from './VisitsCard'
 
 export { VisitDynamicsChart } from './VisitDynamicsChart'
-export type { VisitDynamicsChartProps } from './VisitDynamicsChart'
+export type { VisitDynamicsChartProps, VisitSeriesPoint } from './VisitDynamicsChart'
 

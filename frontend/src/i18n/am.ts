@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Armenian translations - DEFAULT LANGUAGE
  */
 const am = {
@@ -81,6 +81,8 @@ const am = {
     monthRevenue: 'Amsakan ekamut',
     monthExpenses: 'Amsakan cakhser',
     month: 'Amis',
+    // Error states
+    loadError: 'Vijakagrutyan bernman sxal',
     // Mock data labels
     placeholder: 'Vijakagrutyan mot klini',
   },
