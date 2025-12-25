@@ -640,7 +640,9 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
         whileTap={{ scale: 0.95 }}
         aria-label="Voice AI Assistant"
       >
-        <Box as={Mic} w={6} h={6} />
+        <Box w={7} h={7}>
+          <AssistantIcon />
+        </Box>
       </MotionButton>
     </Box>
   )
