@@ -26,8 +26,9 @@ import {
   useDisclosure,
   useToast,
   HStack,
+  VStack,
 } from '@chakra-ui/react'
-import { Phone, User, Star, Pencil, X, Check } from 'lucide-react'
+import { Phone, User, Star, Pencil, X, Check, UserCircle } from 'lucide-react'
 import { useLanguage } from '../../context/LanguageContext'
 import { apiClient } from '../../api/client'
 import { TOKEN_STORAGE_KEY } from '../../constants/storage'
@@ -48,6 +49,10 @@ export function PatientInfoCard({ patient, onPatientUpdate }: PatientInfoCardPro
   // DOB editing state
   const [dobValue, setDobValue] = useState(patient.birthDate || '')
   const [isSaving, setIsSaving] = useState(false)
+
+  // Segment editing state
+  const segmentPopover = useDisclosure()
+  const [isSavingSegment, setIsSavingSegment] = useState(false)
 
   const statusConfig: Record<PatientStatus, { label: string; bg: string; text: string }> = {
     in_progress: {
@@ -163,6 +168,65 @@ export function PatientInfoCard({ patient, onPatientUpdate }: PatientInfoCardPro
     onClose()
   }, [patient.birthDate, onClose])
 
+  // Handle segment change
+  const handleSegmentChange = useCallback(async (newSegment: PatientSegment) => {
+    if (newSegment === patient.segment) {
+      segmentPopover.onClose()
+      return
+    }
+
+    setIsSavingSegment(true)
+    try {
+      const authToken = localStorage.getItem(TOKEN_STORAGE_KEY)
+      if (!authToken) {
+        throw new Error(t('patientDetails.authRequired'))
+      }
+
+      await apiClient.patch(
+        `/patients/${patient.id}`,
+        { segment: newSegment },
+        { headers: { Authorization: `Bearer ${authToken}` } }
+      )
+
+      // Update local state
+      const updatedPatient = { ...patient, segment: newSegment }
+      onPatientUpdate?.(updatedPatient)
+
+      toast({
+        title: newSegment === 'vip' 
+          ? t('patientDetails.segmentVipSet') || 'Patient marked as VIP'
+          : t('patientDetails.segmentRegularSet') || 'Patient marked as Regular',
+        status: 'success',
+        duration: 2000,
+        isClosable: true,
+      })
+
+      segmentPopover.onClose()
+    } catch (error: unknown) {
+      console.error('Failed to save segment:', error)
+      
+      let errorMessage = t('patientDetails.saveError')
+      if (error && typeof error === 'object') {
+        const axiosError = error as { response?: { data?: { detail?: string } }; message?: string }
+        if (axiosError.response?.data?.detail) {
+          errorMessage = axiosError.response.data.detail
+        } else if (axiosError.message) {
+          errorMessage = axiosError.message
+        }
+      }
+      
+      toast({
+        title: t('common.error'),
+        description: errorMessage,
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+      })
+    } finally {
+      setIsSavingSegment(false)
+    }
+  }, [patient, onPatientUpdate, segmentPopover, toast, t])
+
   // Theme colors for popover
   const popoverBg = isDark ? 'gray.800' : 'white'
   const inputBg = isDark ? 'gray.700' : 'gray.50'
@@ -190,24 +254,84 @@ export function PatientInfoCard({ patient, onPatientUpdate }: PatientInfoCardPro
           {patient.firstName} {patient.lastName}
         </Text>
         <Flex align="center" gap={2} flexShrink={0}>
-          {/* Segment Badge */}
-          <Flex
-            as="span"
-            align="center"
-            gap={1}
-            px={2}
-            py={0.5}
-            borderRadius="full"
-            fontSize="xs"
-            fontWeight="medium"
-            border="1px solid"
-            bg={segment.bg}
-            color={segment.text}
-            borderColor={segment.border}
+          {/* Segment Badge - Clickable */}
+          <Popover
+            isOpen={segmentPopover.isOpen}
+            onOpen={segmentPopover.onOpen}
+            onClose={segmentPopover.onClose}
+            placement="bottom-start"
+            closeOnBlur={true}
           >
-            {segment.icon && <Box as={Star} w={3} h={3} />}
-            {segment.label}
-          </Flex>
+            <PopoverTrigger>
+              <Flex
+                as="button"
+                align="center"
+                gap={1}
+                px={2}
+                py={0.5}
+                borderRadius="full"
+                fontSize="xs"
+                fontWeight="medium"
+                border="1px solid"
+                bg={segment.bg}
+                color={segment.text}
+                borderColor={segment.border}
+                cursor="pointer"
+                transition="all 0.15s"
+                _hover={{
+                  opacity: 0.8,
+                  transform: 'scale(1.02)',
+                }}
+              >
+                {segment.icon && <Box as={Star} w={3} h={3} />}
+                {segment.label}
+                <Box as={Pencil} w={2.5} h={2.5} ml={0.5} opacity={0.6} />
+              </Flex>
+            </PopoverTrigger>
+            <PopoverContent
+              bg={popoverBg}
+              borderColor={inputBorder}
+              borderRadius="xl"
+              boxShadow="lg"
+              w="auto"
+              minW="140px"
+            >
+              <PopoverArrow bg={popoverBg} />
+              <PopoverBody p={2}>
+                <Text fontSize="xs" fontWeight="medium" mb={2} color={isDark ? 'gray.400' : 'gray.500'}>
+                  {t('patientDetails.selectSegment') || 'Select segment'}
+                </Text>
+                <VStack spacing={1} align="stretch">
+                  {/* VIP Option */}
+                  <Button
+                    size="sm"
+                    variant={patient.segment === 'vip' ? 'solid' : 'ghost'}
+                    colorScheme={patient.segment === 'vip' ? 'blue' : 'gray'}
+                    leftIcon={<Star size={14} />}
+                    justifyContent="flex-start"
+                    onClick={() => handleSegmentChange('vip')}
+                    isLoading={isSavingSegment}
+                    isDisabled={isSavingSegment}
+                  >
+                    VIP
+                  </Button>
+                  {/* Regular Option */}
+                  <Button
+                    size="sm"
+                    variant={patient.segment === 'regular' || !patient.segment ? 'solid' : 'ghost'}
+                    colorScheme={patient.segment === 'regular' || !patient.segment ? 'gray' : 'gray'}
+                    leftIcon={<UserCircle size={14} />}
+                    justifyContent="flex-start"
+                    onClick={() => handleSegmentChange('regular')}
+                    isLoading={isSavingSegment}
+                    isDisabled={isSavingSegment}
+                  >
+                    {t('segment.regular') || 'Regular'}
+                  </Button>
+                </VStack>
+              </PopoverBody>
+            </PopoverContent>
+          </Popover>
           {/* Status Badge */}
           {status && (
             <Flex
