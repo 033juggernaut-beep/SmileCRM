@@ -1,11 +1,6 @@
 /**
  * VisitsPage - Full page view for managing visits
- * 
- * Features:
- * - Date navigation (today, previous/next day)
- * - List of visits with patient info
- * - Quick status update buttons
- * - Reschedule modal
+ * Matches CRM style with blue accent colors
  */
 
 import { useState, useCallback, useEffect } from 'react'
@@ -32,7 +27,6 @@ import {
   Textarea,
   useDisclosure,
   Skeleton,
-  Badge,
 } from '@chakra-ui/react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -76,16 +70,31 @@ const isToday = (dateStr: string): boolean => {
   return dateStr === today
 }
 
-// Get status color scheme
-const getStatusColorScheme = (status: VisitStatus): string => {
-  const map: Record<VisitStatus, string> = {
-    scheduled: 'blue',
-    in_progress: 'yellow',
-    completed: 'green',
-    no_show: 'red',
-    rescheduled: 'gray',
+// Get status styles - using CRM blue/neutral palette
+const getStatusStyles = (status: VisitStatus, isDark: boolean) => {
+  const styles: Record<VisitStatus, { bg: string; color: string }> = {
+    scheduled: {
+      bg: isDark ? 'rgba(59, 130, 246, 0.15)' : '#DBEAFE',
+      color: isDark ? '#60A5FA' : '#2563EB',
+    },
+    in_progress: {
+      bg: isDark ? 'rgba(245, 158, 11, 0.15)' : '#FEF3C7',
+      color: isDark ? '#FBBF24' : '#D97706',
+    },
+    completed: {
+      bg: isDark ? 'rgba(100, 116, 139, 0.15)' : '#F1F5F9',
+      color: isDark ? '#94A3B8' : '#64748B',
+    },
+    no_show: {
+      bg: isDark ? 'rgba(239, 68, 68, 0.15)' : '#FEE2E2',
+      color: isDark ? '#F87171' : '#DC2626',
+    },
+    rescheduled: {
+      bg: isDark ? 'rgba(100, 116, 139, 0.15)' : '#F1F5F9',
+      color: isDark ? '#94A3B8' : '#64748B',
+    },
   }
-  return map[status] || 'gray'
+  return styles[status] || styles.scheduled
 }
 
 // Get status label
@@ -129,6 +138,13 @@ export function VisitsPage() {
   const dateStr = formatDateApi(currentDate)
   const displayDate = formatDate(dateStr, language)
   const isTodayView = isToday(dateStr)
+  
+  // CRM Colors
+  const cardBg = isDark ? 'rgba(30, 41, 59, 0.7)' : 'white'
+  const borderColor = isDark ? 'rgba(51, 65, 85, 0.5)' : '#DBEAFE'
+  const textColor = isDark ? '#E2E8F0' : '#334155'
+  const mutedColor = isDark ? '#64748B' : '#94A3B8'
+  const accentColor = isDark ? '#60A5FA' : '#2563EB'
   
   // Fetch visits for current date
   const fetchVisits = useCallback(async () => {
@@ -186,7 +202,6 @@ export function VisitsPage() {
         duration: 2000,
       })
       
-      // Refresh visits
       fetchVisits()
     } catch (err) {
       console.error('Failed to update status:', err)
@@ -198,13 +213,8 @@ export function VisitsPage() {
     }
   }
   
-  const handleMarkInProgress = (visit: Visit) => {
-    updateStatus(visit, 'in_progress')
-  }
-  
-  const handleMarkCompleted = (visit: Visit) => {
-    updateStatus(visit, 'completed')
-  }
+  const handleMarkInProgress = (visit: Visit) => updateStatus(visit, 'in_progress')
+  const handleMarkCompleted = (visit: Visit) => updateStatus(visit, 'completed')
   
   const handleOpenNoShowModal = (visit: Visit) => {
     setSelectedVisit(visit)
@@ -214,7 +224,6 @@ export function VisitsPage() {
   
   const handleConfirmNoShow = async () => {
     if (!selectedVisit) return
-    
     setIsMarkingNoShow(true)
     try {
       await updateStatus(selectedVisit, 'no_show', noShowNote || undefined)
@@ -234,28 +243,14 @@ export function VisitsPage() {
   
   const handleConfirmReschedule = async () => {
     if (!selectedVisit || !rescheduleDate) return
-    
     setIsRescheduling(true)
     try {
-      await updateStatus(
-        selectedVisit,
-        'rescheduled',
-        rescheduleNote || undefined,
-        rescheduleDate,
-        rescheduleTime || undefined
-      )
+      await updateStatus(selectedVisit, 'rescheduled', rescheduleNote || undefined, rescheduleDate, rescheduleTime || undefined)
       rescheduleModal.onClose()
     } finally {
       setIsRescheduling(false)
     }
   }
-  
-  // Colors
-  const cardBg = isDark ? 'rgba(30, 41, 59, 0.7)' : 'white'
-  const borderColor = isDark ? 'rgba(51, 65, 85, 0.5)' : '#E2E8F0'
-  const textColor = isDark ? '#E2E8F0' : '#334155'
-  const mutedColor = isDark ? '#64748B' : '#94A3B8'
-  const accentColor = isDark ? '#60A5FA' : '#2563EB'
   
   return (
     <PremiumLayout
@@ -265,36 +260,40 @@ export function VisitsPage() {
       background="gradient"
       safeAreaBottom
     >
-      <VStack spacing={4} align="stretch" pb={4}>
-        {/* Date Navigation */}
-        <Flex
-          align="center"
+      <VStack spacing={4} align="stretch" pb={4} maxW="768px" mx="auto" w="100%">
+        {/* Date Navigation - Compact toolbar style */}
+        <HStack
           justify="space-between"
+          align="center"
           bg={cardBg}
-          p={3}
-          borderRadius="xl"
+          px={3}
+          py={2}
+          borderRadius="lg"
           border="1px solid"
           borderColor={borderColor}
         >
           <IconButton
             aria-label="Previous day"
-            icon={<ChevronLeft size={20} />}
+            icon={<ChevronLeft size={18} />}
             variant="ghost"
             size="sm"
             onClick={goToPreviousDay}
+            color={mutedColor}
           />
           
           <VStack spacing={0}>
-            <Text fontSize="md" fontWeight="semibold" color={textColor}>
+            <Text fontSize="sm" fontWeight="semibold" color={textColor}>
               {displayDate}
             </Text>
             {!isTodayView && (
               <Button
                 size="xs"
-                variant="ghost"
+                variant="link"
                 color={accentColor}
                 onClick={goToToday}
-                leftIcon={<Calendar size={12} />}
+                fontWeight="normal"
+                h="auto"
+                py={0}
               >
                 {t('visits.goToToday') || 'Go to today'}
               </Button>
@@ -303,17 +302,18 @@ export function VisitsPage() {
           
           <IconButton
             aria-label="Next day"
-            icon={<ChevronRight size={20} />}
+            icon={<ChevronRight size={18} />}
             variant="ghost"
             size="sm"
             onClick={goToNextDay}
+            color={mutedColor}
           />
-        </Flex>
+        </HStack>
         
         {/* Visits Count */}
-        <Text fontSize="sm" color={mutedColor} textAlign="center">
+        <Text fontSize="xs" color={mutedColor} textAlign="center">
           {isLoading ? (
-            <Skeleton height="16px" width="100px" mx="auto" />
+            <Skeleton height="14px" width="80px" mx="auto" />
           ) : (
             `${visits.length} ${t('visits.visitsCount') || 'visits'}`
           )}
@@ -322,28 +322,28 @@ export function VisitsPage() {
         {/* Visits List */}
         {isLoading ? (
           <VStack spacing={3}>
-            <Skeleton height="100px" borderRadius="xl" />
-            <Skeleton height="100px" borderRadius="xl" />
-            <Skeleton height="100px" borderRadius="xl" />
+            <Skeleton height="80px" borderRadius="lg" w="100%" />
+            <Skeleton height="80px" borderRadius="lg" w="100%" />
+            <Skeleton height="80px" borderRadius="lg" w="100%" />
           </VStack>
         ) : visits.length === 0 ? (
           <Flex
             direction="column"
             align="center"
             justify="center"
-            py={12}
+            py={10}
             bg={cardBg}
-            borderRadius="xl"
+            borderRadius="lg"
             border="1px solid"
             borderColor={borderColor}
           >
-            <Text fontSize="3xl" mb={2}>📅</Text>
-            <Text color={mutedColor}>
-              ✅ {t('visits.noVisitsOnDate') || 'No visits on this date'}
+            <Calendar size={32} color={mutedColor} style={{ marginBottom: 8 }} />
+            <Text fontSize="sm" color={mutedColor}>
+              {t('visits.noVisitsOnDate') || 'No visits on this date'}
             </Text>
           </Flex>
         ) : (
-          <VStack spacing={3}>
+          <VStack spacing={2}>
             {visits.map((visit) => (
               <VisitCard
                 key={visit.id}
@@ -351,6 +351,11 @@ export function VisitsPage() {
                 isDark={isDark}
                 isTodayView={isTodayView}
                 t={t}
+                cardBg={cardBg}
+                borderColor={borderColor}
+                textColor={textColor}
+                mutedColor={mutedColor}
+                accentColor={accentColor}
                 onMarkInProgress={() => handleMarkInProgress(visit)}
                 onMarkCompleted={() => handleMarkCompleted(visit)}
                 onMarkNoShow={() => handleOpenNoShowModal(visit)}
@@ -364,45 +369,50 @@ export function VisitsPage() {
       
       {/* Reschedule Modal */}
       <Modal isOpen={rescheduleModal.isOpen} onClose={rescheduleModal.onClose} isCentered>
-        <ModalOverlay />
-        <ModalContent mx={4} bg={isDark ? 'gray.800' : 'white'}>
-          <ModalHeader>{t('visits.reschedule') || 'Reschedule Visit'}</ModalHeader>
+        <ModalOverlay bg="blackAlpha.600" />
+        <ModalContent mx={4} bg={isDark ? 'gray.800' : 'white'} borderRadius="xl">
+          <ModalHeader fontSize="md">{t('visits.reschedule') || 'Reschedule Visit'}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <VStack spacing={4}>
               <FormControl isRequired>
-                <FormLabel>{t('visits.newDate') || 'New Date'}</FormLabel>
+                <FormLabel fontSize="sm">{t('visits.newDate') || 'New Date'}</FormLabel>
                 <Input
                   type="date"
+                  size="sm"
                   value={rescheduleDate}
                   onChange={(e) => setRescheduleDate(e.target.value)}
                   min={new Date().toISOString().split('T')[0]}
                 />
               </FormControl>
               <FormControl>
-                <FormLabel>{t('visits.newTime') || 'New Time'}</FormLabel>
+                <FormLabel fontSize="sm">{t('visits.newTime') || 'New Time'}</FormLabel>
                 <Input
                   type="time"
+                  size="sm"
                   value={rescheduleTime}
                   onChange={(e) => setRescheduleTime(e.target.value)}
                 />
               </FormControl>
               <FormControl>
-                <FormLabel>{t('visits.note') || 'Note'}</FormLabel>
+                <FormLabel fontSize="sm">{t('visits.note') || 'Note'}</FormLabel>
                 <Textarea
+                  size="sm"
                   value={rescheduleNote}
                   onChange={(e) => setRescheduleNote(e.target.value)}
                   placeholder={t('visits.rescheduleNotePlaceholder') || 'Reason for rescheduling...'}
+                  rows={2}
                 />
               </FormControl>
             </VStack>
           </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={rescheduleModal.onClose}>
+          <ModalFooter gap={2}>
+            <Button variant="ghost" size="sm" onClick={rescheduleModal.onClose}>
               {t('common.cancel') || 'Cancel'}
             </Button>
             <Button
               colorScheme="blue"
+              size="sm"
               onClick={handleConfirmReschedule}
               isLoading={isRescheduling}
               isDisabled={!rescheduleDate}
@@ -415,26 +425,29 @@ export function VisitsPage() {
       
       {/* No-Show Modal */}
       <Modal isOpen={noShowModal.isOpen} onClose={noShowModal.onClose} isCentered>
-        <ModalOverlay />
-        <ModalContent mx={4} bg={isDark ? 'gray.800' : 'white'}>
-          <ModalHeader>{t('visits.markNoShow') || 'Mark as No-Show'}</ModalHeader>
+        <ModalOverlay bg="blackAlpha.600" />
+        <ModalContent mx={4} bg={isDark ? 'gray.800' : 'white'} borderRadius="xl">
+          <ModalHeader fontSize="md">{t('visits.markNoShow') || 'Mark as No-Show'}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <FormControl>
-              <FormLabel>{t('visits.note') || 'Note'}</FormLabel>
+              <FormLabel fontSize="sm">{t('visits.note') || 'Note'}</FormLabel>
               <Textarea
+                size="sm"
                 value={noShowNote}
                 onChange={(e) => setNoShowNote(e.target.value)}
                 placeholder={t('visits.noShowNotePlaceholder') || 'Reason (optional)...'}
+                rows={2}
               />
             </FormControl>
           </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={noShowModal.onClose}>
+          <ModalFooter gap={2}>
+            <Button variant="ghost" size="sm" onClick={noShowModal.onClose}>
               {t('common.cancel') || 'Cancel'}
             </Button>
             <Button
               colorScheme="red"
+              size="sm"
               onClick={handleConfirmNoShow}
               isLoading={isMarkingNoShow}
             >
@@ -447,12 +460,17 @@ export function VisitsPage() {
   )
 }
 
-// Individual Visit Card
+// Visit Card Component
 interface VisitCardProps {
   visit: Visit
   isDark: boolean
   isTodayView: boolean
   t: (key: string) => string
+  cardBg: string
+  borderColor: string
+  textColor: string
+  mutedColor: string
+  accentColor: string
   onMarkInProgress: () => void
   onMarkCompleted: () => void
   onMarkNoShow: () => void
@@ -465,16 +483,18 @@ function VisitCard({
   isDark,
   isTodayView,
   t,
+  cardBg,
+  borderColor,
+  textColor,
+  mutedColor,
+  accentColor,
   onMarkInProgress,
   onMarkCompleted,
   onMarkNoShow,
   onReschedule,
   onOpenPatient,
 }: VisitCardProps) {
-  const cardBg = isDark ? 'rgba(30, 41, 59, 0.7)' : 'white'
-  const borderColor = isDark ? 'rgba(51, 65, 85, 0.5)' : '#E2E8F0'
-  const textColor = isDark ? '#E2E8F0' : '#334155'
-  const mutedColor = isDark ? '#64748B' : '#94A3B8'
+  const statusStyles = getStatusStyles(visit.status, isDark)
   
   const patientName = visit.patient
     ? `${visit.patient.firstName} ${visit.patient.lastName}`.trim()
@@ -485,6 +505,7 @@ function VisitCard({
   const isCompleted = visit.status === 'completed'
   const isNoShow = visit.status === 'no_show'
   const isRescheduled = visit.status === 'rescheduled'
+  const isInactive = isCompleted || isNoShow || isRescheduled
   const canChangeStatus = isTodayView && visit.status === 'scheduled'
   const canMarkComplete = isTodayView && (visit.status === 'scheduled' || visit.status === 'in_progress')
   
@@ -493,30 +514,38 @@ function VisitCard({
       bg={cardBg}
       border="1px solid"
       borderColor={borderColor}
-      borderRadius="xl"
-      p={4}
+      borderRadius="lg"
+      p={3}
       w="100%"
-      opacity={isCompleted || isNoShow || isRescheduled ? 0.7 : 1}
+      opacity={isInactive ? 0.6 : 1}
     >
       {/* Header: Time + Status */}
-      <Flex justify="space-between" align="center" mb={3}>
+      <Flex justify="space-between" align="center" mb={2}>
         <HStack spacing={2}>
-          <Clock size={16} color={mutedColor} />
-          <Text fontSize="lg" fontWeight="bold" color={textColor}>
+          <Clock size={14} color={mutedColor} />
+          <Text fontSize="md" fontWeight="bold" color={textColor}>
             {timeDisplay}
           </Text>
         </HStack>
-        <Badge colorScheme={getStatusColorScheme(visit.status)}>
+        <Text
+          fontSize="xs"
+          fontWeight="medium"
+          px={2}
+          py={0.5}
+          borderRadius="full"
+          bg={statusStyles.bg}
+          color={statusStyles.color}
+        >
           {getStatusLabel(visit.status, t)}
-        </Badge>
+        </Text>
       </Flex>
       
       {/* Patient Info */}
-      <VStack align="stretch" spacing={2} mb={3}>
-        <HStack spacing={2} onClick={onOpenPatient} cursor="pointer" _hover={{ opacity: 0.8 }}>
-          <User size={14} color={mutedColor} />
+      <VStack align="stretch" spacing={1} mb={2}>
+        <HStack spacing={2} onClick={onOpenPatient} cursor="pointer" _hover={{ color: accentColor }}>
+          <User size={12} color={mutedColor} />
           <Text
-            fontSize="md"
+            fontSize="sm"
             fontWeight="medium"
             color={textColor}
             textDecoration={isCompleted ? 'line-through' : 'none'}
@@ -527,8 +556,8 @@ function VisitCard({
         
         {visit.patient?.phone && (
           <HStack spacing={2}>
-            <Phone size={14} color={mutedColor} />
-            <Text fontSize="sm" color={mutedColor}>
+            <Phone size={12} color={mutedColor} />
+            <Text fontSize="xs" color={mutedColor}>
               {visit.patient.phone}
             </Text>
           </HStack>
@@ -536,8 +565,8 @@ function VisitCard({
         
         {visit.notes && (
           <HStack spacing={2} align="flex-start">
-            <FileText size={14} color={mutedColor} style={{ marginTop: 2 }} />
-            <Text fontSize="sm" color={mutedColor} noOfLines={2}>
+            <FileText size={12} color={mutedColor} style={{ marginTop: 2 }} />
+            <Text fontSize="xs" color={mutedColor} noOfLines={1}>
               {visit.notes}
             </Text>
           </HStack>
@@ -545,24 +574,25 @@ function VisitCard({
         
         {isRescheduled && visit.rescheduledTo && (
           <HStack spacing={2}>
-            <Calendar size={14} color={mutedColor} />
-            <Text fontSize="sm" color={mutedColor}>
-              → {visit.rescheduledTo} {visit.rescheduledTime ? `at ${visit.rescheduledTime.slice(0, 5)}` : ''}
+            <Calendar size={12} color={mutedColor} />
+            <Text fontSize="xs" color={mutedColor}>
+              → {visit.rescheduledTo} {visit.rescheduledTime ? visit.rescheduledTime.slice(0, 5) : ''}
             </Text>
           </HStack>
         )}
       </VStack>
       
-      {/* Action Buttons */}
-      {!isCompleted && !isNoShow && !isRescheduled && (
-        <Flex gap={2} flexWrap="wrap">
+      {/* Action Buttons - compact */}
+      {!isInactive && (
+        <Flex gap={1.5} flexWrap="wrap">
           {canChangeStatus && (
             <Button
-              size="sm"
-              variant="outline"
-              colorScheme="yellow"
-              leftIcon={<Play size={14} />}
+              size="xs"
+              variant="ghost"
+              leftIcon={<Play size={12} />}
               onClick={onMarkInProgress}
+              color={mutedColor}
+              _hover={{ color: accentColor, bg: isDark ? 'whiteAlpha.100' : 'blackAlpha.50' }}
             >
               {t('visits.actions.start') || 'Start'}
             </Button>
@@ -570,34 +600,37 @@ function VisitCard({
           
           {canMarkComplete && (
             <Button
-              size="sm"
-              variant="outline"
-              colorScheme="green"
-              leftIcon={<CheckCircle size={14} />}
+              size="xs"
+              variant="ghost"
+              leftIcon={<CheckCircle size={12} />}
               onClick={onMarkCompleted}
+              color={mutedColor}
+              _hover={{ color: accentColor, bg: isDark ? 'whiteAlpha.100' : 'blackAlpha.50' }}
             >
-              {t('visits.actions.complete') || 'Complete'}
+              {t('visits.actions.complete') || 'Done'}
             </Button>
           )}
           
           {isTodayView && (
             <Button
-              size="sm"
-              variant="outline"
-              colorScheme="red"
-              leftIcon={<XCircle size={14} />}
+              size="xs"
+              variant="ghost"
+              leftIcon={<XCircle size={12} />}
               onClick={onMarkNoShow}
+              color={mutedColor}
+              _hover={{ color: '#DC2626', bg: isDark ? 'whiteAlpha.100' : 'blackAlpha.50' }}
             >
               {t('visits.actions.noShow') || 'No Show'}
             </Button>
           )}
           
           <Button
-            size="sm"
-            variant="outline"
-            colorScheme="gray"
-            leftIcon={<RefreshCw size={14} />}
+            size="xs"
+            variant="ghost"
+            leftIcon={<RefreshCw size={12} />}
             onClick={onReschedule}
+            color={mutedColor}
+            _hover={{ color: accentColor, bg: isDark ? 'whiteAlpha.100' : 'blackAlpha.50' }}
           >
             {t('visits.actions.reschedule') || 'Reschedule'}
           </Button>
@@ -608,4 +641,3 @@ function VisitCard({
 }
 
 export default VisitsPage
-

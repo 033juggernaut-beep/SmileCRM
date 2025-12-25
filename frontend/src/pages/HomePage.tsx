@@ -8,13 +8,13 @@
  * Displays personalized daily motivation for the doctor (i18n support)
  */
 
-import { Box, Flex, useColorMode } from '@chakra-ui/react';
+import { Box, Flex, Grid, useColorMode } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { Users, UserPlus, TrendingUp, Bot } from 'lucide-react';
+import { motion } from 'framer-motion';
 import {
   Header,
   WelcomeBlock,
-  DashboardGrid,
   DashboardCard,
   Footer,
   BackgroundPattern,
@@ -23,6 +23,31 @@ import {
 import { useLanguage } from '../context/LanguageContext';
 import { useTelegramSafeArea } from '../hooks/useTelegramSafeArea';
 import { useDailyMotivation } from '../hooks/useDailyMotivation';
+
+const MotionDiv = motion.div;
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.3,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.4,
+      ease: 'easeOut' as const,
+    },
+  },
+};
 
 export const HomePage = () => {
   const navigate = useNavigate();
@@ -97,40 +122,72 @@ export const HomePage = () => {
             motivationQuote={motivationQuote || undefined}
           />
 
-          {/* Dashboard Cards - Visits first, then 2x2 grid */}
-          <DashboardGrid animated>
-            {/* Visits Card - First and prominent */}
-            <VisitsCard onClick={() => navigate('/visits')} />
+          {/* Dashboard Cards Grid - 2 columns with centered AI card at bottom */}
+          <Grid
+            as={motion.div}
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            w="100%"
+            maxW="768px"
+            mx="auto"
+            templateColumns={{ base: '1fr', sm: 'repeat(2, 1fr)' }}
+            gap={{ base: '16px', md: '20px' }}
+          >
+            {/* Row 1: Visits | Patients */}
+            <MotionDiv variants={itemVariants}>
+              <VisitsCard onClick={() => navigate('/visits')} />
+            </MotionDiv>
+            <MotionDiv variants={itemVariants}>
+              <DashboardCard
+                icon={<Users />}
+                title={t('home.patients')}
+                description={t('home.patientsHelper')}
+                onClick={() => navigate('/patients')}
+              />
+            </MotionDiv>
             
-            <DashboardCard
-              icon={<Users />}
-              title={t('home.patients')}
-              description={t('home.patientsHelper')}
-              onClick={() => navigate('/patients')}
-            />
-            <DashboardCard
-              icon={<UserPlus />}
-              title={t('home.addPatient')}
-              description={t('home.addPatientHelper')}
-              onClick={() => navigate('/patients/new')}
-            />
-            <DashboardCard
-              icon={<TrendingUp />}
-              title={t('home.statistics')}
-              stats={[
-                { label: t('home.totalPatients'), value: 1247 },
-                { label: t('home.todayVisits'), value: 12 },
-              ]}
-              onClick={() => navigate('/stats')}
-            />
-            <DashboardCard
-              icon={<Bot />}
-              title={t('ai.title')}
-              description={t('ai.cardDescription')}
-              badge="AI"
-              onClick={() => navigate('/ai-assistant')}
-            />
-          </DashboardGrid>
+            {/* Row 2: Add Patient | Statistics */}
+            <MotionDiv variants={itemVariants}>
+              <DashboardCard
+                icon={<UserPlus />}
+                title={t('home.addPatient')}
+                description={t('home.addPatientHelper')}
+                onClick={() => navigate('/patients/new')}
+              />
+            </MotionDiv>
+            <MotionDiv variants={itemVariants}>
+              <DashboardCard
+                icon={<TrendingUp />}
+                title={t('home.statistics')}
+                stats={[
+                  { label: t('home.totalPatients'), value: 1247 },
+                  { label: t('home.todayVisits'), value: 12 },
+                ]}
+                onClick={() => navigate('/stats')}
+              />
+            </MotionDiv>
+            
+            {/* Row 3: AI Assistant - Centered across both columns */}
+            <MotionDiv 
+              variants={itemVariants}
+              style={{ 
+                gridColumn: '1 / -1',
+                display: 'flex',
+                justifyContent: 'center',
+              }}
+            >
+              <Box w="100%" maxW={{ base: '100%', sm: '374px' }}>
+                <DashboardCard
+                  icon={<Bot />}
+                  title={t('ai.title')}
+                  description={t('ai.cardDescription')}
+                  badge="AI"
+                  onClick={() => navigate('/ai-assistant')}
+                />
+              </Box>
+            </MotionDiv>
+          </Grid>
         </Flex>
 
         {/* Footer */}
