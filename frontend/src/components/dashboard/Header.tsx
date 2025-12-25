@@ -64,9 +64,12 @@ export function Header(_props?: { notificationCount?: number }) {
   const handleNotificationClick = useCallback((notification: Notification) => {
     // Mark as read
     markRead([notification.id]);
-    // Navigate if has target path
+    
+    // Navigate: prefer targetPath, fallback to patient page if patientId exists
     if (notification.targetPath) {
       navigate(notification.targetPath);
+    } else if (notification.patientId) {
+      navigate(`/patients/${notification.patientId}`);
     }
   }, [navigate, markRead]);
 
