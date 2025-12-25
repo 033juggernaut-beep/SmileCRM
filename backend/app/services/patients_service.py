@@ -81,8 +81,10 @@ def create_patient(doctor_id: str, payload: Mapping[str, Any]) -> dict[str, Any]
   body = {"doctor_id": doctor_id, **payload}
   # Serialize Decimal and date objects for JSON
   serialized_body = _serialize_for_json(body)
+  logger.info(f"Creating patient with payload: {serialized_body}")
   try:
     inserted = supabase_client.insert("patients", serialized_body)
+    logger.info(f"Patient created: {inserted}")
   except SupabaseNotConfiguredError:
     return {"id": f"local-patient-{doctor_id}", **serialized_body}
   return inserted[0] if inserted else serialized_body
