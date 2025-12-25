@@ -5,6 +5,37 @@
  * - Apply button to save changes
  */
 
+// Web Speech API type declarations
+interface SpeechRecognitionEvent extends Event {
+  resultIndex: number
+  results: SpeechRecognitionResultList
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean
+  interimResults: boolean
+  lang: string
+  onresult: ((event: SpeechRecognitionEvent) => void) | null
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null
+  start: () => void
+  stop: () => void
+}
+
+interface SpeechRecognitionConstructor {
+  new (): SpeechRecognition
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition?: SpeechRecognitionConstructor
+    webkitSpeechRecognition?: SpeechRecognitionConstructor
+  }
+}
+
 import { useState, useCallback, useRef, useEffect } from 'react'
 import {
   Box,
@@ -78,7 +109,7 @@ const categoryMap: Record<string, AICategory> = {
 }
 
 export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIAssistantProps) {
-  const { t, language } = useLanguage()
+  const { language } = useLanguage()
   const { colorMode } = useColorMode()
   const isDark = colorMode === 'dark'
   const toast = useToast()
@@ -175,7 +206,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
         
         recognition.continuous = true
         recognition.interimResults = true
-        recognition.lang = language === 'hy' ? 'hy-AM' : language === 'en' ? 'en-US' : 'ru-RU'
+        recognition.lang = language === 'am' ? 'hy-AM' : language === 'en' ? 'en-US' : 'ru-RU'
         
         recognition.onresult = (event) => {
           let finalTranscript = ''
@@ -261,7 +292,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
         category: categoryMap[selectedCategory],
         patient_id: patientId || null,
         text: finalTranscript,
-        locale: language as 'ru' | 'hy' | 'en',
+        locale: language === 'am' ? 'hy' : language as 'ru' | 'en',
       })
 
       setAiResponse(response)
