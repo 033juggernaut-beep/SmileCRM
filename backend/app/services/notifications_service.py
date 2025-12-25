@@ -297,18 +297,24 @@ def generate_birthday_notifications(doctor_id: str, target_date: date | None = N
     if target_date is None:
         target_date = date.today() + timedelta(days=1)
     
+    logger.info(f"Generating birthday notifications for doctor {doctor_id}, target_date={target_date}")
+    
     try:
         if not supabase_client.is_configured:
+            logger.warning("Supabase not configured, skipping birthday notifications")
             return []
             
         client = supabase_client.client
         if not client:
+            logger.warning("Supabase client not available")
             return []
         
         # Get patients with birthdays matching target date (month and day)
         # We need to query by EXTRACT(MONTH) and EXTRACT(DAY)
         month = target_date.month
         day = target_date.day
+        
+        logger.info(f"Looking for birthdays on month={month}, day={day}")
         
         # Get all patients for this doctor with birth_date set
         response = (
@@ -320,7 +326,10 @@ def generate_birthday_notifications(doctor_id: str, target_date: date | None = N
         )
         
         if not response.data:
+            logger.info("No patients with birth_date found")
             return []
+        
+        logger.info(f"Found {len(response.data)} patients with birth_date")
         
         # Filter patients whose birthday matches target date
         birthday_patients = []
@@ -329,10 +338,15 @@ def generate_birthday_notifications(doctor_id: str, target_date: date | None = N
             if birth_date_str:
                 try:
                     bd = date.fromisoformat(birth_date_str) if isinstance(birth_date_str, str) else birth_date_str
+                    logger.debug(f"Patient {patient.get('first_name')} {patient.get('last_name')}: birth_date={bd}, matches={bd.month == month and bd.day == day}")
                     if bd.month == month and bd.day == day:
                         birthday_patients.append(patient)
-                except Exception:
+                        logger.info(f"Birthday match: {patient.get('first_name')} {patient.get('last_name')}")
+                except Exception as e:
+                    logger.warning(f"Failed to parse birth_date {birth_date_str}: {e}")
                     continue
+        
+        logger.info(f"Found {len(birthday_patients)} patients with birthdays on {target_date}")
         
         created = []
         for patient in birthday_patients:
