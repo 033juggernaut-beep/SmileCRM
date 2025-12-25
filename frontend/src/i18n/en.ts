@@ -489,6 +489,8 @@ const en = {
       generateError: 'Failed to generate message',
       noTelegram: 'Patient has no Telegram username',
       noWhatsApp: 'Patient has no WhatsApp number',
+      contacts: 'Contact info',
+      notSet: 'Not set',
       textCopied: 'Text copied',
       telegramOpening: 'Open Telegram and paste the text',
       whatsappOpening: 'Opening WhatsApp...',

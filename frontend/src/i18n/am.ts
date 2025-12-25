@@ -488,6 +488,8 @@ const am = {
       generateError: 'Chi hajoxvec generacnel',
       noTelegram: 'Patsienti Telegram-y nshvac che',
       noWhatsApp: 'Patsienti WhatsApp-y nshvac che',
+      contacts: 'Kapi tvyalner',
+      notSet: 'Nshvac che',
       textCopied: 'Tekste patchenvec',
       telegramOpening: 'Bacneq Telegram-y ev tphenq tekste',
       whatsappOpening: 'WhatsApp-y bacvum e...',

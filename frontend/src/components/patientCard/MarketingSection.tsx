@@ -47,6 +47,8 @@ interface MarketingSectionProps {
   whatsappPhone?: string | null
   phone?: string | null
   defaultOpen?: boolean
+  patientId?: string
+  onContactUpdate?: (field: 'telegramUsername' | 'whatsappPhone', value: string) => Promise<void>
 }
 
 const messageTypes: MessageConfig[] = [
@@ -62,6 +64,8 @@ export function MarketingSection({
   whatsappPhone,
   phone,
   defaultOpen = false,
+  patientId,
+  onContactUpdate,
 }: MarketingSectionProps) {
   const { t } = useLanguage()
   const { colorMode } = useColorMode()
@@ -73,6 +77,61 @@ export function MarketingSection({
   const [isGenerating, setIsGenerating] = useState(false)
   const [editText, setEditText] = useState('')
   const [copied, setCopied] = useState(false)
+
+  // Contact editing state
+  const [editingTelegram, setEditingTelegram] = useState(false)
+  const [editingWhatsApp, setEditingWhatsApp] = useState(false)
+  const [tempTelegram, setTempTelegram] = useState(telegramUsername || '')
+  const [tempWhatsApp, setTempWhatsApp] = useState(whatsappPhone || '')
+  const [savingContact, setSavingContact] = useState(false)
+
+  // Save telegram username
+  const handleSaveTelegram = useCallback(async () => {
+    if (!onContactUpdate) return
+    setSavingContact(true)
+    try {
+      await onContactUpdate('telegramUsername', tempTelegram.replace(/^@/, ''))
+      setEditingTelegram(false)
+      toast({
+        title: t('common.saved'),
+        status: 'success',
+        duration: 2000,
+      })
+    } catch (err) {
+      console.error('Failed to save telegram:', err)
+      toast({
+        title: t('common.error'),
+        status: 'error',
+        duration: 2000,
+      })
+    } finally {
+      setSavingContact(false)
+    }
+  }, [onContactUpdate, tempTelegram, toast, t])
+
+  // Save whatsapp phone
+  const handleSaveWhatsApp = useCallback(async () => {
+    if (!onContactUpdate) return
+    setSavingContact(true)
+    try {
+      await onContactUpdate('whatsappPhone', tempWhatsApp)
+      setEditingWhatsApp(false)
+      toast({
+        title: t('common.saved'),
+        status: 'success',
+        duration: 2000,
+      })
+    } catch (err) {
+      console.error('Failed to save whatsapp:', err)
+      toast({
+        title: t('common.error'),
+        status: 'error',
+        duration: 2000,
+      })
+    } finally {
+      setSavingContact(false)
+    }
+  }, [onContactUpdate, tempWhatsApp, toast, t])
 
   // Copy to clipboard helper
   const copyToClipboard = useCallback(async (text: string) => {
@@ -260,6 +319,142 @@ export function MarketingSection({
         <Text fontSize="xs" color={isDark ? 'gray.500' : 'gray.400'}>
           {t('patientCard.marketing.hint')}
         </Text>
+
+        {/* Contact Info Block */}
+        <Box
+          borderRadius="xl"
+          p={4}
+          border="1px solid"
+          bg={isDark ? 'rgba(30, 41, 59, 0.3)' : 'rgba(248, 250, 252, 0.6)'}
+          borderColor={isDark ? 'rgba(71, 85, 105, 0.4)' : 'rgba(226, 232, 240, 0.6)'}
+        >
+          <Text fontSize="xs" fontWeight="medium" color={isDark ? 'gray.400' : 'gray.500'} mb={3}>
+            {t('patientCard.marketing.contacts') || 'Контакты для связи'}
+          </Text>
+          <VStack spacing={3} align="stretch">
+            {/* Telegram */}
+            <Flex align="center" gap={2}>
+              <Flex
+                w={6}
+                h={6}
+                borderRadius="md"
+                align="center"
+                justify="center"
+                bg={isDark ? 'rgba(59, 130, 246, 0.2)' : 'blue.50'}
+                color={isDark ? 'blue.400' : 'blue.500'}
+                flexShrink={0}
+              >
+                <TelegramIcon />
+              </Flex>
+              {editingTelegram ? (
+                <HStack flex={1} spacing={2}>
+                  <input
+                    type="text"
+                    value={tempTelegram}
+                    onChange={(e) => setTempTelegram(e.target.value)}
+                    placeholder="@username"
+                    style={{
+                      flex: 1,
+                      padding: '4px 8px',
+                      fontSize: '14px',
+                      borderRadius: '6px',
+                      border: `1px solid ${isDark ? '#475569' : '#e2e8f0'}`,
+                      background: isDark ? '#1e293b' : '#fff',
+                      color: isDark ? '#fff' : '#1e293b',
+                    }}
+                  />
+                  <Button size="xs" colorScheme="blue" onClick={handleSaveTelegram} isLoading={savingContact}>
+                    {t('common.save')}
+                  </Button>
+                  <Button size="xs" variant="ghost" onClick={() => setEditingTelegram(false)}>
+                    ✕
+                  </Button>
+                </HStack>
+              ) : (
+                <Flex flex={1} align="center" justify="space-between">
+                  <Text fontSize="sm" color={telegramUsername ? (isDark ? 'white' : 'gray.700') : (isDark ? 'gray.500' : 'gray.400')}>
+                    {telegramUsername ? `@${telegramUsername.replace(/^@/, '')}` : t('patientCard.marketing.notSet') || 'Не указан'}
+                  </Text>
+                  {onContactUpdate && (
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      leftIcon={<Pencil size={12} />}
+                      onClick={() => {
+                        setTempTelegram(telegramUsername || '')
+                        setEditingTelegram(true)
+                      }}
+                      color={isDark ? 'blue.400' : 'blue.600'}
+                    >
+                      {telegramUsername ? t('common.edit') : t('common.add') || 'Добавить'}
+                    </Button>
+                  )}
+                </Flex>
+              )}
+            </Flex>
+
+            {/* WhatsApp */}
+            <Flex align="center" gap={2}>
+              <Flex
+                w={6}
+                h={6}
+                borderRadius="md"
+                align="center"
+                justify="center"
+                bg={isDark ? 'rgba(34, 197, 94, 0.2)' : 'green.50'}
+                color={isDark ? 'green.400' : 'green.500'}
+                flexShrink={0}
+              >
+                <WhatsAppIcon />
+              </Flex>
+              {editingWhatsApp ? (
+                <HStack flex={1} spacing={2}>
+                  <input
+                    type="text"
+                    value={tempWhatsApp}
+                    onChange={(e) => setTempWhatsApp(e.target.value)}
+                    placeholder="+374..."
+                    style={{
+                      flex: 1,
+                      padding: '4px 8px',
+                      fontSize: '14px',
+                      borderRadius: '6px',
+                      border: `1px solid ${isDark ? '#475569' : '#e2e8f0'}`,
+                      background: isDark ? '#1e293b' : '#fff',
+                      color: isDark ? '#fff' : '#1e293b',
+                    }}
+                  />
+                  <Button size="xs" colorScheme="green" onClick={handleSaveWhatsApp} isLoading={savingContact}>
+                    {t('common.save')}
+                  </Button>
+                  <Button size="xs" variant="ghost" onClick={() => setEditingWhatsApp(false)}>
+                    ✕
+                  </Button>
+                </HStack>
+              ) : (
+                <Flex flex={1} align="center" justify="space-between">
+                  <Text fontSize="sm" color={whatsappPhone ? (isDark ? 'white' : 'gray.700') : (isDark ? 'gray.500' : 'gray.400')}>
+                    {whatsappPhone || phone || t('patientCard.marketing.notSet') || 'Не указан'}
+                  </Text>
+                  {onContactUpdate && (
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      leftIcon={<Pencil size={12} />}
+                      onClick={() => {
+                        setTempWhatsApp(whatsappPhone || phone || '')
+                        setEditingWhatsApp(true)
+                      }}
+                      color={isDark ? 'green.400' : 'green.600'}
+                    >
+                      {whatsappPhone ? t('common.edit') : t('common.add') || 'Добавить'}
+                    </Button>
+                  )}
+                </Flex>
+              )}
+            </Flex>
+          </VStack>
+        </Box>
 
         {/* AI Assistant Block */}
         <Box

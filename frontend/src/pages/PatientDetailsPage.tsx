@@ -611,6 +611,27 @@ export const PatientDetailsPage = () => {
               whatsappPhone={patient.whatsappPhone}
               phone={patient.phone}
               defaultOpen={false}
+              patientId={id}
+              onContactUpdate={async (field, value) => {
+                const authToken = localStorage.getItem(TOKEN_STORAGE_KEY)
+                if (!authToken) throw new Error(t('patientDetails.authRequired'))
+                
+                const payload = field === 'telegramUsername' 
+                  ? { telegram_username: value }
+                  : { whatsapp_phone: value }
+                
+                await apiClient.patch(
+                  `/patients/${id}`,
+                  payload,
+                  { headers: { Authorization: `Bearer ${authToken}` } }
+                )
+                
+                // Update local state
+                setPatient({
+                  ...patient,
+                  [field]: value,
+                })
+              }}
             />
 
             {/* 9. Finance - Last section */}

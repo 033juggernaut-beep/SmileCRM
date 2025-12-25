@@ -489,6 +489,8 @@ const ru = {
       generateError: 'Ошибка генерации сообщения',
       noTelegram: 'У пациента не указан Telegram',
       noWhatsApp: 'У пациента не указан WhatsApp',
+      contacts: 'Контакты для связи',
+      notSet: 'Не указан',
       textCopied: 'Текст скопирован',
       telegramOpening: 'Откройте Telegram и вставьте текст',
       whatsappOpening: 'Открываем WhatsApp...',
