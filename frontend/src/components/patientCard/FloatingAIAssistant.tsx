@@ -122,6 +122,8 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
   const [isApplying, setIsApplying] = useState(false)
   const [aiResponse, setAiResponse] = useState<AIAssistantResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [pendingDateActionIndex, setPendingDateActionIndex] = useState<number | null>(null)
+  const [selectedDate, setSelectedDate] = useState<string>('')
 
   // Refs for recording
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -304,9 +306,66 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
     }
   }
 
+  // Check if any action needs date clarification
+  const needsClarification = useCallback((): { index: number; question: string } | null => {
+    if (!aiResponse?.actions) return null
+    
+    for (let i = 0; i < aiResponse.actions.length; i++) {
+      const action = aiResponse.actions[i] as AIAction
+      if (action.type === 'create_visit' && (action.needs_clarification || !action.visit_date)) {
+        return {
+          index: i,
+          question: action.clarification_question || 'На какую дату записать визит?',
+        }
+      }
+    }
+    return null
+  }, [aiResponse])
+
+  // Get today's date in YYYY-MM-DD format (Asia/Yerevan)
+  const getToday = (): string => {
+    const now = new Date()
+    // Adjust for Asia/Yerevan timezone (+4 hours from UTC)
+    const offset = 4 * 60 // minutes
+    const local = new Date(now.getTime() + (offset - now.getTimezoneOffset()) * 60000)
+    return local.toISOString().split('T')[0]
+  }
+
+  // Get tomorrow's date
+  const getTomorrow = (): string => {
+    const today = new Date(getToday())
+    today.setDate(today.getDate() + 1)
+    return today.toISOString().split('T')[0]
+  }
+
+  // Apply selected date to pending action
+  const applyDateToAction = useCallback((dateValue: string) => {
+    if (pendingDateActionIndex === null || !aiResponse) return
+
+    const updatedActions = [...aiResponse.actions]
+    const action = updatedActions[pendingDateActionIndex] as AIAction
+    action.visit_date = dateValue
+    action.needs_clarification = false
+    action.clarification_question = null
+
+    setAiResponse({
+      ...aiResponse,
+      actions: updatedActions,
+    })
+    setPendingDateActionIndex(null)
+    setSelectedDate('')
+  }, [pendingDateActionIndex, aiResponse])
+
   // Apply AI actions
   const handleApply = useCallback(async () => {
     if (!aiResponse?.actions?.length) return
+
+    // Check if we need clarification first
+    const clarification = needsClarification()
+    if (clarification) {
+      setPendingDateActionIndex(clarification.index)
+      return
+    }
 
     setIsApplying(true)
 
@@ -324,6 +383,8 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
         setAiResponse(null)
         setTranscript('')
         setRecordingState('idle')
+        setPendingDateActionIndex(null)
+        setSelectedDate('')
         onActionsApplied?.()
       } else {
         toast({
@@ -344,7 +405,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
     } finally {
       setIsApplying(false)
     }
-  }, [aiResponse, toast, onActionsApplied])
+  }, [aiResponse, toast, onActionsApplied, needsClarification])
 
   // Reset to try again
   const handleReset = () => {
@@ -353,6 +414,8 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
     setTranscript('')
     setAiResponse(null)
     setError(null)
+    setPendingDateActionIndex(null)
+    setSelectedDate('')
   }
 
   // Format time
@@ -369,10 +432,23 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
     }
     if (action.type === 'create_visit') {
       const parts = []
-      if (action.visit_date) parts.push(`📅 ${action.visit_date}`)
+      if (action.visit_date) {
+        // Format date nicely
+        try {
+          const dateObj = new Date(action.visit_date)
+          const formatted = dateObj.toLocaleDateString('ru-RU', { 
+            day: 'numeric', 
+            month: 'long',
+            year: dateObj.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined 
+          })
+          parts.push(`📅 ${formatted}`)
+        } catch {
+          parts.push(`📅 ${action.visit_date}`)
+        }
+      }
       if (action.next_visit_date) parts.push(`➡️ ${action.next_visit_date}`)
       if (action.notes) parts.push(action.notes)
-      return { label: '🗓️ Визит', value: parts.join(' • ') }
+      return { label: '🗓️ Визит', value: parts.join(' • ') || 'Нужна дата' }
     }
     if (action.type === 'add_finance_note') {
       return { label: '💰 Оплата', value: action.note || '' }
@@ -587,26 +663,99 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                         Изменения:
                       </Text>
                       {aiResponse.actions.map((action, idx) => {
-                        const { label, value } = formatAction(action as AIAction)
+                        const typedAction = action as AIAction
+                        const { label, value } = formatAction(typedAction)
+                        const needsDate = typedAction.type === 'create_visit' && 
+                          (typedAction.needs_clarification || !typedAction.visit_date)
+                        
                         return (
                           <Box
                             key={idx}
                             p={2}
                             borderRadius="lg"
-                            bg={isDark ? 'green.900' : 'green.50'}
+                            bg={needsDate ? (isDark ? 'orange.900' : 'orange.50') : (isDark ? 'green.900' : 'green.50')}
                             border="1px solid"
-                            borderColor={isDark ? 'green.700' : 'green.200'}
+                            borderColor={needsDate ? (isDark ? 'orange.700' : 'orange.200') : (isDark ? 'green.700' : 'green.200')}
                           >
-                            <Badge colorScheme="green" fontSize="10px" mb={1}>
+                            <Badge colorScheme={needsDate ? 'orange' : 'green'} fontSize="10px" mb={1}>
                               {label}
                             </Badge>
                             <Text fontSize="sm" color={isDark ? 'white' : 'gray.800'}>
-                              {value}
+                              {needsDate ? '⚠️ Нужна дата' : value}
                             </Text>
                           </Box>
                         )
                       })}
                     </VStack>
+                  )}
+
+                  {/* Date Picker for Clarification */}
+                  {pendingDateActionIndex !== null && (
+                    <Box 
+                      p={3} 
+                      borderRadius="lg" 
+                      bg={isDark ? 'blue.900' : 'blue.50'}
+                      border="1px solid"
+                      borderColor={isDark ? 'blue.700' : 'blue.200'}
+                    >
+                      <Text fontSize="sm" fontWeight="medium" color={isDark ? 'white' : 'gray.800'} mb={3}>
+                        📅 {(aiResponse.actions[pendingDateActionIndex] as AIAction).clarification_question || 'На какую дату записать визит?'}
+                      </Text>
+                      
+                      {/* Quick date buttons */}
+                      <HStack spacing={2} mb={3}>
+                        <Button
+                          size="sm"
+                          colorScheme="blue"
+                          variant="outline"
+                          onClick={() => applyDateToAction(getToday())}
+                          borderRadius="lg"
+                        >
+                          Сегодня
+                        </Button>
+                        <Button
+                          size="sm"
+                          colorScheme="blue"
+                          variant="outline"
+                          onClick={() => applyDateToAction(getTomorrow())}
+                          borderRadius="lg"
+                        >
+                          Завтра
+                        </Button>
+                      </HStack>
+                      
+                      {/* Date input */}
+                      <HStack spacing={2}>
+                        <input
+                          type="date"
+                          value={selectedDate}
+                          onChange={(e) => setSelectedDate(e.target.value)}
+                          min={getToday()}
+                          style={{
+                            flex: 1,
+                            padding: '8px 12px',
+                            borderRadius: '8px',
+                            border: `1px solid ${isDark ? '#4A5568' : '#E2E8F0'}`,
+                            background: isDark ? '#2D3748' : '#fff',
+                            color: isDark ? '#fff' : '#1A202C',
+                            fontSize: '14px',
+                          }}
+                        />
+                        <Button
+                          size="sm"
+                          colorScheme="blue"
+                          onClick={() => {
+                            if (selectedDate) {
+                              applyDateToAction(selectedDate)
+                            }
+                          }}
+                          isDisabled={!selectedDate}
+                          borderRadius="lg"
+                        >
+                          OK
+                        </Button>
+                      </HStack>
+                    </Box>
                   )}
 
                   {/* Marketing Draft */}
@@ -630,8 +779,9 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                       loadingText="Сохраняю..."
                       size="sm"
                       borderRadius="lg"
+                      isDisabled={pendingDateActionIndex !== null}
                     >
-                      Сохранить
+                      {needsClarification() ? 'Укажите дату' : 'Сохранить'}
                     </Button>
                     <Button
                       variant="ghost"

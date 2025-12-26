@@ -14,10 +14,13 @@ export interface AIAction {
   type: string
   patient_id?: string | null
   diagnosis?: string
-  visit_date?: string
+  visit_date?: string | null
+  visit_date_raw?: string | null
   next_visit_date?: string | null
   notes?: string
   note?: string
+  needs_clarification?: boolean
+  clarification_question?: string | null
 }
 
 export interface AIDraft {
