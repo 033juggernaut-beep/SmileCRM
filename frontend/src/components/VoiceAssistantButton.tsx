@@ -77,7 +77,7 @@ export const VoiceAssistantButton = ({
   mode,
   contextPatientId,
   onApply,
-  buttonLabel = '🎤 Голос',
+  buttonLabel = '🤖 Голос',
 }: VoiceAssistantButtonProps) => {
   const { isOpen, onOpen, onClose } = useDisclosure()
   const toast = useToast()
@@ -383,7 +383,7 @@ export const VoiceAssistantButton = ({
     <>
       <Button
         onClick={onOpen}
-        leftIcon={<Text fontSize="lg">🎤</Text>}
+        leftIcon={<Text fontSize="lg">🤖</Text>}
         variant="outline"
         size="sm"
         borderRadius="lg"
@@ -411,7 +411,7 @@ export const VoiceAssistantButton = ({
         >
           <ModalHeader color="text.primary" borderBottom="1px solid" borderColor="border.subtle">
             <Flex align="center" gap={2}>
-              <Text fontSize="xl">🎤</Text>
+              <Text fontSize="xl">🤖</Text>
               <Text>Голосовой ввод {getModeLabel()}</Text>
             </Flex>
           </ModalHeader>

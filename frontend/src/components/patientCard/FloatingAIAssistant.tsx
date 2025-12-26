@@ -52,7 +52,7 @@ import {
   Divider,
   Progress,
 } from '@chakra-ui/react'
-import { X, Mic, MicOff, Check, RotateCcw, Stethoscope, Calendar, Wallet, Megaphone } from 'lucide-react'
+import { X, Check, RotateCcw, Stethoscope, Calendar, Wallet, Megaphone, Square } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLanguage } from '../../context/LanguageContext'
 import { aiApi } from '../../api/ai'
@@ -496,7 +496,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                   <AssistantIcon />
                 </Box>
                 <Text fontSize="sm" fontWeight="semibold" color={isDark ? 'white' : 'gray.800'}>
-                  🎤 Голосовой AI
+                  🤖 Голосовой AI
                 </Text>
               </Flex>
               <IconButton
@@ -549,7 +549,9 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                     _hover={{ transform: 'scale(1.05)' }}
                     transition="transform 0.2s"
                   >
-                    <Box as={Mic} w={8} h={8} />
+                    <Box w={8} h={8}>
+                      <AssistantIcon />
+                    </Box>
                   </Button>
                 </VStack>
               )}
@@ -587,7 +589,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                     h="80px"
                     onClick={stopRecording}
                   >
-                    <Box as={MicOff} w={8} h={8} />
+                    <Box as={Square} w={8} h={8} fill="currentColor" />
                   </Button>
                   <Text fontSize="xs" color={isDark ? 'gray.500' : 'gray.400'}>
                     Нажмите чтобы остановить

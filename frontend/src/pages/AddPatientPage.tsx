@@ -268,7 +268,7 @@ export const AddPatientPage = () => {
               <VoiceAssistantButton
                 mode="patient"
                 onApply={handleVoiceApply}
-                buttonLabel="🎤"
+                buttonLabel="🤖"
               />
             </Box>
 

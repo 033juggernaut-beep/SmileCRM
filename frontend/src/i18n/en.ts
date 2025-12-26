@@ -183,7 +183,7 @@ const en = {
     medicationsEmpty: 'Not specified — click ✏️ to add',
     nextVisitLabel: '⏭️ Next visit:',
     medicationsSaved: 'Medications saved',
-    voiceButton: '🎤 Dictate',
+    voiceButton: '🤖 Dictate',
     // Finance section
     finance: '💰 Patient finances',
     treatmentPlan: 'Treatment plan (total cost)',

@@ -185,7 +185,7 @@ const am = {
     medicationsEmpty: 'Nshvac che — sexmeq ✏️ avelacnelu hamar',
     nextVisitLabel: '⏭️ Hajord vizit:',
     medicationsSaved: 'Medikamentnere pahpanvac en',
-    voiceButton: '🎤 Dzaynagrel',
+    voiceButton: '🤖 Dzaynagrel',
     // Finance section
     finance: '💰 Pacienti finansner',
     treatmentPlan: 'Bujman plan (endhanur arjeq)',
