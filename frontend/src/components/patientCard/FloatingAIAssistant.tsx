@@ -1,40 +1,13 @@
 /**
- * Floating Voice AI Assistant - Voice-first dental assistant
- * - Doctor speaks → AI fills fields
- * - Shows transcription and suggested changes
- * - Apply button to save changes
+ * Floating Voice AI Assistant - Whisper STT + LLM parsing + preview/confirm
+ * 
+ * Flow:
+ * 1. Doctor records voice
+ * 2. Audio sent to /api/ai/voice/parse (Whisper STT → LLM parsing)
+ * 3. Show preview with parsed data (editable)
+ * 4. Doctor confirms or edits
+ * 5. Commit to /api/ai/voice/commit
  */
-
-// Web Speech API type declarations
-interface SpeechRecognitionEvent extends Event {
-  resultIndex: number
-  results: SpeechRecognitionResultList
-}
-
-interface SpeechRecognitionErrorEvent extends Event {
-  error: string
-}
-
-interface SpeechRecognition extends EventTarget {
-  continuous: boolean
-  interimResults: boolean
-  lang: string
-  onresult: ((event: SpeechRecognitionEvent) => void) | null
-  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null
-  start: () => void
-  stop: () => void
-}
-
-interface SpeechRecognitionConstructor {
-  new (): SpeechRecognition
-}
-
-declare global {
-  interface Window {
-    SpeechRecognition?: SpeechRecognitionConstructor
-    webkitSpeechRecognition?: SpeechRecognitionConstructor
-  }
-}
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import {
@@ -51,12 +24,14 @@ import {
   Badge,
   Divider,
   Progress,
+  Input,
+  Textarea,
 } from '@chakra-ui/react'
-import { X, Check, RotateCcw, Stethoscope, Calendar, Wallet, Megaphone, Square } from 'lucide-react'
+import { X, Check, RotateCcw, Stethoscope, Calendar, Wallet, MessageSquare, Square, Edit2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLanguage } from '../../context/LanguageContext'
-import { aiApi } from '../../api/ai'
-import type { AICategory, AIAction, AIAssistantResponse } from '../../api/ai'
+import { voiceApi } from '../../api/ai'
+import type { VoiceAIMode, VoiceParsedData } from '../../api/ai'
 
 interface FloatingAIAssistantProps {
   patientId?: string
@@ -98,14 +73,14 @@ const SUPPORTED_MIME_TYPES = [
   'audio/wav',
 ]
 
-type RecordingState = 'idle' | 'recording' | 'processing' | 'done' | 'error'
+type RecordingState = 'idle' | 'recording' | 'processing' | 'preview' | 'editing' | 'committing' | 'error'
 
-// Category mapping
-const categoryMap: Record<string, AICategory> = {
-  diagnosis: 'diagnosis',
-  visits: 'visits',
-  finance: 'finance',
-  marketing: 'marketing',
+// Mode configuration
+const modeConfig: Record<VoiceAIMode, { icon: typeof Stethoscope; label: string; color: string }> = {
+  visit: { icon: Calendar, label: 'Визит', color: 'blue' },
+  diagnosis: { icon: Stethoscope, label: 'Диагноз', color: 'green' },
+  payment: { icon: Wallet, label: 'Оплата', color: 'orange' },
+  message: { icon: MessageSquare, label: 'Заметка', color: 'purple' },
 }
 
 export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIAssistantProps) {
@@ -114,30 +89,24 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
   const isDark = colorMode === 'dark'
   const toast = useToast()
 
+  // UI state
   const [isOpen, setIsOpen] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState<string>('diagnosis')
+  const [selectedMode, setSelectedMode] = useState<VoiceAIMode>('visit')
   const [recordingState, setRecordingState] = useState<RecordingState>('idle')
   const [recordingSeconds, setRecordingSeconds] = useState(0)
-  const [transcript, setTranscript] = useState('')
-  const [isApplying, setIsApplying] = useState(false)
-  const [aiResponse, setAiResponse] = useState<AIAssistantResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [pendingDateActionIndex, setPendingDateActionIndex] = useState<number | null>(null)
-  const [selectedDate, setSelectedDate] = useState<string>('')
 
-  // Refs for recording
+  // Result state
+  const [transcript, setTranscript] = useState('')
+  const [parsedData, setParsedData] = useState<VoiceParsedData | null>(null)
+  const [editedData, setEditedData] = useState<VoiceParsedData | null>(null)
+  const [warnings, setWarnings] = useState<string[]>([])
+
+  // Refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const timerRef = useRef<number | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
-  const recognitionRef = useRef<SpeechRecognition | null>(null)
-
-  const capabilities = [
-    { id: 'diagnosis', icon: Stethoscope, label: 'Диагноз' },
-    { id: 'visits', icon: Calendar, label: 'Визит' },
-    { id: 'finance', icon: Wallet, label: 'Оплата' },
-    { id: 'marketing', icon: Megaphone, label: 'Сообщение' },
-  ]
 
   // Cleanup function
   const cleanup = useCallback(() => {
@@ -146,105 +115,62 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
       timerRef.current = null
     }
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop()
+      try {
+        mediaRecorderRef.current.stop()
+      } catch {
+        // Ignore
+      }
     }
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop())
+      streamRef.current.getTracks().forEach((track) => track.stop())
       streamRef.current = null
-    }
-    if (recognitionRef.current) {
-      recognitionRef.current.stop()
-      recognitionRef.current = null
     }
     audioChunksRef.current = []
   }, [])
 
   // Cleanup on unmount
   useEffect(() => {
-    return () => cleanup()
+    return cleanup
   }, [cleanup])
 
   // Get supported MIME type
   const getSupportedMimeType = (): string => {
-    for (const mimeType of SUPPORTED_MIME_TYPES) {
-      if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(mimeType)) {
-        return mimeType
+    for (const type of SUPPORTED_MIME_TYPES) {
+      if (MediaRecorder.isTypeSupported(type)) {
+        return type
       }
     }
     return 'audio/webm'
   }
 
-  // Start recording with Web Speech API for real-time transcription
+  // Start recording
   const startRecording = async () => {
     try {
-      cleanup()
       setError(null)
-      setTranscript('')
-      setAiResponse(null)
+      audioChunksRef.current = []
       
-      // Request microphone access
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       streamRef.current = stream
-
-      // Setup MediaRecorder for audio capture (backup)
+      
       const mimeType = getSupportedMimeType()
       const mediaRecorder = new MediaRecorder(stream, { mimeType })
       mediaRecorderRef.current = mediaRecorder
-      audioChunksRef.current = []
-
+      
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data)
         }
       }
-
-      mediaRecorder.start(100)
-
-      // Setup Web Speech API for real-time transcription
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-      if (SpeechRecognition) {
-        const recognition = new SpeechRecognition()
-        recognitionRef.current = recognition
-        
-        recognition.continuous = true
-        recognition.interimResults = true
-        recognition.lang = language === 'am' ? 'hy-AM' : language === 'en' ? 'en-US' : 'ru-RU'
-        
-        recognition.onresult = (event) => {
-          let finalTranscript = ''
-          let interimTranscript = ''
-          
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            const result = event.results[i]
-            if (result.isFinal) {
-              finalTranscript += result[0].transcript + ' '
-            } else {
-              interimTranscript += result[0].transcript
-            }
-          }
-          
-          setTranscript(prev => {
-            const base = prev.replace(/\[.*\]$/, '').trim()
-            const newText = finalTranscript || ''
-            const interim = interimTranscript ? ` [${interimTranscript}]` : ''
-            return (base + ' ' + newText + interim).trim()
-          })
-        }
-        
-        recognition.onerror = (event) => {
-          console.warn('Speech recognition error:', event.error)
-        }
-        
-        recognition.start()
-      }
-
-      // Start timer
-      setRecordingSeconds(0)
-      timerRef.current = window.setInterval(() => {
-        setRecordingSeconds(prev => prev + 1)
-      }, 1000)
-
+      
+      mediaRecorder.start(100) // Collect data every 100ms
       setRecordingState('recording')
+      setRecordingSeconds(0)
+      
+      // Start timer
+      timerRef.current = window.setInterval(() => {
+        setRecordingSeconds((s) => s + 1)
+      }, 1000)
+      
     } catch (err) {
       console.error('Failed to start recording:', err)
       setError('Не удалось получить доступ к микрофону')
@@ -252,170 +178,122 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
     }
   }
 
-  // Stop recording and process
+  // Stop recording and send to API
   const stopRecording = async () => {
+    if (!mediaRecorderRef.current) return
+    
+    // Stop timer
     if (timerRef.current) {
       clearInterval(timerRef.current)
       timerRef.current = null
     }
     
-    if (recognitionRef.current) {
-      recognitionRef.current.stop()
-    }
-
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop()
-    }
-
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop())
-    }
-
-    // Clean up interim markers from transcript
-    setTranscript(prev => prev.replace(/\[.*\]$/, '').trim())
-    
     setRecordingState('processing')
     
-    // Small delay to ensure transcript is finalized
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
-    // Get final transcript
-    const finalTranscript = transcript.replace(/\[.*\]$/, '').trim()
-    
-    if (!finalTranscript) {
-      setError('Не удалось распознать речь. Попробуйте снова.')
-      setRecordingState('error')
-      return
-    }
-
-    // Send to AI
-    try {
-      const response = await aiApi.assistant({
-        category: categoryMap[selectedCategory],
-        patient_id: patientId || null,
-        text: finalTranscript,
-        locale: language === 'am' ? 'hy' : language as 'ru' | 'en',
-      })
-
-      setAiResponse(response)
-      setRecordingState('done')
-    } catch (err) {
-      console.error('AI request failed:', err)
-      setError('Ошибка AI. Попробуйте снова.')
-      setRecordingState('error')
-    }
-  }
-
-  // Check if any action needs date clarification
-  const needsClarification = useCallback((): { index: number; question: string } | null => {
-    if (!aiResponse?.actions) return null
-    
-    for (let i = 0; i < aiResponse.actions.length; i++) {
-      const action = aiResponse.actions[i] as AIAction
-      if (action.type === 'create_visit' && (action.needs_clarification || !action.visit_date)) {
-        return {
-          index: i,
-          question: action.clarification_question || 'На какую дату записать визит?',
-        }
-      }
-    }
-    return null
-  }, [aiResponse])
-
-  // Get today's date in YYYY-MM-DD format (Asia/Yerevan)
-  const getToday = (): string => {
-    const now = new Date()
-    // Adjust for Asia/Yerevan timezone (+4 hours from UTC)
-    const offset = 4 * 60 // minutes
-    const local = new Date(now.getTime() + (offset - now.getTimezoneOffset()) * 60000)
-    return local.toISOString().split('T')[0]
-  }
-
-  // Get tomorrow's date
-  const getTomorrow = (): string => {
-    const today = new Date(getToday())
-    today.setDate(today.getDate() + 1)
-    return today.toISOString().split('T')[0]
-  }
-
-  // Apply selected date to pending action
-  const applyDateToAction = useCallback((dateValue: string) => {
-    if (pendingDateActionIndex === null || !aiResponse) return
-
-    const updatedActions = [...aiResponse.actions]
-    const action = updatedActions[pendingDateActionIndex] as AIAction
-    action.visit_date = dateValue
-    action.needs_clarification = false
-    action.clarification_question = null
-
-    setAiResponse({
-      ...aiResponse,
-      actions: updatedActions,
+    // Wait for final data
+    await new Promise<void>((resolve) => {
+      const recorder = mediaRecorderRef.current!
+      recorder.onstop = () => resolve()
+      recorder.stop()
     })
-    setPendingDateActionIndex(null)
-    setSelectedDate('')
-  }, [pendingDateActionIndex, aiResponse])
-
-  // Apply AI actions
-  const handleApply = useCallback(async () => {
-    if (!aiResponse?.actions?.length) return
-
-    // Check if we need clarification first
-    const clarification = needsClarification()
-    if (clarification) {
-      setPendingDateActionIndex(clarification.index)
+    
+    // Stop stream
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop())
+      streamRef.current = null
+    }
+    
+    // Create audio blob
+    const mimeType = getSupportedMimeType()
+    const audioBlob = new Blob(audioChunksRef.current, { type: mimeType })
+    
+    if (audioBlob.size < 100) {
+      setError('Запись слишком короткая')
+      setRecordingState('error')
       return
     }
-
-    setIsApplying(true)
-
+    
+    // Check patient ID
+    if (!patientId) {
+      setError('Не выбран пациент')
+      setRecordingState('error')
+      return
+    }
+    
+    // Send to API
     try {
-      const result = await aiApi.apply(aiResponse.actions as AIAction[])
+      const locale = (language === 'ru' || language === 'hy' || language === 'en') ? language : 'ru'
+      
+      const response = await voiceApi.parse(audioBlob, selectedMode, patientId, {
+        locale,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      })
+      
+      setTranscript(response.text)
+      setParsedData(response.data)
+      setEditedData(response.data)
+      setWarnings(response.warnings)
+      setRecordingState('preview')
+      
+    } catch (err) {
+      console.error('Voice parse failed:', err)
+      setError('Ошибка распознавания. Попробуйте снова.')
+      setRecordingState('error')
+    }
+  }
 
-      if (result.success) {
+  // Commit data
+  const handleCommit = async () => {
+    if (!editedData || !patientId) return
+    
+    setRecordingState('committing')
+    
+    try {
+      const response = await voiceApi.commit({
+        mode: selectedMode,
+        patient_id: patientId,
+        data: editedData,
+      })
+      
+      if (response.ok) {
         toast({
           title: '✅ Сохранено',
-          description: `${result.results.applied.length} изменений применено`,
+          description: response.message,
           status: 'success',
           duration: 3000,
         })
+        
         // Reset state
-        setAiResponse(null)
-        setTranscript('')
-        setRecordingState('idle')
-        setPendingDateActionIndex(null)
-        setSelectedDate('')
+        handleReset()
         onActionsApplied?.()
-      } else {
-        toast({
-          title: 'Ошибка',
-          description: `${result.results.failed.length} изменений не применено`,
-          status: 'warning',
-          duration: 5000,
-        })
       }
-    } catch (err) {
-      console.error('Apply failed:', err)
+    } catch (err: unknown) {
+      console.error('Commit failed:', err)
+      const errorMessage = err instanceof Error ? err.message : 
+        (typeof err === 'object' && err !== null && 'response' in err) 
+          ? ((err as { response?: { data?: { detail?: string } } }).response?.data?.detail || 'Ошибка сохранения')
+          : 'Ошибка сохранения'
+      
       toast({
         title: 'Ошибка',
-        description: 'Не удалось сохранить изменения',
+        description: errorMessage,
         status: 'error',
         duration: 5000,
       })
-    } finally {
-      setIsApplying(false)
+      setRecordingState('preview')
     }
-  }, [aiResponse, toast, onActionsApplied, needsClarification])
+  }
 
-  // Reset to try again
+  // Reset to initial state
   const handleReset = () => {
     cleanup()
     setRecordingState('idle')
     setTranscript('')
-    setAiResponse(null)
+    setParsedData(null)
+    setEditedData(null)
+    setWarnings([])
     setError(null)
-    setPendingDateActionIndex(null)
-    setSelectedDate('')
+    setRecordingSeconds(0)
   }
 
   // Format time
@@ -425,40 +303,27 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  // Format action for display
-  const formatAction = (action: AIAction): { label: string; value: string } => {
-    if (action.type === 'update_patient_diagnosis') {
-      return { label: '📋 Диагноз', value: action.diagnosis || '' }
-    }
-    if (action.type === 'create_visit') {
-      const parts = []
-      if (action.visit_date) {
-        // Format date nicely
-        try {
-          const dateObj = new Date(action.visit_date)
-          const formatted = dateObj.toLocaleDateString('ru-RU', { 
-            day: 'numeric', 
-            month: 'long',
-            year: dateObj.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined 
-          })
-          parts.push(`📅 ${formatted}`)
-        } catch {
-          parts.push(`📅 ${action.visit_date}`)
-        }
-      }
-      if (action.next_visit_date) parts.push(`➡️ ${action.next_visit_date}`)
-      if (action.notes) parts.push(action.notes)
-      return { label: '🗓️ Визит', value: parts.join(' • ') || 'Нужна дата' }
-    }
-    if (action.type === 'add_finance_note') {
-      return { label: '💰 Оплата', value: action.note || '' }
-    }
-    return { label: action.type, value: JSON.stringify(action) }
+  // Update edited field
+  const updateField = (field: keyof VoiceParsedData, value: string | number | null) => {
+    if (!editedData) return
+    setEditedData({ ...editedData, [field]: value })
+  }
+
+  // Get today's date
+  const getToday = (): string => {
+    return new Date().toISOString().split('T')[0]
+  }
+
+  // Get tomorrow's date
+  const getTomorrow = (): string => {
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    return tomorrow.toISOString().split('T')[0]
   }
 
   return (
     <Box position="fixed" bottom={6} right={6} zIndex={50}>
-      {/* Panel */}
+      {/* Main Panel */}
       <AnimatePresence>
         {isOpen && (
           <MotionBox
@@ -469,8 +334,8 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
             position="absolute"
             bottom={16}
             right={0}
-            w="320px"
-            maxH="480px"
+            w="340px"
+            maxH="520px"
             overflowY="auto"
             borderRadius="2xl"
             boxShadow="2xl"
@@ -512,32 +377,33 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
             </Flex>
 
             <Box p={4}>
-              {/* Category Selection */}
+              {/* Mode Selection */}
               <HStack spacing={2} mb={4} flexWrap="wrap">
-                {capabilities.map((cap) => {
-                  const isSelected = selectedCategory === cap.id
+                {(Object.entries(modeConfig) as [VoiceAIMode, typeof modeConfig.visit][]).map(([mode, config]) => {
+                  const Icon = config.icon
+                  const isSelected = selectedMode === mode
                   return (
                     <Button
-                      key={cap.id}
-                      size="xs"
-                      leftIcon={<Box as={cap.icon} w={3} h={3} />}
+                      key={mode}
+                      size="sm"
                       variant={isSelected ? 'solid' : 'outline'}
-                      colorScheme={isSelected ? 'blue' : 'gray'}
-                      borderRadius="full"
-                      onClick={() => setSelectedCategory(cap.id)}
-                      isDisabled={recordingState === 'recording'}
+                      colorScheme={isSelected ? config.color : 'gray'}
+                      leftIcon={<Box as={Icon} w={4} h={4} />}
+                      onClick={() => setSelectedMode(mode)}
+                      borderRadius="lg"
+                      isDisabled={recordingState !== 'idle'}
                     >
-                      {cap.label}
+                      {config.label}
                     </Button>
                   )
                 })}
               </HStack>
 
-              {/* Recording Area */}
+              {/* Idle State - Record Button */}
               {recordingState === 'idle' && (
                 <VStack spacing={4}>
                   <Text fontSize="sm" color={isDark ? 'gray.400' : 'gray.500'} textAlign="center">
-                    Нажмите и говорите. AI заполнит данные.
+                    Нажмите и говорите. AI распознает и заполнит данные.
                   </Text>
                   <Button
                     size="lg"
@@ -566,20 +432,9 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                     </Text>
                   </HStack>
                   
-                  {transcript && (
-                    <Box 
-                      p={3} 
-                      borderRadius="lg" 
-                      bg={isDark ? 'gray.700' : 'gray.100'}
-                      w="full"
-                      maxH="120px"
-                      overflowY="auto"
-                    >
-                      <Text fontSize="sm" color={isDark ? 'white' : 'gray.800'}>
-                        {transcript}
-                      </Text>
-                    </Box>
-                  )}
+                  <Text fontSize="sm" color={isDark ? 'gray.400' : 'gray.500'}>
+                    Говорите...
+                  </Text>
 
                   <Button
                     size="lg"
@@ -629,8 +484,8 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                 </VStack>
               )}
 
-              {/* Results State */}
-              {recordingState === 'done' && aiResponse && (
+              {/* Preview/Editing State */}
+              {(recordingState === 'preview' || recordingState === 'editing') && editedData && (
                 <VStack spacing={3} align="stretch">
                   {/* Transcript */}
                   <Box 
@@ -639,136 +494,172 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                     bg={isDark ? 'gray.700' : 'gray.100'}
                   >
                     <Text fontSize="xs" color={isDark ? 'gray.400' : 'gray.500'} mb={1}>
-                      Вы сказали:
+                      Распознано:
                     </Text>
                     <Text fontSize="sm" color={isDark ? 'white' : 'gray.800'}>
                       "{transcript}"
                     </Text>
                   </Box>
 
+                  {/* Warnings */}
+                  {warnings.length > 0 && (
+                    <Box p={2} borderRadius="lg" bg={isDark ? 'orange.900' : 'orange.50'}>
+                      {warnings.map((w, i) => (
+                        <Text key={i} fontSize="xs" color="orange.500">
+                          ⚠️ {w}
+                        </Text>
+                      ))}
+                    </Box>
+                  )}
+
                   <Divider />
 
-                  {/* AI Summary */}
-                  <Box>
-                    <Text fontSize="xs" fontWeight="medium" color={isDark ? 'gray.400' : 'gray.500'} mb={2}>
-                      AI понял:
-                    </Text>
-                    <Text fontSize="sm" color={isDark ? 'white' : 'gray.800'}>
-                      {aiResponse.summary}
-                    </Text>
-                  </Box>
-
-                  {/* Actions Preview */}
-                  {aiResponse.actions.length > 0 && (
-                    <VStack spacing={2} align="stretch">
+                  {/* Editable Fields */}
+                  <VStack spacing={3} align="stretch">
+                    <Flex justify="space-between" align="center">
                       <Text fontSize="xs" fontWeight="medium" color={isDark ? 'gray.400' : 'gray.500'}>
-                        Изменения:
+                        Данные для сохранения:
                       </Text>
-                      {aiResponse.actions.map((action, idx) => {
-                        const typedAction = action as AIAction
-                        const { label, value } = formatAction(typedAction)
-                        const needsDate = typedAction.type === 'create_visit' && 
-                          (typedAction.needs_clarification || !typedAction.visit_date)
-                        
-                        return (
-                          <Box
-                            key={idx}
-                            p={2}
-                            borderRadius="lg"
-                            bg={needsDate ? (isDark ? 'orange.900' : 'orange.50') : (isDark ? 'green.900' : 'green.50')}
-                            border="1px solid"
-                            borderColor={needsDate ? (isDark ? 'orange.700' : 'orange.200') : (isDark ? 'green.700' : 'green.200')}
-                          >
-                            <Badge colorScheme={needsDate ? 'orange' : 'green'} fontSize="10px" mb={1}>
-                              {label}
-                            </Badge>
-                            <Text fontSize="sm" color={isDark ? 'white' : 'gray.800'}>
-                              {needsDate ? '⚠️ Нужна дата' : value}
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        leftIcon={<Box as={Edit2} w={3} h={3} />}
+                        onClick={() => setRecordingState(recordingState === 'editing' ? 'preview' : 'editing')}
+                      >
+                        {recordingState === 'editing' ? 'Готово' : 'Редактировать'}
+                      </Button>
+                    </Flex>
+
+                    {/* Visit Date */}
+                    {(selectedMode === 'visit' || editedData.visit_date) && (
+                      <Box>
+                        <Text fontSize="xs" color={isDark ? 'gray.500' : 'gray.400'} mb={1}>
+                          📅 Дата визита
+                        </Text>
+                        {recordingState === 'editing' ? (
+                          <VStack spacing={2} align="stretch">
+                            <HStack spacing={2}>
+                              <Button
+                                size="xs"
+                                variant="outline"
+                                onClick={() => updateField('visit_date', getToday())}
+                              >
+                                Сегодня
+                              </Button>
+                              <Button
+                                size="xs"
+                                variant="outline"
+                                onClick={() => updateField('visit_date', getTomorrow())}
+                              >
+                                Завтра
+                              </Button>
+                            </HStack>
+                            <Input
+                              type="date"
+                              size="sm"
+                              value={editedData.visit_date || ''}
+                              onChange={(e) => updateField('visit_date', e.target.value || null)}
+                              min={getToday()}
+                            />
+                          </VStack>
+                        ) : (
+                          <Badge colorScheme={editedData.visit_date ? 'green' : 'orange'}>
+                            {editedData.visit_date || 'Не указана'}
+                          </Badge>
+                        )}
+                      </Box>
+                    )}
+
+                    {/* Next Visit Date */}
+                    {editedData.next_visit_date && (
+                      <Box>
+                        <Text fontSize="xs" color={isDark ? 'gray.500' : 'gray.400'} mb={1}>
+                          ➡️ Следующий визит
+                        </Text>
+                        {recordingState === 'editing' ? (
+                          <Input
+                            type="date"
+                            size="sm"
+                            value={editedData.next_visit_date || ''}
+                            onChange={(e) => updateField('next_visit_date', e.target.value || null)}
+                          />
+                        ) : (
+                          <Badge colorScheme="blue">{editedData.next_visit_date}</Badge>
+                        )}
+                      </Box>
+                    )}
+
+                    {/* Diagnosis */}
+                    {(selectedMode === 'diagnosis' || editedData.diagnosis) && (
+                      <Box>
+                        <Text fontSize="xs" color={isDark ? 'gray.500' : 'gray.400'} mb={1}>
+                          🩺 Диагноз
+                        </Text>
+                        {recordingState === 'editing' ? (
+                          <Textarea
+                            size="sm"
+                            rows={2}
+                            value={editedData.diagnosis || ''}
+                            onChange={(e) => updateField('diagnosis', e.target.value || null)}
+                            placeholder="Введите диагноз..."
+                          />
+                        ) : (
+                          <Text fontSize="sm" color={isDark ? 'white' : 'gray.800'}>
+                            {editedData.diagnosis || <Text as="span" color="gray.400">Не указан</Text>}
+                          </Text>
+                        )}
+                      </Box>
+                    )}
+
+                    {/* Notes */}
+                    {(selectedMode === 'message' || editedData.notes) && (
+                      <Box>
+                        <Text fontSize="xs" color={isDark ? 'gray.500' : 'gray.400'} mb={1}>
+                          📝 Заметки
+                        </Text>
+                        {recordingState === 'editing' ? (
+                          <Textarea
+                            size="sm"
+                            rows={2}
+                            value={editedData.notes || ''}
+                            onChange={(e) => updateField('notes', e.target.value || null)}
+                            placeholder="Введите заметки..."
+                          />
+                        ) : (
+                          <Text fontSize="sm" color={isDark ? 'white' : 'gray.800'}>
+                            {editedData.notes || <Text as="span" color="gray.400">Нет</Text>}
+                          </Text>
+                        )}
+                      </Box>
+                    )}
+
+                    {/* Amount */}
+                    {(selectedMode === 'payment' || editedData.amount) && (
+                      <Box>
+                        <Text fontSize="xs" color={isDark ? 'gray.500' : 'gray.400'} mb={1}>
+                          💰 Сумма
+                        </Text>
+                        {recordingState === 'editing' ? (
+                          <HStack>
+                            <Input
+                              type="number"
+                              size="sm"
+                              value={editedData.amount || ''}
+                              onChange={(e) => updateField('amount', parseFloat(e.target.value) || null)}
+                              placeholder="0"
+                            />
+                            <Text fontSize="sm" color={isDark ? 'gray.400' : 'gray.500'}>
+                              {editedData.currency || 'AMD'}
                             </Text>
-                          </Box>
-                        )
-                      })}
-                    </VStack>
-                  )}
-
-                  {/* Date Picker for Clarification */}
-                  {pendingDateActionIndex !== null && (
-                    <Box 
-                      p={3} 
-                      borderRadius="lg" 
-                      bg={isDark ? 'blue.900' : 'blue.50'}
-                      border="1px solid"
-                      borderColor={isDark ? 'blue.700' : 'blue.200'}
-                    >
-                      <Text fontSize="sm" fontWeight="medium" color={isDark ? 'white' : 'gray.800'} mb={3}>
-                        📅 {(aiResponse.actions[pendingDateActionIndex] as AIAction).clarification_question || 'На какую дату записать визит?'}
-                      </Text>
-                      
-                      {/* Quick date buttons */}
-                      <HStack spacing={2} mb={3}>
-                        <Button
-                          size="sm"
-                          colorScheme="blue"
-                          variant="outline"
-                          onClick={() => applyDateToAction(getToday())}
-                          borderRadius="lg"
-                        >
-                          Сегодня
-                        </Button>
-                        <Button
-                          size="sm"
-                          colorScheme="blue"
-                          variant="outline"
-                          onClick={() => applyDateToAction(getTomorrow())}
-                          borderRadius="lg"
-                        >
-                          Завтра
-                        </Button>
-                      </HStack>
-                      
-                      {/* Date input */}
-                      <HStack spacing={2}>
-                        <input
-                          type="date"
-                          value={selectedDate}
-                          onChange={(e) => setSelectedDate(e.target.value)}
-                          min={getToday()}
-                          style={{
-                            flex: 1,
-                            padding: '8px 12px',
-                            borderRadius: '8px',
-                            border: `1px solid ${isDark ? '#4A5568' : '#E2E8F0'}`,
-                            background: isDark ? '#2D3748' : '#fff',
-                            color: isDark ? '#fff' : '#1A202C',
-                            fontSize: '14px',
-                          }}
-                        />
-                        <Button
-                          size="sm"
-                          colorScheme="blue"
-                          onClick={() => {
-                            if (selectedDate) {
-                              applyDateToAction(selectedDate)
-                            }
-                          }}
-                          isDisabled={!selectedDate}
-                          borderRadius="lg"
-                        >
-                          OK
-                        </Button>
-                      </HStack>
-                    </Box>
-                  )}
-
-                  {/* Marketing Draft */}
-                  {aiResponse.draft?.marketing_message && (
-                    <Box p={3} borderRadius="lg" bg={isDark ? 'purple.900' : 'purple.50'}>
-                      <Text fontSize="xs" color="purple.500" mb={1}>📨 Сообщение:</Text>
-                      <Text fontSize="sm" color={isDark ? 'white' : 'gray.800'}>
-                        {aiResponse.draft.marketing_message}
-                      </Text>
-                    </Box>
-                  )}
+                          </HStack>
+                        ) : (
+                          <Badge colorScheme={editedData.amount ? 'green' : 'orange'}>
+                            {editedData.amount ? `${editedData.amount.toLocaleString()} ${editedData.currency || 'AMD'}` : 'Не указана'}
+                          </Badge>
+                        )}
+                      </Box>
+                    )}
+                  </VStack>
 
                   {/* Action Buttons */}
                   <HStack spacing={2} pt={2}>
@@ -776,14 +667,18 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                       flex={1}
                       colorScheme="green"
                       leftIcon={<Box as={Check} w={4} h={4} />}
-                      onClick={handleApply}
-                      isLoading={isApplying}
+                      onClick={handleCommit}
+                      isLoading={recordingState === 'committing'}
                       loadingText="Сохраняю..."
                       size="sm"
                       borderRadius="lg"
-                      isDisabled={pendingDateActionIndex !== null}
+                      isDisabled={
+                        (selectedMode === 'visit' && !editedData.visit_date) ||
+                        (selectedMode === 'diagnosis' && !editedData.diagnosis) ||
+                        (selectedMode === 'payment' && !editedData.amount)
+                      }
                     >
-                      {needsClarification() ? 'Укажите дату' : 'Сохранить'}
+                      Подтвердить
                     </Button>
                     <Button
                       variant="ghost"
@@ -797,38 +692,37 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                   </HStack>
                 </VStack>
               )}
+
+              {/* Committing State */}
+              {recordingState === 'committing' && (
+                <VStack spacing={4} py={6}>
+                  <Spinner size="lg" color="green.500" />
+                  <Text fontSize="sm" color={isDark ? 'gray.400' : 'gray.500'}>
+                    Сохраняю...
+                  </Text>
+                </VStack>
+              )}
             </Box>
           </MotionBox>
         )}
       </AnimatePresence>
 
-      {/* Main Floating Button */}
+      {/* Floating Button */}
       <MotionButton
         onClick={() => setIsOpen(!isOpen)}
-        w={14}
-        h={14}
         borderRadius="full"
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
+        w="56px"
+        h="56px"
+        colorScheme="blue"
         boxShadow="lg"
-        bg={isOpen ? 'blue.600' : isDark ? 'gray.700' : 'white'}
-        color={isOpen ? 'white' : 'blue.500'}
-        border={isOpen ? 'none' : '1px solid'}
-        borderColor={isDark ? 'gray.600' : 'gray.200'}
-        _hover={{
-          bg: isOpen ? 'blue.500' : isDark ? 'gray.600' : 'gray.50',
-        }}
-        whileHover={{ scale: 1.05 }}
+        whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
-        aria-label="Voice AI Assistant"
+        p={0}
       >
-        <Box w={7} h={7}>
+        <Box w={6} h={6} color="white">
           <AssistantIcon />
         </Box>
       </MotionButton>
     </Box>
   )
 }
-
-export default FloatingAIAssistant

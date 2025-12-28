@@ -162,6 +162,40 @@ export function isNoteStructured(data: VoiceParseStructured | undefined): data i
 }
 
 // ============================================================================
+// Voice AI types (new Whisper-based voice parsing)
+// ============================================================================
+
+export type VoiceAIMode = 'visit' | 'diagnosis' | 'payment' | 'message'
+
+export interface VoiceParsedData {
+  visit_date: string | null
+  next_visit_date: string | null
+  diagnosis: string | null
+  notes: string | null
+  amount: number | null
+  currency: string | null
+}
+
+export interface VoiceParseAPIResponse {
+  ok: boolean
+  text: string
+  data: VoiceParsedData
+  warnings: string[]
+}
+
+export interface VoiceCommitRequest {
+  mode: VoiceAIMode
+  patient_id: string
+  data: VoiceParsedData
+}
+
+export interface VoiceCommitResponse {
+  ok: boolean
+  message: string
+  created?: Record<string, unknown>
+}
+
+// ============================================================================
 // AI Assistant API client
 // ============================================================================
 
@@ -190,6 +224,60 @@ export const aiApi = {
     const response = await apiClient.post<AIApplyResponse>(
       '/ai/apply',
       { actions }
+    )
+
+    return response.data
+  },
+}
+
+// ============================================================================
+// Voice AI API client (new Whisper-based)
+// ============================================================================
+
+export const voiceApi = {
+  /**
+   * Parse voice audio - sends to Whisper STT + LLM parsing
+   */
+  async parse(
+    audioBlob: Blob,
+    mode: VoiceAIMode,
+    patientId: string,
+    options?: {
+      timezone?: string
+      locale?: 'ru' | 'hy' | 'en'
+      today?: string
+    }
+  ): Promise<VoiceParseAPIResponse> {
+    const formData = new FormData()
+    formData.append('file', audioBlob, 'recording.webm')
+    formData.append('mode', mode)
+    formData.append('patient_id', patientId)
+    formData.append('timezone', options?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone)
+    formData.append('locale', options?.locale || 'ru')
+    if (options?.today) {
+      formData.append('today', options.today)
+    }
+
+    const response = await apiClient.post<VoiceParseAPIResponse>(
+      '/ai/voice/parse',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    )
+
+    return response.data
+  },
+
+  /**
+   * Commit parsed voice data to database
+   */
+  async commit(request: VoiceCommitRequest): Promise<VoiceCommitResponse> {
+    const response = await apiClient.post<VoiceCommitResponse>(
+      '/ai/voice/commit',
+      request
     )
 
     return response.data
