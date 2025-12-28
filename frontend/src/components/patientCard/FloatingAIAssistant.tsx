@@ -73,7 +73,7 @@ const SUPPORTED_MIME_TYPES = [
   'audio/wav',
 ]
 
-type RecordingState = 'idle' | 'recording' | 'processing' | 'preview' | 'editing' | 'committing' | 'error'
+type RecordingState = 'idle' | 'recording' | 'processing' | 'preview' | 'editing' | 'error'
 
 // Mode configuration
 const modeConfig: Record<VoiceAIMode, { icon: typeof Stethoscope; label: string; color: string }> = {
@@ -95,10 +95,10 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
   const [recordingState, setRecordingState] = useState<RecordingState>('idle')
   const [recordingSeconds, setRecordingSeconds] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const [isCommitting, setIsCommitting] = useState(false)
 
   // Result state
   const [transcript, setTranscript] = useState('')
-  const [parsedData, setParsedData] = useState<VoiceParsedData | null>(null)
   const [editedData, setEditedData] = useState<VoiceParsedData | null>(null)
   const [warnings, setWarnings] = useState<string[]>([])
 
@@ -222,7 +222,13 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
     
     // Send to API
     try {
-      const locale = (language === 'ru' || language === 'hy' || language === 'en') ? language : 'ru'
+      // Map 'am' (Armenian in app) to 'hy' (Armenian ISO code for Whisper)
+      const localeMap: Record<string, 'ru' | 'hy' | 'en'> = {
+        ru: 'ru',
+        am: 'hy',
+        en: 'en',
+      }
+      const locale = localeMap[language] || 'ru'
       
       const response = await voiceApi.parse(audioBlob, selectedMode, patientId, {
         locale,
@@ -230,7 +236,6 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
       })
       
       setTranscript(response.text)
-      setParsedData(response.data)
       setEditedData(response.data)
       setWarnings(response.warnings)
       setRecordingState('preview')
@@ -246,7 +251,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
   const handleCommit = async () => {
     if (!editedData || !patientId) return
     
-    setRecordingState('committing')
+    setIsCommitting(true)
     
     try {
       const response = await voiceApi.commit({
@@ -280,7 +285,8 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
         status: 'error',
         duration: 5000,
       })
-      setRecordingState('preview')
+    } finally {
+      setIsCommitting(false)
     }
   }
 
@@ -289,11 +295,11 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
     cleanup()
     setRecordingState('idle')
     setTranscript('')
-    setParsedData(null)
     setEditedData(null)
     setWarnings([])
     setError(null)
     setRecordingSeconds(0)
+    setIsCommitting(false)
   }
 
   // Format time
@@ -668,7 +674,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                       colorScheme="green"
                       leftIcon={<Box as={Check} w={4} h={4} />}
                       onClick={handleCommit}
-                      isLoading={recordingState === 'committing'}
+                      isLoading={isCommitting}
                       loadingText="Сохраняю..."
                       size="sm"
                       borderRadius="lg"
@@ -693,15 +699,6 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                 </VStack>
               )}
 
-              {/* Committing State */}
-              {recordingState === 'committing' && (
-                <VStack spacing={4} py={6}>
-                  <Spinner size="lg" color="green.500" />
-                  <Text fontSize="sm" color={isDark ? 'gray.400' : 'gray.500'}>
-                    Сохраняю...
-                  </Text>
-                </VStack>
-              )}
             </Box>
           </MotionBox>
         )}
