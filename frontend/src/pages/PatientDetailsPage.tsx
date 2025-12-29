@@ -3,7 +3,7 @@
  * Uses new Chakra UI components that replicate the Superdesign export 1:1
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   Box,
@@ -43,6 +43,7 @@ import {
   type Medication,
 } from '../api/medications'
 import { treatmentPlanApi } from '../api/treatmentPlan'
+import { mediaApi, type MediaFile } from '../api/media'
 import { apiClient } from '../api/client'
 import { TOKEN_STORAGE_KEY } from '../constants/storage'
 
@@ -115,6 +116,10 @@ export const PatientDetailsPage = () => {
   // Medications state
   const [medications, setMedications] = useState<Medication[]>([])
 
+  // Media files state
+  const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   // New Visit modal state
   const newVisitModal = useDisclosure()
   const [newVisitDate, setNewVisitDate] = useState(() => new Date().toISOString().split('T')[0])
@@ -178,13 +183,14 @@ export const PatientDetailsPage = () => {
       setIsLoading(true)
       setError(null)
       try {
-        const [patientData, visitsData, financeData, paymentsData, medicationsData, treatmentData] = await Promise.all([
+        const [patientData, visitsData, financeData, paymentsData, medicationsData, treatmentData, mediaData] = await Promise.all([
           patientsApi.getById(id),
           patientsApi.getVisits(id),
           patientFinanceApi.getFinanceSummary(id),
           patientFinanceApi.listPayments(id),
           medicationsApi.list(id),
           treatmentPlanApi.list(id),
+          mediaApi.getPatientMedia(id).catch(() => []),
         ])
         if (!cancelled) {
           setPatient(patientData)
@@ -192,6 +198,7 @@ export const PatientDetailsPage = () => {
           setFinanceSummary(financeData)
           setPayments(paymentsData)
           setMedications(medicationsData)
+          setMediaFiles(mediaData)
           // Map treatment plan items to TreatmentStep format
           setTreatmentSteps(treatmentData.map((item) => ({
             id: item.id,
@@ -339,6 +346,40 @@ export const PatientDetailsPage = () => {
     },
     []
   )
+
+  // Handle file upload
+  const handleAddFile = useCallback(() => {
+    fileInputRef.current?.click()
+  }, [])
+
+  const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file || !id) return
+
+    try {
+      const uploaded = await mediaApi.uploadPatientMedia(id, file)
+      setMediaFiles((prev) => [uploaded, ...prev])
+      toast({
+        title: t('common.saved'),
+        description: file.name,
+        status: 'success',
+        duration: 3000,
+      })
+    } catch (err) {
+      console.error('Failed to upload file:', err)
+      toast({
+        title: t('common.error'),
+        description: 'Failed to upload file',
+        status: 'error',
+        duration: 3000,
+      })
+    }
+
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }, [id, toast, t])
 
   // Handle finance update
   const handleUpdateFinance = useCallback(
@@ -578,16 +619,23 @@ export const PatientDetailsPage = () => {
 
             {/* 5. Files - X-rays, photos, documents */}
             <FilesSection
-              files={[]}
-              onAddFile={() => {
-                toast({
-                  title: 'Coming soon',
-                  description: 'File upload will be available in the next update',
-                  status: 'info',
-                  duration: 3000,
-                })
-              }}
+              files={mediaFiles.map(f => ({
+                id: f.id,
+                name: f.fileName,
+                type: f.fileType.startsWith('image/') ? 'photo' as const : 'document' as const,
+                url: f.publicUrl,
+              }))}
+              onAddFile={handleAddFile}
               defaultOpen={false}
+            />
+
+            {/* Hidden file input for upload */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,.pdf,.doc,.docx"
+              style={{ display: 'none' }}
+              onChange={handleFileChange}
             />
 
             {/* 6. Prescribed Medications */}
