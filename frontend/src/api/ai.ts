@@ -126,12 +126,13 @@ export async function parseVoice(request: VoiceParseRequest): Promise<VoiceParse
   const formData = new FormData()
   formData.append('mode', request.mode)
   formData.append('language', request.language)
+  formData.append('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone)
   if (request.contextPatientId) {
-    formData.append('context_patient_id', request.contextPatientId)
+    formData.append('patient_id', request.contextPatientId)
   }
-  formData.append('audio', request.audioBlob, 'recording.webm')
+  formData.append('file', request.audioBlob, 'recording.webm')
 
-  const response = await apiClient.post<VoiceParseResponse>('/voice/parse', formData, {
+  const response = await apiClient.post<VoiceParseResponse>('/ai/voice/patient-parse', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },

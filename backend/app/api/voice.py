@@ -286,3 +286,170 @@ async def commit_voice_data(
         logger.exception(f"Failed to commit voice data: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to save: {str(e)}")
 
+
+# ============== Patient Creation Voice Parse ==============
+
+class PatientVoiceParsedData(BaseModel):
+    """Parsed data for patient creation from voice"""
+    first_name: str | None = Field(None, description="Patient first name")
+    last_name: str | None = Field(None, description="Patient last name")
+    phone: str | None = Field(None, description="Phone number")
+    diagnosis: str | None = Field(None, description="Initial diagnosis")
+    birth_date: str | None = Field(None, description="Birth date YYYY-MM-DD")
+    notes: str | None = Field(None, description="Additional notes")
+
+
+class PatientVoiceParseResponse(BaseModel):
+    """Response from patient voice parse endpoint"""
+    transcript: str = Field(..., description="Transcribed text from audio")
+    language: str = Field(..., description="Detected language")
+    mode: str = Field(default="patient")
+    structured: dict = Field(..., description="Parsed structured data")
+    warnings: list[str] = Field(default_factory=list, description="Validation warnings")
+
+
+@router.post("/patient-parse", response_model=PatientVoiceParseResponse)
+async def parse_patient_voice(
+    current_doctor: CurrentDoctor,
+    file: UploadFile = File(..., description="Audio file (webm/wav/mp3)"),
+    mode: str = Form("patient", description="Mode - always 'patient' for this endpoint"),
+    language: Literal["auto", "hy", "ru", "en"] = Form("auto", description="Speech language"),
+    timezone: str = Form("Asia/Yerevan", description="Client timezone"),
+    patient_id: str | None = Form(None, description="Not used for patient creation"),
+):
+    """
+    Parse voice audio for patient creation.
+    
+    Extracts: first_name, last_name, phone, diagnosis, birth_date, notes
+    from spoken input.
+    
+    Language hint helps Whisper with transcription accuracy.
+    """
+    from app.services.voice_service import transcribe_audio
+    from app.config import settings
+    import openai
+    import json
+    
+    # Read audio file
+    try:
+        audio_bytes = await file.read()
+    except Exception as e:
+        logger.error(f"Failed to read audio file: {e}")
+        raise HTTPException(status_code=400, detail="Failed to read audio file")
+    
+    if len(audio_bytes) > MAX_AUDIO_SIZE:
+        raise HTTPException(status_code=413, detail="Audio file too large (max 25MB)")
+    
+    if len(audio_bytes) < 100:
+        raise HTTPException(status_code=400, detail="Audio file too small or empty")
+    
+    filename = file.filename or "audio.webm"
+    
+    logger.info(
+        f"Patient voice parse: language={language}, timezone={timezone}, "
+        f"file={filename} ({len(audio_bytes)} bytes)"
+    )
+    
+    # Transcribe with Whisper
+    if not settings.OPENAI_API_KEY:
+        raise HTTPException(
+            status_code=503, 
+            detail="Voice AI not configured. Please set OPENAI_API_KEY."
+        )
+    
+    try:
+        # Map language for Whisper
+        whisper_lang = None
+        if language != "auto":
+            whisper_lang = language
+        
+        transcript = transcribe_audio(
+            audio_bytes=audio_bytes,
+            filename=filename,
+            language=whisper_lang,
+        )
+        
+        if not transcript or not transcript.strip():
+            raise HTTPException(status_code=400, detail="Could not transcribe audio")
+        
+        logger.info(f"Transcribed text: {transcript[:100]}...")
+        
+    except Exception as e:
+        logger.exception(f"Transcription failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
+    
+    # Parse with LLM to extract patient info
+    client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+    
+    system_prompt = """You are a medical assistant helping to extract patient registration data from speech.
+
+Extract from the text:
+- first_name: Patient's first name
+- last_name: Patient's last name (family name)
+- phone: Phone number (clean digits, may have +374 prefix)
+- diagnosis: Initial diagnosis or reason for visit
+- birth_date: Birth date in YYYY-MM-DD format (calculate from age if given)
+- notes: Any additional notes
+
+If information is not mentioned, use null.
+Return ONLY valid JSON, no markdown:
+{
+  "first_name": "string or null",
+  "last_name": "string or null", 
+  "phone": "string or null",
+  "diagnosis": "string or null",
+  "birth_date": "YYYY-MM-DD or null",
+  "notes": "string or null"
+}"""
+
+    try:
+        response = client.chat.completions.create(
+            model=settings.AI_MODEL_TEXT,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"Extract patient data from:\n\n{transcript}"}
+            ],
+            temperature=0.1,
+            max_tokens=500,
+        )
+        
+        content = response.choices[0].message.content or "{}"
+        content = content.strip()
+        
+        # Clean markdown if present
+        if content.startswith("```"):
+            lines = content.split("\n")
+            content = "\n".join(lines[1:-1] if lines[-1] == "```" else lines[1:])
+        
+        parsed = json.loads(content)
+        
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to parse LLM response as JSON: {e}")
+        parsed = {}
+    except Exception as e:
+        logger.exception(f"LLM parsing failed: {e}")
+        parsed = {}
+    
+    # Build structured response
+    structured = {
+        "patient": {
+            "first_name": parsed.get("first_name"),
+            "last_name": parsed.get("last_name"),
+            "phone": parsed.get("phone"),
+            "diagnosis": parsed.get("diagnosis"),
+            "birth_date": parsed.get("birth_date"),
+        }
+    }
+    
+    warnings = []
+    if parsed.get("notes"):
+        warnings.append(f"Notes: {parsed.get('notes')}")
+    
+    return PatientVoiceParseResponse(
+        transcript=transcript,
+        language=language if language != "auto" else "auto",
+        mode="patient",
+        structured=structured,
+        warnings=warnings,
+    )
+
