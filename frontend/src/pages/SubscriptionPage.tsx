@@ -1,10 +1,11 @@
 /**
  * SubscriptionPage - Premium subscription management
  * UI/UX styled like main dashboard (HomePage)
- * No header, no back buttons - clean content-focused design
+ * With back button for navigation
  */
 
 import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Alert,
   AlertDescription,
@@ -13,6 +14,7 @@ import {
   Flex,
   Grid,
   Heading,
+  IconButton,
   Skeleton,
   Stack,
   Text,
@@ -20,7 +22,7 @@ import {
   useToast,
 } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
-import { Crown, CreditCard, Clock, CheckCircle, AlertCircle } from 'lucide-react'
+import { Crown, CreditCard, Clock, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react'
 
 import { createPayment, getSubscription } from '../api/subscription'
 import type { PaymentProvider, SubscriptionSnapshot } from '../api/subscription'
@@ -110,6 +112,7 @@ const openPaymentLink = (url: string) => {
 
 export const SubscriptionPage = () => {
   const { t, language } = useLanguage()
+  const navigate = useNavigate()
   const toast = useToast()
   const { colorMode } = useColorMode()
   const isDark = colorMode === 'dark'
@@ -237,6 +240,25 @@ export const SubscriptionPage = () => {
 
       {/* Main Content */}
       <Box position="relative" zIndex={10} display="flex" flexDir="column" flex="1">
+        {/* Back Button */}
+        <Flex px="16px" pt="16px">
+          <IconButton
+            aria-label="Back"
+            icon={<ArrowLeft size={20} />}
+            variant="ghost"
+            size="sm"
+            borderRadius="full"
+            color={isDark ? 'gray.400' : 'gray.600'}
+            bg={isDark ? 'rgba(30, 41, 59, 0.6)' : 'rgba(255, 255, 255, 0.8)'}
+            backdropFilter="blur(8px)"
+            _hover={{
+              bg: isDark ? 'rgba(30, 41, 59, 0.8)' : 'rgba(255, 255, 255, 1)',
+              color: isDark ? 'white' : 'gray.800',
+            }}
+            onClick={() => navigate('/home')}
+          />
+        </Flex>
+
         <Flex
           as="main"
           direction="column"
@@ -244,7 +266,7 @@ export const SubscriptionPage = () => {
           justify="flex-start"
           flex="1"
           px="16px"
-          py={{ base: '32px', md: '48px' }}
+          py={{ base: '16px', md: '32px' }}
           gap={{ base: '24px', md: '32px' }}
         >
           {/* Premium Banner Card */}
