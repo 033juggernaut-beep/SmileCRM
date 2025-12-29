@@ -79,8 +79,16 @@ PARSE_PROMPT_TEMPLATE = """Ты — медицинский AI-ассистент
    - конкретные даты (5 января, 25.12, etc) → преобразуй в YYYY-MM-DD
 5. Если год не указан — используй {YEAR} (или следующий год если дата уже прошла)
 
+ПРАВИЛА ВАЛЮТЫ (КРИТИЧЕСКИ ВАЖНО для Армении):
+- Если встречается 'դdelays', 'драм', 'драма', 'драмов', 'AMD', '֏', 'dram' → currency = "AMD"
+- RUB допускается ТОЛЬКО если явно сказано 'рубль/рублей/руб' И НЕТ признаков 'драм/AMD/֏'
+- Для Armenia (timezone: Asia/Yerevan) валюта по умолчанию = AMD
+- НИКОГДА не подменяй "драм" на "рубли"
+- Предустановленная валюта: {DEFAULT_CURRENCY}
+
 Текущая дата: {TODAY} (timezone: {TIMEZONE})
 Режим: {MODE}
+Язык: {LOCALE}
 
 Верни СТРОГО JSON без markdown:
 {{
@@ -89,7 +97,7 @@ PARSE_PROMPT_TEMPLATE = """Ты — медицинский AI-ассистент
   "diagnosis": "текст диагноза или null",
   "notes": "заметки врача или null",
   "amount": число или null,
-  "currency": "AMD" или null
+  "currency": "AMD" | "RUB" | null
 }}
 
 Примеры:
@@ -97,6 +105,8 @@ PARSE_PROMPT_TEMPLATE = """Ты — медицинский AI-ассистент
 - "Запиши на завтра" → visit_date: "{TOMORROW}"
 - "Визит 25 декабря" → visit_date: "YYYY-12-25" (правильный год)
 - "Оплата 20000 драм" → amount: 20000, currency: "AMD"
+- "Оплата 20000 դdelays" → amount: 20000, currency: "AMD"
+- "Оплата 20000 ֏" → amount: 20000, currency: "AMD"
 - "Новый визит" (без даты) → visit_date: null
 
 Текст врача: \"\"\"{TEXT}\"\"\"
@@ -165,6 +175,81 @@ def _normalize_amount(amount_val: Any) -> float | None:
             return None
     
     return None
+
+
+# Currency tokens for normalization
+AMD_TOKENS = [
+    "դdelays", "դdelays.", "dram", "драм", "драма", "драмов", "amd", "֏",
+    "драму", "драме", "драмах", "drm", "drams",
+]
+RUB_TOKENS = [
+    "руб", "рублей", "рубля", "рубль", "ruble", "rub", "₽",
+]
+
+
+def normalize_currency(
+    text: str,
+    locale: str = "ru",
+    timezone: str = "Asia/Yerevan",
+) -> tuple[str | None, str, list[str]]:
+    """
+    Normalize currency from transcribed text.
+    
+    Args:
+        text: Transcribed text
+        locale: User locale (hy/ru/en)
+        timezone: User timezone
+    
+    Returns:
+        Tuple of (currency, corrected_text, warnings)
+    """
+    warnings: list[str] = []
+    text_lower = text.lower()
+    corrected_text = text
+    
+    # Check for AMD tokens
+    has_amd = any(token in text_lower for token in AMD_TOKENS)
+    
+    # Check for RUB tokens
+    has_rub = any(token in text_lower for token in RUB_TOKENS)
+    
+    # Case 1: Both AMD and RUB found (STT error - likely misheard "драм" as "рублей")
+    if has_amd and has_rub:
+        # AMD takes priority - this is likely an STT error
+        currency = "AMD"
+        # Correct the text - replace RUB tokens with correct Armenian
+        for rub_token in RUB_TOKENS:
+            pattern = re.compile(re.escape(rub_token) + r'\w*', re.IGNORECASE)
+            if pattern.search(corrected_text):
+                corrected_text = pattern.sub('դрам', corrected_text)
+        warnings.append("Валюта исправлена на AMD (драм)")
+        return currency, corrected_text, warnings
+    
+    # Case 2: Only AMD tokens found
+    if has_amd:
+        return "AMD", corrected_text, warnings
+    
+    # Case 3: Only RUB tokens found
+    if has_rub:
+        return "RUB", corrected_text, warnings
+    
+    # Case 4: No currency found - use defaults based on locale/timezone
+    if timezone == "Asia/Yerevan" or locale == "hy":
+        return "AMD", corrected_text, warnings
+    
+    # No currency detected
+    return None, corrected_text, warnings
+
+
+def correct_currency_in_text(text: str, locale: str, timezone: str) -> tuple[str, str | None, list[str]]:
+    """
+    Pre-process text before LLM to fix currency recognition errors.
+    
+    Returns:
+        Tuple of (corrected_text, detected_currency, warnings)
+    """
+    currency, corrected_text, warnings = normalize_currency(text, locale, timezone)
+    return corrected_text, currency, warnings
 
 
 def transcribe_audio(
@@ -237,6 +322,14 @@ def parse_voice_text(
     client = _get_openai_client()
     settings = get_settings()
     
+    # Pre-process text for currency normalization (before LLM)
+    corrected_text, pre_detected_currency, currency_warnings = correct_currency_in_text(
+        text, locale, timezone
+    )
+    
+    # Determine default currency based on locale/timezone
+    default_currency = "AMD" if (timezone == "Asia/Yerevan" or locale == "hy") else "AMD"
+    
     # Calculate dates
     try:
         tz = ZoneInfo(timezone)
@@ -254,7 +347,7 @@ def parse_voice_text(
     tomorrow = today + timedelta(days=1)
     day_after = today + timedelta(days=2)
     
-    # Build prompt
+    # Build prompt with corrected text
     prompt = PARSE_PROMPT_TEMPLATE.format(
         TODAY=today.isoformat(),
         TOMORROW=tomorrow.isoformat(),
@@ -262,7 +355,9 @@ def parse_voice_text(
         YEAR=today.year,
         TIMEZONE=timezone,
         MODE=mode,
-        TEXT=text,
+        TEXT=corrected_text,
+        DEFAULT_CURRENCY=default_currency,
+        LOCALE=locale,
     )
     
     logger.debug(f"LLM parse prompt: {prompt[:500]}...")
@@ -294,6 +389,9 @@ def parse_voice_text(
         # Validate and normalize
         warnings: list[str] = []
         
+        # Add currency correction warnings from pre-processing
+        warnings.extend(currency_warnings)
+        
         # Validate dates
         visit_date, date_warnings = _validate_date(data.get("visit_date"), today)
         warnings.extend(date_warnings)
@@ -304,13 +402,21 @@ def parse_voice_text(
         # Normalize amount
         amount = _normalize_amount(data.get("amount"))
         
-        # Get currency (default to AMD if amount present)
-        currency = data.get("currency")
-        if amount and not currency:
-            currency = "AMD"
+        # Get currency - priority: pre-detected > LLM > default
+        llm_currency = data.get("currency")
+        if pre_detected_currency:
+            # Use pre-detected currency from text normalization
+            currency = pre_detected_currency
+        elif llm_currency:
+            currency = llm_currency
+        elif amount:
+            # Default to AMD if we have amount but no currency
+            currency = default_currency
+        else:
+            currency = None
         
         return VoiceParseResult(
-            text=text,
+            text=text,  # Return original text, not corrected
             visit_date=visit_date,
             next_visit_date=next_visit_date,
             diagnosis=data.get("diagnosis"),

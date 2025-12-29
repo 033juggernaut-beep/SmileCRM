@@ -646,22 +646,47 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                           💰 Сумма
                         </Text>
                         {recordingState === 'editing' ? (
-                          <HStack>
-                            <Input
-                              type="number"
-                              size="sm"
-                              value={editedData.amount || ''}
-                              onChange={(e) => updateField('amount', parseFloat(e.target.value) || null)}
-                              placeholder="0"
-                            />
-                            <Text fontSize="sm" color={isDark ? 'gray.400' : 'gray.500'}>
-                              {editedData.currency || 'AMD'}
-                            </Text>
-                          </HStack>
+                          <VStack spacing={2} align="stretch">
+                            <HStack>
+                              <Input
+                                type="number"
+                                size="sm"
+                                flex={1}
+                                value={editedData.amount || ''}
+                                onChange={(e) => updateField('amount', parseFloat(e.target.value) || null)}
+                                placeholder="0"
+                              />
+                              <HStack spacing={1}>
+                                <Button
+                                  size="xs"
+                                  variant={editedData.currency === 'AMD' ? 'solid' : 'outline'}
+                                  colorScheme={editedData.currency === 'AMD' ? 'green' : 'gray'}
+                                  onClick={() => updateField('currency', 'AMD')}
+                                >
+                                  AMD
+                                </Button>
+                                <Button
+                                  size="xs"
+                                  variant={editedData.currency === 'RUB' ? 'solid' : 'outline'}
+                                  colorScheme={editedData.currency === 'RUB' ? 'blue' : 'gray'}
+                                  onClick={() => updateField('currency', 'RUB')}
+                                >
+                                  RUB
+                                </Button>
+                              </HStack>
+                            </HStack>
+                          </VStack>
                         ) : (
-                          <Badge colorScheme={editedData.amount ? 'green' : 'orange'}>
-                            {editedData.amount ? `${editedData.amount.toLocaleString()} ${editedData.currency || 'AMD'}` : 'Не указана'}
-                          </Badge>
+                          <HStack>
+                            <Badge colorScheme={editedData.amount ? 'green' : 'orange'}>
+                              {editedData.amount ? `${editedData.amount.toLocaleString()} ${editedData.currency || 'AMD'}` : 'Не указана'}
+                            </Badge>
+                            {warnings.some(w => w.includes('исправлена')) && (
+                              <Badge colorScheme="orange" fontSize="10px">
+                                исправлено
+                              </Badge>
+                            )}
+                          </HStack>
                         )}
                       </Box>
                     )}

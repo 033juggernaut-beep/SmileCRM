@@ -9,6 +9,8 @@ from app.services.voice_service import (
     parse_voice_text,
     _validate_date,
     _normalize_amount,
+    normalize_currency,
+    correct_currency_in_text,
     VoiceParseResult,
 )
 
@@ -135,6 +137,101 @@ class TestAmountNormalization:
         """Invalid string should return None"""
         result = _normalize_amount("abc")
         assert result is None
+
+
+class TestCurrencyNormalization:
+    """Tests for currency normalization (AMD/RUB detection)"""
+    
+    def test_dram_russian_returns_amd(self):
+        """'оплатил 300000 драм' → AMD"""
+        currency, text, warnings = normalize_currency(
+            "оплатил 300000 драм",
+            locale="ru",
+            timezone="Asia/Yerevan",
+        )
+        assert currency == "AMD"
+        assert len(warnings) == 0
+    
+    def test_dram_armenian_returns_amd(self):
+        """'օdelays 300000 դdelays' → AMD"""
+        currency, text, warnings = normalize_currency(
+            "оплатил 300000 դdelays",
+            locale="hy",
+            timezone="Asia/Yerevan",
+        )
+        assert currency == "AMD"
+        assert len(warnings) == 0
+    
+    def test_amd_explicit_returns_amd(self):
+        """'оплатил 300000 AMD' → AMD"""
+        currency, text, warnings = normalize_currency(
+            "оплатил 300000 AMD",
+            locale="ru",
+            timezone="Asia/Yerevan",
+        )
+        assert currency == "AMD"
+        assert len(warnings) == 0
+    
+    def test_dram_symbol_returns_amd(self):
+        """'оплатил 300000 ֏' → AMD"""
+        currency, text, warnings = normalize_currency(
+            "оплатил 300000 ֏",
+            locale="ru",
+            timezone="Asia/Yerevan",
+        )
+        assert currency == "AMD"
+        assert len(warnings) == 0
+    
+    def test_ruble_returns_rub(self):
+        """'оплатил 300000 рублей' → RUB"""
+        currency, text, warnings = normalize_currency(
+            "оплатил 300000 рублей",
+            locale="ru",
+            timezone="Europe/Moscow",
+        )
+        assert currency == "RUB"
+        assert len(warnings) == 0
+    
+    def test_mixed_dram_rub_returns_amd_with_warning(self):
+        """'оплатил 300000 драм рублей' (STT garbage) → AMD + warning"""
+        currency, text, warnings = normalize_currency(
+            "оплатил 300000 драм рублей",
+            locale="ru",
+            timezone="Asia/Yerevan",
+        )
+        assert currency == "AMD"
+        assert len(warnings) == 1
+        assert "исправлена" in warnings[0].lower() or "AMD" in warnings[0]
+    
+    def test_no_currency_yerevan_returns_amd(self):
+        """No currency but timezone=Asia/Yerevan → AMD"""
+        currency, text, warnings = normalize_currency(
+            "оплатил 300000",
+            locale="ru",
+            timezone="Asia/Yerevan",
+        )
+        assert currency == "AMD"
+        assert len(warnings) == 0
+    
+    def test_no_currency_armenian_locale_returns_amd(self):
+        """No currency but locale=hy → AMD"""
+        currency, text, warnings = normalize_currency(
+            "оплатил 300000",
+            locale="hy",
+            timezone="Europe/Moscow",
+        )
+        assert currency == "AMD"
+        assert len(warnings) == 0
+    
+    def test_dram_variation_drama_returns_amd(self):
+        """'оплатил 300000 драма' → AMD"""
+        currency, text, warnings = normalize_currency(
+            "оплатил 300000 драма",
+            locale="ru",
+            timezone="Asia/Yerevan",
+        )
+        assert currency == "AMD"
+        assert len(warnings) == 0
 
 
 class TestVoiceParserIntegration:
