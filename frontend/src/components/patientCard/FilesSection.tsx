@@ -20,6 +20,7 @@ interface MedicalFile {
 interface FilesSectionProps {
   files: MedicalFile[]
   onAddFile: () => void
+  onFileClick?: (file: MedicalFile) => void
   defaultOpen?: boolean
 }
 
@@ -43,6 +44,7 @@ function FileIcon({ type, isDark }: { type: MedicalFile['type']; isDark: boolean
 export function FilesSection({
   files,
   onAddFile,
+  onFileClick,
   defaultOpen = false,
 }: FilesSectionProps) {
   const { t } = useLanguage()
@@ -110,6 +112,7 @@ export function FilesSection({
               }}
               cursor="pointer"
               border="none"
+              onClick={() => onFileClick?.(file)}
             >
               {/* Icon */}
               <Flex

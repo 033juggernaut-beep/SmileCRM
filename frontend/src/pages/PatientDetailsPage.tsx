@@ -352,6 +352,19 @@ export const PatientDetailsPage = () => {
     fileInputRef.current?.click()
   }, [])
 
+  // Handle file click - open in new tab/window
+  const handleFileClick = useCallback((file: { url?: string; name: string }) => {
+    if (file.url) {
+      // Try to use Telegram's openLink if available, otherwise use window.open
+      const tg = (window as { Telegram?: { WebApp?: { openLink?: (url: string) => void } } }).Telegram?.WebApp
+      if (tg?.openLink) {
+        tg.openLink(file.url)
+      } else {
+        window.open(file.url, '_blank')
+      }
+    }
+  }, [])
+
   const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file || !id) return
@@ -626,6 +639,7 @@ export const PatientDetailsPage = () => {
                 url: f.publicUrl,
               }))}
               onAddFile={handleAddFile}
+              onFileClick={handleFileClick}
               defaultOpen={false}
             />
 
