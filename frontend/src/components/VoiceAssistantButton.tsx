@@ -328,19 +328,41 @@ export const VoiceAssistantButton = ({
     }
   }
   
+  // Check if we should render as floating circular button
+  const isFloatingStyle = buttonLabel === '🤖' || buttonLabel === ''
+  
   return (
     <>
-      <Button
-        onClick={onOpen}
-        leftIcon={<Box w={4} h={4}><AssistantIcon /></Box>}
-        variant="outline"
-        size="sm"
-        borderRadius="lg"
-        colorScheme="blue"
-        isDisabled={!isMediaRecorderSupported}
-      >
-        {buttonLabel}
-      </Button>
+      {isFloatingStyle ? (
+        <Button
+          onClick={onOpen}
+          borderRadius="full"
+          w="56px"
+          h="56px"
+          colorScheme="blue"
+          boxShadow="lg"
+          p={0}
+          isDisabled={!isMediaRecorderSupported}
+          _hover={{ transform: 'scale(1.1)' }}
+          transition="transform 0.2s"
+        >
+          <Box w={6} h={6} color="white">
+            <AssistantIcon />
+          </Box>
+        </Button>
+      ) : (
+        <Button
+          onClick={onOpen}
+          leftIcon={<Box w={4} h={4}><AssistantIcon /></Box>}
+          variant="outline"
+          size="sm"
+          borderRadius="lg"
+          colorScheme="blue"
+          isDisabled={!isMediaRecorderSupported}
+        >
+          {buttonLabel}
+        </Button>
+      )}
       
       <Modal isOpen={isOpen} onClose={handleClose} size="sm" isCentered>
         <ModalOverlay bg="blackAlpha.600" backdropFilter="blur(4px)" />
