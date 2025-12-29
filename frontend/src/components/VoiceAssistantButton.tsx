@@ -25,7 +25,29 @@ import {
 } from '@chakra-ui/react'
 import { keyframes } from '@emotion/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Bot, Check, Edit2, RotateCcw, Square, X } from 'lucide-react'
+import { Check, Edit2, RotateCcw, Square, X } from 'lucide-react'
+
+// Minimal robot/assistant icon - same as FloatingAIAssistant
+function AssistantIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ width: '100%', height: '100%' }}
+    >
+      <rect x="5" y="4" width="14" height="12" rx="2" />
+      <circle cx="9" cy="10" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="10" r="1.5" fill="currentColor" stroke="none" />
+      <line x1="12" y1="4" x2="12" y2="2" />
+      <circle cx="12" cy="1.5" r="1" fill="currentColor" stroke="none" />
+      <path d="M8 16v2a2 2 0 002 2h4a2 2 0 002-2v-2" />
+    </svg>
+  )
+}
 import {
   type VoiceLanguage,
   type VoiceMode,
@@ -310,7 +332,7 @@ export const VoiceAssistantButton = ({
     <>
       <Button
         onClick={onOpen}
-        leftIcon={<Box as={Bot} w={4} h={4} />}
+        leftIcon={<Box w={4} h={4}><AssistantIcon /></Box>}
         variant="outline"
         size="sm"
         borderRadius="lg"
@@ -333,7 +355,7 @@ export const VoiceAssistantButton = ({
             borderColor="gray.200"
           >
             <Flex align="center" gap={2}>
-              <Box as={Bot} w={5} h={5} color="blue.500" />
+              <Box w={5} h={5} color="blue.500"><AssistantIcon /></Box>
               <Text fontSize="sm" fontWeight="semibold">
                 {getModeLabel()}
               </Text>
@@ -383,7 +405,7 @@ export const VoiceAssistantButton = ({
                   _hover={{ transform: 'scale(1.05)' }}
                   transition="transform 0.2s"
                 >
-                  <Box as={Bot} w={8} h={8} />
+                  <Box w={8} h={8}><AssistantIcon /></Box>
                 </Button>
               </VStack>
             )}
