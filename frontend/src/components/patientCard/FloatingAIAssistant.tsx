@@ -1,9 +1,9 @@
-/**
+﻿/**
  * Floating Voice AI Assistant - Whisper STT + LLM parsing + preview/confirm
  * 
  * Flow:
  * 1. Doctor records voice
- * 2. Audio sent to /api/ai/voice/parse (Whisper STT → LLM parsing)
+ * 2. Audio sent to /api/ai/voice/parse (Whisper STT в†’ LLM parsing)
  * 3. Show preview with parsed data (editable)
  * 4. Doctor confirms or edits
  * 5. Commit to /api/ai/voice/commit
@@ -77,10 +77,10 @@ type RecordingState = 'idle' | 'recording' | 'processing' | 'preview' | 'editing
 
 // Mode configuration
 const modeConfig: Record<VoiceAIMode, { icon: typeof Stethoscope; label: string; color: string }> = {
-  visit: { icon: Calendar, label: 'Визит', color: 'blue' },
-  diagnosis: { icon: Stethoscope, label: 'Диагноз', color: 'green' },
-  payment: { icon: Wallet, label: 'Оплата', color: 'orange' },
-  message: { icon: MessageSquare, label: 'Заметка', color: 'purple' },
+  visit: { icon: Calendar, label: 'Р’РёР·РёС‚', color: 'blue' },
+  diagnosis: { icon: Stethoscope, label: 'Р”РёР°РіРЅРѕР·', color: 'green' },
+  payment: { icon: Wallet, label: 'РћРїР»Р°С‚Р°', color: 'orange' },
+  message: { icon: MessageSquare, label: 'Р—Р°РјРµС‚РєР°', color: 'purple' },
 }
 
 export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIAssistantProps) {
@@ -91,9 +91,9 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
   // Speech language options
   type SpeechLanguage = 'ru' | 'hy' | 'en'
   const speechLanguageLabels: Record<SpeechLanguage, string> = {
-    ru: '🇷🇺 Русский',
-    hy: '🇦🇲 Հայերdelays',
-    en: '🇬🇧 English',
+    ru: 'RU',
+    hy: 'AM',
+    en: 'EN',
   }
 
   // UI state
@@ -181,7 +181,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
       
     } catch (err) {
       console.error('Failed to start recording:', err)
-      setError('Не удалось получить доступ к микрофону')
+      setError('РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ РґРѕСЃС‚СѓРї Рє РјРёРєСЂРѕС„РѕРЅСѓ')
       setRecordingState('error')
     }
   }
@@ -216,14 +216,14 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
     const audioBlob = new Blob(audioChunksRef.current, { type: mimeType })
     
     if (audioBlob.size < 100) {
-      setError('Запись слишком короткая')
+      setError('Р—Р°РїРёСЃСЊ СЃР»РёС€РєРѕРј РєРѕСЂРѕС‚РєР°СЏ')
       setRecordingState('error')
       return
     }
     
     // Check patient ID
     if (!patientId) {
-      setError('Не выбран пациент')
+      setError('РќРµ РІС‹Р±СЂР°РЅ РїР°С†РёРµРЅС‚')
       setRecordingState('error')
       return
     }
@@ -243,7 +243,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
       
     } catch (err) {
       console.error('Voice parse failed:', err)
-      setError('Ошибка распознавания. Попробуйте снова.')
+      setError('РћС€РёР±РєР° СЂР°СЃРїРѕР·РЅР°РІР°РЅРёСЏ. РџРѕРїСЂРѕР±СѓР№С‚Рµ СЃРЅРѕРІР°.')
       setRecordingState('error')
     }
   }
@@ -263,7 +263,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
       
       if (response.ok) {
         toast({
-          title: '✅ Сохранено',
+          title: 'вњ… РЎРѕС…СЂР°РЅРµРЅРѕ',
           description: response.message,
           status: 'success',
           duration: 3000,
@@ -277,11 +277,11 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
       console.error('Commit failed:', err)
       const errorMessage = err instanceof Error ? err.message : 
         (typeof err === 'object' && err !== null && 'response' in err) 
-          ? ((err as { response?: { data?: { detail?: string } } }).response?.data?.detail || 'Ошибка сохранения')
-          : 'Ошибка сохранения'
+          ? ((err as { response?: { data?: { detail?: string } } }).response?.data?.detail || 'РћС€РёР±РєР° СЃРѕС…СЂР°РЅРµРЅРёСЏ')
+          : 'РћС€РёР±РєР° СЃРѕС…СЂР°РЅРµРЅРёСЏ'
       
       toast({
-        title: 'Ошибка',
+        title: 'РћС€РёР±РєР°',
         description: errorMessage,
         status: 'error',
         duration: 5000,
@@ -368,11 +368,11 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                   <AssistantIcon />
                 </Box>
                 <Text fontSize="sm" fontWeight="semibold" color={isDark ? 'white' : 'gray.800'}>
-                  🤖 Голосовой AI
+                  рџ¤– Р“РѕР»РѕСЃРѕРІРѕР№ AI
                 </Text>
               </Flex>
               <IconButton
-                aria-label="Закрыть"
+                aria-label="Р—Р°РєСЂС‹С‚СЊ"
                 icon={<Box as={X} w={4} h={4} />}
                 size="xs"
                 variant="ghost"
@@ -429,7 +429,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
               {recordingState === 'idle' && (
                 <VStack spacing={4}>
                   <Text fontSize="sm" color={isDark ? 'gray.400' : 'gray.500'} textAlign="center">
-                    Нажмите и говорите. AI распознает и заполнит данные.
+                    РќР°Р¶РјРёС‚Рµ Рё РіРѕРІРѕСЂРёС‚Рµ. AI СЂР°СЃРїРѕР·РЅР°РµС‚ Рё Р·Р°РїРѕР»РЅРёС‚ РґР°РЅРЅС‹Рµ.
                   </Text>
                   <Button
                     size="lg"
@@ -459,7 +459,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                   </HStack>
                   
                   <Text fontSize="sm" color={isDark ? 'gray.400' : 'gray.500'}>
-                    Говорите...
+                    Р“РѕРІРѕСЂРёС‚Рµ...
                   </Text>
 
                   <Button
@@ -473,7 +473,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                     <Box as={Square} w={8} h={8} fill="currentColor" />
                   </Button>
                   <Text fontSize="xs" color={isDark ? 'gray.500' : 'gray.400'}>
-                    Нажмите чтобы остановить
+                    РќР°Р¶РјРёС‚Рµ С‡С‚РѕР±С‹ РѕСЃС‚Р°РЅРѕРІРёС‚СЊ
                   </Text>
                 </VStack>
               )}
@@ -483,7 +483,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                 <VStack spacing={4} py={6}>
                   <Spinner size="lg" color="blue.500" />
                   <Text fontSize="sm" color={isDark ? 'gray.400' : 'gray.500'}>
-                    AI обрабатывает...
+                    AI РѕР±СЂР°Р±Р°С‚С‹РІР°РµС‚...
                   </Text>
                   <Progress size="sm" isIndeterminate colorScheme="blue" w="full" borderRadius="full" />
                 </VStack>
@@ -505,7 +505,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                     onClick={handleReset}
                     size="sm"
                   >
-                    Попробовать снова
+                    РџРѕРїСЂРѕР±РѕРІР°С‚СЊ СЃРЅРѕРІР°
                   </Button>
                 </VStack>
               )}
@@ -520,7 +520,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                     bg={isDark ? 'gray.700' : 'gray.100'}
                   >
                     <Text fontSize="xs" color={isDark ? 'gray.400' : 'gray.500'} mb={1}>
-                      Распознано:
+                      Р Р°СЃРїРѕР·РЅР°РЅРѕ:
                     </Text>
                     <Text fontSize="sm" color={isDark ? 'white' : 'gray.800'}>
                       "{transcript}"
@@ -532,7 +532,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                     <Box p={2} borderRadius="lg" bg={isDark ? 'orange.900' : 'orange.50'}>
                       {warnings.map((w, i) => (
                         <Text key={i} fontSize="xs" color="orange.500">
-                          ⚠️ {w}
+                          вљ пёЏ {w}
                         </Text>
                       ))}
                     </Box>
@@ -544,7 +544,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                   <VStack spacing={3} align="stretch">
                     <Flex justify="space-between" align="center">
                       <Text fontSize="xs" fontWeight="medium" color={isDark ? 'gray.400' : 'gray.500'}>
-                        Данные для сохранения:
+                        Р”Р°РЅРЅС‹Рµ РґР»СЏ СЃРѕС…СЂР°РЅРµРЅРёСЏ:
                       </Text>
                       <Button
                         size="xs"
@@ -552,7 +552,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                         leftIcon={<Box as={Edit2} w={3} h={3} />}
                         onClick={() => setRecordingState(recordingState === 'editing' ? 'preview' : 'editing')}
                       >
-                        {recordingState === 'editing' ? 'Готово' : 'Редактировать'}
+                        {recordingState === 'editing' ? 'Р“РѕС‚РѕРІРѕ' : 'Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ'}
                       </Button>
                     </Flex>
 
@@ -560,7 +560,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                     {(selectedMode === 'visit' || editedData.visit_date) && (
                       <Box>
                         <Text fontSize="xs" color={isDark ? 'gray.500' : 'gray.400'} mb={1}>
-                          📅 Дата визита
+                          рџ“… Р”Р°С‚Р° РІРёР·РёС‚Р°
                         </Text>
                         {recordingState === 'editing' ? (
                           <VStack spacing={2} align="stretch">
@@ -570,14 +570,14 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                                 variant="outline"
                                 onClick={() => updateField('visit_date', getToday())}
                               >
-                                Сегодня
+                                РЎРµРіРѕРґРЅСЏ
                               </Button>
                               <Button
                                 size="xs"
                                 variant="outline"
                                 onClick={() => updateField('visit_date', getTomorrow())}
                               >
-                                Завтра
+                                Р—Р°РІС‚СЂР°
                               </Button>
                             </HStack>
                             <Input
@@ -590,7 +590,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                           </VStack>
                         ) : (
                           <Badge colorScheme={editedData.visit_date ? 'green' : 'orange'}>
-                            {editedData.visit_date || 'Не указана'}
+                            {editedData.visit_date || 'РќРµ СѓРєР°Р·Р°РЅР°'}
                           </Badge>
                         )}
                       </Box>
@@ -600,7 +600,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                     {editedData.next_visit_date && (
                       <Box>
                         <Text fontSize="xs" color={isDark ? 'gray.500' : 'gray.400'} mb={1}>
-                          ➡️ Следующий визит
+                          вћЎпёЏ РЎР»РµРґСѓСЋС‰РёР№ РІРёР·РёС‚
                         </Text>
                         {recordingState === 'editing' ? (
                           <Input
@@ -619,7 +619,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                     {(selectedMode === 'diagnosis' || editedData.diagnosis) && (
                       <Box>
                         <Text fontSize="xs" color={isDark ? 'gray.500' : 'gray.400'} mb={1}>
-                          🩺 Диагноз
+                          рџ©є Р”РёР°РіРЅРѕР·
                         </Text>
                         {recordingState === 'editing' ? (
                           <Textarea
@@ -627,11 +627,11 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                             rows={2}
                             value={editedData.diagnosis || ''}
                             onChange={(e) => updateField('diagnosis', e.target.value || null)}
-                            placeholder="Введите диагноз..."
+                            placeholder="Р’РІРµРґРёС‚Рµ РґРёР°РіРЅРѕР·..."
                           />
                         ) : (
                           <Text fontSize="sm" color={isDark ? 'white' : 'gray.800'}>
-                            {editedData.diagnosis || <Text as="span" color="gray.400">Не указан</Text>}
+                            {editedData.diagnosis || <Text as="span" color="gray.400">РќРµ СѓРєР°Р·Р°РЅ</Text>}
                           </Text>
                         )}
                       </Box>
@@ -641,7 +641,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                     {(selectedMode === 'message' || editedData.notes) && (
                       <Box>
                         <Text fontSize="xs" color={isDark ? 'gray.500' : 'gray.400'} mb={1}>
-                          📝 Заметки
+                          рџ“ќ Р—Р°РјРµС‚РєРё
                         </Text>
                         {recordingState === 'editing' ? (
                           <Textarea
@@ -649,11 +649,11 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                             rows={2}
                             value={editedData.notes || ''}
                             onChange={(e) => updateField('notes', e.target.value || null)}
-                            placeholder="Введите заметки..."
+                            placeholder="Р’РІРµРґРёС‚Рµ Р·Р°РјРµС‚РєРё..."
                           />
                         ) : (
                           <Text fontSize="sm" color={isDark ? 'white' : 'gray.800'}>
-                            {editedData.notes || <Text as="span" color="gray.400">Нет</Text>}
+                            {editedData.notes || <Text as="span" color="gray.400">РќРµС‚</Text>}
                           </Text>
                         )}
                       </Box>
@@ -663,7 +663,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                     {(selectedMode === 'payment' || editedData.amount) && (
                       <Box>
                         <Text fontSize="xs" color={isDark ? 'gray.500' : 'gray.400'} mb={1}>
-                          💰 Сумма
+                          рџ’° РЎСѓРјРјР°
                         </Text>
                         {recordingState === 'editing' ? (
                           <VStack spacing={2} align="stretch">
@@ -699,11 +699,11 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                         ) : (
                           <HStack>
                             <Badge colorScheme={editedData.amount ? 'green' : 'orange'}>
-                              {editedData.amount ? `${editedData.amount.toLocaleString()} ${editedData.currency || 'AMD'}` : 'Не указана'}
+                              {editedData.amount ? `${editedData.amount.toLocaleString()} ${editedData.currency || 'AMD'}` : 'РќРµ СѓРєР°Р·Р°РЅР°'}
                             </Badge>
-                            {warnings.some(w => w.includes('исправлена')) && (
+                            {warnings.some(w => w.includes('РёСЃРїСЂР°РІР»РµРЅР°')) && (
                               <Badge colorScheme="orange" fontSize="10px">
-                                исправлено
+                                РёСЃРїСЂР°РІР»РµРЅРѕ
                               </Badge>
                             )}
                           </HStack>
@@ -720,7 +720,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                       leftIcon={<Box as={Check} w={4} h={4} />}
                       onClick={handleCommit}
                       isLoading={isCommitting}
-                      loadingText="Сохраняю..."
+                      loadingText="РЎРѕС…СЂР°РЅСЏСЋ..."
                       size="sm"
                       borderRadius="lg"
                       isDisabled={
@@ -729,7 +729,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                         (selectedMode === 'payment' && !editedData.amount)
                       }
                     >
-                      Подтвердить
+                      РџРѕРґС‚РІРµСЂРґРёС‚СЊ
                     </Button>
                     <Button
                       variant="ghost"
@@ -738,7 +738,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                       size="sm"
                       borderRadius="lg"
                     >
-                      Заново
+                      Р—Р°РЅРѕРІРѕ
                     </Button>
                   </HStack>
                 </VStack>

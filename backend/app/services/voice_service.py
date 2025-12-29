@@ -1,4 +1,4 @@
-"""
+﻿"""
 Voice AI Service - Whisper STT + LLM parsing with strict validation
 """
 import json
@@ -80,8 +80,8 @@ PARSE_PROMPT_TEMPLATE = """Ты — медицинский AI-ассистент
 5. Если год не указан — используй {YEAR} (или следующий год если дата уже прошла)
 
 ПРАВИЛА ВАЛЮТЫ (КРИТИЧЕСКИ ВАЖНО для Армении):
-- Если встречается 'դdelays', 'драм', 'драма', 'драмов', 'AMD', '֏', 'dram' → currency = "AMD"
-- RUB допускается ТОЛЬКО если явно сказано 'рубль/рублей/руб' И НЕТ признаков 'драм/AMD/֏'
+- Если встречается 'dram', 'драм', 'драма', 'драмов', 'AMD', 'drams' → currency = "AMD"
+- RUB допускается ТОЛЬКО если явно сказано 'рубль/рублей/руб' И НЕТ признаков 'драм/AMD'
 - Для Armenia (timezone: Asia/Yerevan) валюта по умолчанию = AMD
 - НИКОГДА не подменяй "драм" на "рубли"
 - Предустановленная валюта: {DEFAULT_CURRENCY}
@@ -105,8 +105,7 @@ PARSE_PROMPT_TEMPLATE = """Ты — медицинский AI-ассистент
 - "Запиши на завтра" → visit_date: "{TOMORROW}"
 - "Визит 25 декабря" → visit_date: "YYYY-12-25" (правильный год)
 - "Оплата 20000 драм" → amount: 20000, currency: "AMD"
-- "Оплата 20000 դdelays" → amount: 20000, currency: "AMD"
-- "Оплата 20000 ֏" → amount: 20000, currency: "AMD"
+- "Оплата 20000 dram" → amount: 20000, currency: "AMD"
 - "Новый визит" (без даты) → visit_date: null
 
 Текст врача: \"\"\"{TEXT}\"\"\"
@@ -178,12 +177,15 @@ def _normalize_amount(amount_val: Any) -> float | None:
 
 
 # Currency tokens for normalization
+# AMD = Armenian Dram (Armenian: dram, Russian: драм)
 AMD_TOKENS = [
-    "դdelays", "դdelays.", "dram", "драм", "драма", "драмов", "amd", "֏",
-    "драму", "драме", "драмах", "drm", "drams",
+    "dram", "drams", "drm",  # Latin/English
+    "драм", "драма", "драмов", "драму", "драме", "драмах",  # Russian
+    "amd",  # Currency code
 ]
 RUB_TOKENS = [
-    "руб", "рублей", "рубля", "рубль", "ruble", "rub", "₽",
+    "руб", "рублей", "рубля", "рубль",  # Russian
+    "ruble", "rubles", "rub",  # English
 ]
 
 

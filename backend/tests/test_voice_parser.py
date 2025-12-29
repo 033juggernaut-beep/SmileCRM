@@ -153,9 +153,9 @@ class TestCurrencyNormalization:
         assert len(warnings) == 0
     
     def test_dram_armenian_returns_amd(self):
-        """'օdelays 300000 դdelays' → AMD"""
+        """'dram' in Armenian context → AMD"""
         currency, text, warnings = normalize_currency(
-            "оплатил 300000 դdelays",
+            "paid 300000 dram",
             locale="hy",
             timezone="Asia/Yerevan",
         )
