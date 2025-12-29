@@ -17,17 +17,19 @@ import {
   Flex,
   Grid,
   Heading,
-  IconButton,
   Stack,
   Text,
   useColorMode,
 } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
-import { ArrowLeft, HelpCircle, Plug, MessageCircle } from 'lucide-react'
+import { HelpCircle, Plug, MessageCircle } from 'lucide-react'
 
 import { API_URL, testBackendConnection } from '../api/client'
 import { BackgroundPattern } from '../components/dashboard'
+import { BackButton } from '../components/patientCard/BackButton'
 import { PremiumButton } from '../components/premium/PremiumButton'
+import { useTelegramBackButton } from '../hooks/useTelegramBackButton'
+import { useTelegramSafeArea } from '../hooks/useTelegramSafeArea'
 import { useLanguage } from '../context/LanguageContext'
 
 const MotionDiv = motion.div
@@ -60,6 +62,11 @@ export const HelpPage = () => {
   const navigate = useNavigate()
   const { colorMode } = useColorMode()
   const isDark = colorMode === 'dark'
+  
+  // Telegram integration
+  const { topInset } = useTelegramSafeArea()
+  const handleBack = () => navigate('/home')
+  const { showFallbackButton } = useTelegramBackButton(handleBack)
   
   const [connectionTest, setConnectionTest] = useState<{
     testing: boolean
@@ -124,24 +131,12 @@ export const HelpPage = () => {
 
       {/* Main Content */}
       <Box position="relative" zIndex={10} display="flex" flexDir="column" flex="1">
-        {/* Back Button */}
-        <Flex px="16px" pt="16px">
-          <IconButton
-            aria-label="Back"
-            icon={<ArrowLeft size={20} />}
-            variant="ghost"
-            size="sm"
-            borderRadius="full"
-            color={isDark ? 'gray.400' : 'gray.600'}
-            bg={isDark ? 'rgba(30, 41, 59, 0.6)' : 'rgba(255, 255, 255, 0.8)'}
-            backdropFilter="blur(8px)"
-            _hover={{
-              bg: isDark ? 'rgba(30, 41, 59, 0.8)' : 'rgba(255, 255, 255, 1)',
-              color: isDark ? 'white' : 'gray.800',
-            }}
-            onClick={() => navigate('/home')}
-          />
-        </Flex>
+        {/* Back Button - only show if not in Telegram */}
+        {showFallbackButton && (
+          <Box px="16px" pt={topInset > 0 ? `${topInset + 16}px` : '16px'}>
+            <BackButton onClick={handleBack} />
+          </Box>
+        )}
 
         <Flex
           as="main"

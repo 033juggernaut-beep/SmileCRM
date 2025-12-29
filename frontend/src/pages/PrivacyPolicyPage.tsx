@@ -9,7 +9,6 @@ import {
   Flex,
   Grid,
   Heading,
-  IconButton,
   ListItem,
   Stack,
   Text,
@@ -17,9 +16,12 @@ import {
   useColorMode,
 } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Shield, FileText, Mail, ClipboardList } from 'lucide-react'
+import { Shield, FileText, Mail, ClipboardList } from 'lucide-react'
 
 import { BackgroundPattern } from '../components/dashboard'
+import { BackButton } from '../components/patientCard/BackButton'
+import { useTelegramBackButton } from '../hooks/useTelegramBackButton'
+import { useTelegramSafeArea } from '../hooks/useTelegramSafeArea'
 import { useLanguage } from '../context/LanguageContext'
 
 const MotionDiv = motion.div
@@ -52,6 +54,11 @@ export const PrivacyPolicyPage = () => {
   const navigate = useNavigate()
   const { colorMode } = useColorMode()
   const isDark = colorMode === 'dark'
+  
+  // Telegram integration
+  const { topInset } = useTelegramSafeArea()
+  const handleBack = () => navigate('/home')
+  const { showFallbackButton } = useTelegramBackButton(handleBack)
   
   // Sections with icons
   const sections = [
@@ -106,24 +113,12 @@ export const PrivacyPolicyPage = () => {
 
       {/* Main Content */}
       <Box position="relative" zIndex={10} display="flex" flexDir="column" flex="1">
-        {/* Back Button */}
-        <Flex px="16px" pt="16px">
-          <IconButton
-            aria-label="Back"
-            icon={<ArrowLeft size={20} />}
-            variant="ghost"
-            size="sm"
-            borderRadius="full"
-            color={isDark ? 'gray.400' : 'gray.600'}
-            bg={isDark ? 'rgba(30, 41, 59, 0.6)' : 'rgba(255, 255, 255, 0.8)'}
-            backdropFilter="blur(8px)"
-            _hover={{
-              bg: isDark ? 'rgba(30, 41, 59, 0.8)' : 'rgba(255, 255, 255, 1)',
-              color: isDark ? 'white' : 'gray.800',
-            }}
-            onClick={() => navigate('/home')}
-          />
-        </Flex>
+        {/* Back Button - only show if not in Telegram */}
+        {showFallbackButton && (
+          <Box px="16px" pt={topInset > 0 ? `${topInset + 16}px` : '16px'}>
+            <BackButton onClick={handleBack} />
+          </Box>
+        )}
 
         <Flex
           as="main"
