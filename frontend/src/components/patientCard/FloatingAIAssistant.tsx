@@ -29,7 +29,7 @@ import {
 } from '@chakra-ui/react'
 import { X, Check, RotateCcw, Stethoscope, Calendar, Wallet, MessageSquare, Square, Edit2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useLanguage } from '../../context/LanguageContext'
+// Speech language is selected explicitly in the UI, not from app language
 import { voiceApi } from '../../api/ai'
 import type { VoiceAIMode, VoiceParsedData } from '../../api/ai'
 
@@ -84,14 +84,22 @@ const modeConfig: Record<VoiceAIMode, { icon: typeof Stethoscope; label: string;
 }
 
 export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIAssistantProps) {
-  const { language } = useLanguage()
   const { colorMode } = useColorMode()
   const isDark = colorMode === 'dark'
   const toast = useToast()
 
+  // Speech language options
+  type SpeechLanguage = 'ru' | 'hy' | 'en'
+  const speechLanguageLabels: Record<SpeechLanguage, string> = {
+    ru: '🇷🇺 Русский',
+    hy: '🇦🇲 Հայերdelays',
+    en: '🇬🇧 English',
+  }
+
   // UI state
   const [isOpen, setIsOpen] = useState(false)
   const [selectedMode, setSelectedMode] = useState<VoiceAIMode>('visit')
+  const [speechLanguage, setSpeechLanguage] = useState<SpeechLanguage>('ru')
   const [recordingState, setRecordingState] = useState<RecordingState>('idle')
   const [recordingSeconds, setRecordingSeconds] = useState(0)
   const [error, setError] = useState<string | null>(null)
@@ -222,16 +230,9 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
     
     // Send to API
     try {
-      // Map 'am' (Armenian in app) to 'hy' (Armenian ISO code for Whisper)
-      const localeMap: Record<string, 'ru' | 'hy' | 'en'> = {
-        ru: 'ru',
-        am: 'hy',
-        en: 'en',
-      }
-      const locale = localeMap[language] || 'ru'
-      
+      // Use explicitly selected speech language (not app UI language)
       const response = await voiceApi.parse(audioBlob, selectedMode, patientId, {
-        locale,
+        locale: speechLanguage,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       })
       
@@ -404,6 +405,25 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                   )
                 })}
               </HStack>
+
+              {/* Speech Language Selection */}
+              {recordingState === 'idle' && (
+                <HStack spacing={1} mb={3} justify="center">
+                  {(Object.entries(speechLanguageLabels) as [SpeechLanguage, string][]).map(([lang, label]) => (
+                    <Button
+                      key={lang}
+                      size="xs"
+                      variant={speechLanguage === lang ? 'solid' : 'ghost'}
+                      colorScheme={speechLanguage === lang ? 'blue' : 'gray'}
+                      onClick={() => setSpeechLanguage(lang)}
+                      borderRadius="md"
+                      px={2}
+                    >
+                      {label}
+                    </Button>
+                  ))}
+                </HStack>
+              )}
 
               {/* Idle State - Record Button */}
               {recordingState === 'idle' && (
