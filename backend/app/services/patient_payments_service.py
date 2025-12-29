@@ -20,21 +20,35 @@ def list_by_patient(patient_id: str, doctor_id: str) -> list[dict[str, Any]]:
 
 
 def create_payment(
-  patient_id: str,
   doctor_id: str,
-  amount: Decimal,
+  patient_id: str,
+  amount: Decimal | float,
+  paid_at: Any = None,
   comment: str | None = None,
   visit_id: str | None = None,
   currency: str = "AMD",
 ) -> dict[str, Any]:
   """Create a new payment record for a patient."""
+  from datetime import date, datetime
+  
+  # Handle paid_at date
+  if paid_at is None:
+    paid_at_str = date.today().isoformat()
+  elif isinstance(paid_at, date):
+    paid_at_str = paid_at.isoformat()
+  elif isinstance(paid_at, str):
+    paid_at_str = paid_at
+  else:
+    paid_at_str = date.today().isoformat()
+  
   payment_data = {
     "patient_id": patient_id,
     "doctor_id": doctor_id,
-    "amount": float(amount),  # Convert Decimal to float for JSON serialization
+    "amount": float(amount),  # Convert Decimal/float for JSON serialization
     "currency": currency,
     "comment": comment,
     "visit_id": visit_id,
+    "paid_at": paid_at_str,
   }
   
   try:
@@ -43,10 +57,8 @@ def create_payment(
   except SupabaseNotConfiguredError:
     # Fallback for development without Supabase
     import uuid
-    from datetime import datetime
     return {
       "id": str(uuid.uuid4()),
-      "paid_at": datetime.now().isoformat(),
       "created_at": datetime.now().isoformat(),
       **payment_data,
     }

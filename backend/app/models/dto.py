@@ -170,6 +170,7 @@ class MediaFileResponse(BaseModel):
 # Patient Payment Models
 class PatientPaymentCreateRequest(BaseModel):
   amount: condecimal(max_digits=12, decimal_places=2, gt=0) = Field(..., description="Payment amount")  # type: ignore
+  paid_at: date | None = Field(default=None, description="Payment date (defaults to today)")
   comment: str | None = Field(default=None, description="Optional payment note")
   visit_id: str | None = Field(default=None, description="Optional visit ID this payment relates to")
 

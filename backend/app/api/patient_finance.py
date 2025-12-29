@@ -70,9 +70,10 @@ async def create_patient_payment(
     )
   
   payment = patient_payments_service.create_payment(
-    patient_id=patient_id,
     doctor_id=current_doctor.doctor_id,
+    patient_id=patient_id,
     amount=payload.amount,
+    paid_at=payload.paid_at,
     comment=payload.comment,
     visit_id=payload.visit_id,
   )
