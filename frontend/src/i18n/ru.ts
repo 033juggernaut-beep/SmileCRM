@@ -481,7 +481,7 @@ const ru = {
       regenerate: 'Сгенерировать заново',
       copy: 'Скопировать текст',
       copied: 'Скопировано',
-      deliveryHint: 'Сообщение можно отправить через WhatsApp / Telegram',
+      deliveryHint: 'Сообщение можно отправить через Telegram / WhatsApp / Viber',
       // Send modal & patient card
       sendMessage: 'Отправить сообщение',
       generating: 'Генерируем текст...',

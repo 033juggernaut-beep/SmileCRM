@@ -481,7 +481,7 @@ const en = {
       regenerate: 'Regenerate',
       copy: 'Copy text',
       copied: 'Copied',
-      deliveryHint: 'Message can be sent via WhatsApp / Telegram',
+      deliveryHint: 'Message can be sent via Telegram / WhatsApp / Viber',
       // Send modal
       sendMessage: 'Send message',
       generating: 'Generating text...',

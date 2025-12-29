@@ -261,6 +261,38 @@ export function MarketingSection({
     })
   }, [generatedMessage, whatsappPhone, phone, toast, t])
 
+  // Handle send via Viber
+  const handleSendViber = useCallback(() => {
+    if (!generatedMessage) return
+    
+    const phoneNumber = viberPhone || phone
+    if (!phoneNumber) {
+      toast({
+        title: 'Viber not configured',
+        status: 'warning',
+        duration: 3000,
+      })
+      return
+    }
+
+    const cleanPhone = phoneNumber.replace(/[^\d+]/g, '').replace(/^\+/, '')
+    const encodedText = encodeURIComponent(generatedMessage.content)
+    const viberUrl = `viber://chat?number=${cleanPhone}&text=${encodedText}`
+    
+    const tg = window.Telegram?.WebApp
+    if (tg?.openLink) {
+      tg.openLink(viberUrl)
+    } else {
+      window.open(viberUrl, '_blank')
+    }
+
+    toast({
+      title: 'Viber opening...',
+      status: 'success',
+      duration: 2000,
+    })
+  }, [generatedMessage, viberPhone, phone, toast])
+
   const generateMessage = (type: MessageType) => {
     setIsGenerating(true)
     setSelectedType(type)
@@ -747,6 +779,15 @@ export function MarketingSection({
                     fontWeight="medium"
                   >
                     WhatsApp
+                  </Button>
+                  <Button
+                    onClick={handleSendViber}
+                    size="sm"
+                    colorScheme="purple"
+                    leftIcon={<ViberIcon />}
+                    fontWeight="medium"
+                  >
+                    Viber
                   </Button>
                 </HStack>
 

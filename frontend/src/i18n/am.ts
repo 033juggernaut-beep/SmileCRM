@@ -480,7 +480,7 @@ const am = {
       regenerate: 'Generacnel noric',
       copy: 'Patchenel tekste',
       copied: 'Patchenvac e',
-      deliveryHint: 'Haxordagrutyune karox eq uxarkel WhatsApp / Telegram micоcov',
+      deliveryHint: 'Haxordagrutyune karox eq uxarkel Telegram / WhatsApp / Viber micоcov',
       // Send modal
       sendMessage: 'Uxarkel haxordagrutyun',
       generating: 'Tekste generacvum e...',
