@@ -6,10 +6,11 @@
  */
 
 import { useState, useCallback } from 'react'
-import { Box, Flex, Text, Button, Textarea, VStack, HStack, useColorMode, useToast } from '@chakra-ui/react'
+import { Box, Flex, Text, Button, Textarea, VStack, HStack, Wrap, WrapItem, useColorMode, useToast } from '@chakra-ui/react'
 import { Sparkles, RefreshCw, Copy, Check, Pencil, MessageCircle } from 'lucide-react'
 import { CollapsibleSection } from './CollapsibleSection'
 import { useLanguage } from '../../context/LanguageContext'
+import { openExternalLink, formatPhoneToE164, buildViberLink } from '../../utils/openExternalLink'
 
 // Telegram icon component
 const TelegramIcon = () => (
@@ -208,18 +209,19 @@ export function MarketingSection({
     // Copy text first
     await copyToClipboard(generatedMessage.content)
     
-    // Clean username and open
+    // Build Telegram link and open
     const cleanUsername = telegramUsername.replace(/^@/, '')
     const telegramUrl = `https://t.me/${cleanUsername}`
     
-    const tg = window.Telegram?.WebApp
-    if (tg?.openTelegramLink) {
-      tg.openTelegramLink(telegramUrl)
-    } else if (tg?.openLink) {
-      tg.openLink(telegramUrl)
-    } else {
-      window.open(telegramUrl, '_blank')
-    }
+    openExternalLink(telegramUrl, {
+      onError: () => {
+        toast({
+          title: 'Failed to open Telegram',
+          status: 'error',
+          duration: 3000,
+        })
+      },
+    })
 
     toast({
       title: t('patientCard.marketing.textCopied'),
@@ -243,16 +245,30 @@ export function MarketingSection({
       return
     }
 
-    const cleanPhone = phoneNumber.replace(/[^\d+]/g, '').replace(/^\+/, '')
+    // Build WhatsApp link with E.164 phone format
+    const formattedPhone = formatPhoneToE164(phoneNumber)
+    if (!formattedPhone) {
+      toast({
+        title: 'Invalid phone number',
+        status: 'error',
+        duration: 3000,
+      })
+      return
+    }
+
+    const cleanPhone = formattedPhone.replace(/^\+/, '')
     const encodedText = encodeURIComponent(generatedMessage.content)
     const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodedText}`
     
-    const tg = window.Telegram?.WebApp
-    if (tg?.openLink) {
-      tg.openLink(whatsappUrl)
-    } else {
-      window.open(whatsappUrl, '_blank')
-    }
+    openExternalLink(whatsappUrl, {
+      onError: () => {
+        toast({
+          title: 'Failed to open WhatsApp',
+          status: 'error',
+          duration: 3000,
+        })
+      },
+    })
 
     toast({
       title: t('patientCard.marketing.whatsappOpening'),
@@ -261,33 +277,46 @@ export function MarketingSection({
     })
   }, [generatedMessage, whatsappPhone, phone, toast, t])
 
-  // Handle send via Viber
+  // Handle send via Viber - uses E.164 format with URL encoding
   const handleSendViber = useCallback(() => {
     if (!generatedMessage) return
     
     const phoneNumber = viberPhone || phone
-    if (!phoneNumber) {
+    
+    // Build Viber link with proper E.164 format
+    const viberUrl = buildViberLink(phoneNumber, generatedMessage.content)
+    
+    if (!viberUrl) {
       toast({
-        title: 'Viber not configured',
+        title: 'Viber: no valid phone',
+        description: 'Add phone number to send via Viber',
         status: 'warning',
         duration: 3000,
       })
       return
     }
 
-    const cleanPhone = phoneNumber.replace(/[^\d+]/g, '').replace(/^\+/, '')
-    const encodedText = encodeURIComponent(generatedMessage.content)
-    const viberUrl = `viber://chat?number=${cleanPhone}&text=${encodedText}`
-    
-    const tg = window.Telegram?.WebApp
-    if (tg?.openLink) {
-      tg.openLink(viberUrl)
-    } else {
-      window.open(viberUrl, '_blank')
-    }
+    openExternalLink(viberUrl, {
+      onBlocked: () => {
+        toast({
+          title: 'Viber not installed',
+          description: 'Copy number and open Viber manually',
+          status: 'warning',
+          duration: 4000,
+        })
+      },
+      onError: () => {
+        toast({
+          title: 'Failed to open Viber',
+          description: 'Copy number and open Viber manually',
+          status: 'error',
+          duration: 3000,
+        })
+      },
+    })
 
     toast({
-      title: 'Viber opening...',
+      title: 'Opening Viber...',
       status: 'success',
       duration: 2000,
     })
@@ -760,36 +789,65 @@ export function MarketingSection({
                 spacing={2}
                 align="stretch"
               >
-                {/* Send buttons row */}
-                <HStack spacing={2} justify="center">
-                  <Button
-                    onClick={handleSendTelegram}
-                    size="sm"
-                    colorScheme="blue"
-                    leftIcon={<TelegramIcon />}
-                    fontWeight="medium"
-                  >
-                    Telegram
-                  </Button>
-                  <Button
-                    onClick={handleSendWhatsApp}
-                    size="sm"
-                    colorScheme="green"
-                    leftIcon={<WhatsAppIcon />}
-                    fontWeight="medium"
-                  >
-                    WhatsApp
-                  </Button>
-                  <Button
-                    onClick={handleSendViber}
-                    size="sm"
-                    colorScheme="purple"
-                    leftIcon={<ViberIcon />}
-                    fontWeight="medium"
-                  >
-                    Viber
-                  </Button>
-                </HStack>
+                {/* Send buttons row - responsive with Wrap for mobile */}
+                <Wrap spacing={2} justify="center" w="100%">
+                  <WrapItem>
+                    <Button
+                      onClick={handleSendTelegram}
+                      size="sm"
+                      colorScheme="blue"
+                      leftIcon={<TelegramIcon />}
+                      fontWeight="medium"
+                      minW="80px"
+                      maxW="120px"
+                      h="32px"
+                      px={3}
+                      fontSize="xs"
+                      whiteSpace="nowrap"
+                      overflow="hidden"
+                    >
+                      Telegram
+                    </Button>
+                  </WrapItem>
+                  <WrapItem>
+                    <Button
+                      onClick={handleSendWhatsApp}
+                      size="sm"
+                      colorScheme="green"
+                      leftIcon={<WhatsAppIcon />}
+                      fontWeight="medium"
+                      minW="80px"
+                      maxW="120px"
+                      h="32px"
+                      px={3}
+                      fontSize="xs"
+                      whiteSpace="nowrap"
+                      overflow="hidden"
+                    >
+                      WhatsApp
+                    </Button>
+                  </WrapItem>
+                  <WrapItem>
+                    <Button
+                      onClick={handleSendViber}
+                      size="sm"
+                      colorScheme="purple"
+                      leftIcon={<ViberIcon />}
+                      fontWeight="medium"
+                      minW="80px"
+                      maxW="120px"
+                      h="32px"
+                      px={3}
+                      fontSize="xs"
+                      whiteSpace="nowrap"
+                      overflow="hidden"
+                      isDisabled={!buildViberLink(viberPhone || phone, '')}
+                      title={!buildViberLink(viberPhone || phone, '') ? 'No valid phone for Viber' : undefined}
+                    >
+                      Viber
+                    </Button>
+                  </WrapItem>
+                </Wrap>
 
                 {/* Edit/Regenerate/Copy row */}
                 <Flex flexWrap="wrap" gap={2} justify="center">
