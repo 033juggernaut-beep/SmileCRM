@@ -58,6 +58,7 @@ import {
   TreatmentPlanBlock,
   type TreatmentStep,
   VisitsSection,
+  FilesSection,
   MedicationsSection,
   NotesSection,
   MarketingSection,
@@ -575,7 +576,21 @@ export const PatientDetailsPage = () => {
               defaultOpen={false}
             />
 
-            {/* 5. Prescribed Medications */}
+            {/* 5. Files - X-rays, photos, documents */}
+            <FilesSection
+              files={[]}
+              onAddFile={() => {
+                toast({
+                  title: 'Coming soon',
+                  description: 'File upload will be available in the next update',
+                  status: 'info',
+                  duration: 3000,
+                })
+              }}
+              defaultOpen={false}
+            />
+
+            {/* 6. Prescribed Medications */}
             <MedicationsSection
               medications={medications}
               onMedicationAdded={handleMedicationAdded}
