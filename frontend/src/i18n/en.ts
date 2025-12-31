@@ -664,6 +664,26 @@ const en = {
       'every complex case makes you a stronger clinician.',
     ],
   },
+
+  // Registration
+  register: {
+    title: 'Doctor Registration',
+    subtitle: 'Fill in your information to start using SmileCRM',
+    firstName: 'First Name',
+    firstNamePlaceholder: 'Enter your first name',
+    lastName: 'Last Name',
+    lastNamePlaceholder: 'Enter your last name',
+    specialization: 'Specialization',
+    specializationPlaceholder: 'Orthodontist, therapist, etc.',
+    phone: 'Phone',
+    clinicName: 'Clinic Name',
+    clinicNamePlaceholder: 'Clinic or private practice',
+    submit: 'Register',
+    submitting: 'Registering...',
+    fillAllFields: 'Please fill in all fields',
+    submitError: 'Failed to submit data',
+    hint: 'Your data is used only for the app',
+  },
 } as const
 
 export default en

@@ -664,6 +664,26 @@ const ru = {
       'каждый сложный случай делает вас сильнее как специалиста.',
     ],
   },
+
+  // Registration
+  register: {
+    title: 'Регистрация врача',
+    subtitle: 'Заполните информацию о себе, чтобы продолжить работу в SmileCRM',
+    firstName: 'Имя',
+    firstNamePlaceholder: 'Введите ваше имя',
+    lastName: 'Фамилия',
+    lastNamePlaceholder: 'Введите вашу фамилию',
+    specialization: 'Специализация',
+    specializationPlaceholder: 'Ортодонт, терапевт и т.д.',
+    phone: 'Телефон',
+    clinicName: 'Название клиники',
+    clinicNamePlaceholder: 'Клиника или частная практика',
+    submit: 'Зарегистрироваться',
+    submitting: 'Регистрация...',
+    fillAllFields: 'Пожалуйста, заполните все поля',
+    submitError: 'Не удалось отправить данные',
+    hint: 'Данные используются только для работы приложения',
+  },
 } as const
 
 export default ru

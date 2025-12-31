@@ -657,6 +657,26 @@ const am = {
       'yuraqanchyur bard depq dzez darjnum e aveli uzex masnaget.',
     ],
   },
+
+  // Registration
+  register: {
+    title: 'Bjshki grantsum',
+    subtitle: 'Lracreq dzez masin teghekutyun SmileCRM-um ashxatelu hamar',
+    firstName: 'Anun',
+    firstNamePlaceholder: 'Mtuceq dzer anun@',
+    lastName: 'Azganun',
+    lastNamePlaceholder: 'Mtuceq dzer azganun@',
+    specialization: 'Masnagitutyn',
+    specializationPlaceholder: 'Ortodont, terapeut ev ayln',
+    phone: 'Heraxos',
+    clinicName: 'Klinikaji anun',
+    clinicNamePlaceholder: 'Klinika kam masnawor praktika',
+    submit: 'Grantsvil',
+    submitting: 'Grantsum...',
+    fillAllFields: 'Khndrum enq lracnel bolor dashter@',
+    submitError: 'Chi hajoxvel ugharkel tvyalner@',
+    hint: 'Tvyalner@ ogtagorcvum en miajn havataraci hamar',
+  },
 } as const
 
 export default am
