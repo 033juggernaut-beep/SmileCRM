@@ -658,24 +658,24 @@ const am = {
     ],
   },
 
-  // Registration
+  // Registration (Armenian - Latin transliteration)
   register: {
     title: 'Bjshki grantsum',
     subtitle: 'Lracreq dzez masin teghekutyun SmileCRM-um ashxatelu hamar',
     firstName: 'Anun',
-    firstNamePlaceholder: 'Mtuceq dzer anun@',
+    firstNamePlaceholder: 'Mtuceq dzer anune',
     lastName: 'Azganun',
-    lastNamePlaceholder: 'Mtuceq dzer azganun@',
-    specialization: 'Masnagitutyn',
+    lastNamePlaceholder: 'Mtuceq dzer azganune',
+    specialization: 'Masnagitutyun',
     specializationPlaceholder: 'Ortodont, terapeut ev ayln',
     phone: 'Heraxos',
     clinicName: 'Klinikaji anun',
     clinicNamePlaceholder: 'Klinika kam masnawor praktika',
-    submit: 'Grantsvil',
-    submitting: 'Grantsum...',
-    fillAllFields: 'Khndrum enq lracnel bolor dashter@',
-    submitError: 'Chi hajoxvel ugharkel tvyalner@',
-    hint: 'Tvyalner@ ogtagorcvum en miajn havataraci hamar',
+    submit: 'Grantswel',
+    submitting: 'Grantsume...',
+    fillAllFields: 'Khndrum enq lracnel bolor dashtery',
+    submitError: 'Chi hajoghvel ugharkely',
+    hint: 'Twealner ogtakorcwum en miain hawataraci hamar',
   },
 } as const
 
