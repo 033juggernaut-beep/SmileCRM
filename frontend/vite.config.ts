@@ -17,5 +17,48 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     base: '/', // SPA base path for Vercel
+    
+    build: {
+      // Split vendor chunks for better caching
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            // Core React - changes rarely
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            // UI framework - changes rarely
+            'vendor-chakra': ['@chakra-ui/react', '@emotion/react', '@emotion/styled'],
+            // Animation library
+            'vendor-motion': ['framer-motion'],
+            // Icons - can be cached separately
+            'vendor-icons': ['lucide-react'],
+            // HTTP client
+            'vendor-axios': ['axios'],
+          },
+        },
+      },
+      // Increase chunk warning limit (optional)
+      chunkSizeWarningLimit: 600,
+      // Enable minification
+      minify: 'terser',
+      terserOptions: {
+        compress: {
+          drop_console: mode === 'production', // Remove console.log in production
+          drop_debugger: true,
+        },
+      },
+    },
+    
+    // Optimize dependencies
+    optimizeDeps: {
+      include: [
+        'react',
+        'react-dom',
+        'react-router-dom',
+        '@chakra-ui/react',
+        '@emotion/react',
+        '@emotion/styled',
+        'framer-motion',
+      ],
+    },
   }
 })
