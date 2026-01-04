@@ -478,6 +478,233 @@ def generate_inactive_notifications(doctor_id: str, months: int = 6) -> list[dic
         return []
 
 
+def generate_completed_inactive_notifications(doctor_id: str, months: int = 1) -> list[dict[str, Any]]:
+    """
+    Generate notifications for COMPLETED patients who haven't visited in specified months.
+    
+    This is different from inactive_6m - it specifically targets patients with status='completed'
+    who might need a follow-up or recall after treatment completion.
+    
+    Args:
+        doctor_id: Doctor UUID
+        months: Number of months since last visit (default 1)
+        
+    Returns:
+        List of created notifications
+    """
+    try:
+        if not supabase_client.is_configured:
+            return []
+            
+        client = supabase_client.client
+        if not client:
+            return []
+        
+        cutoff_date = date.today() - timedelta(days=months * 30)
+        
+        # Get completed patients for this doctor
+        patients_response = (
+            client.table("patients")
+            .select("id, first_name, last_name")
+            .eq("doctor_id", doctor_id)
+            .eq("status", "completed")
+            .execute()
+        )
+        
+        if not patients_response.data:
+            return []
+        
+        created = []
+        today_str = date.today().isoformat()
+        
+        for patient in patients_response.data:
+            patient_id = patient["id"]
+            
+            # Get latest visit for this patient
+            visits_response = (
+                client.table("visits")
+                .select("visit_date")
+                .eq("patient_id", patient_id)
+                .order("visit_date", desc=True)
+                .limit(1)
+                .execute()
+            )
+            
+            last_visit_date = None
+            if visits_response.data:
+                last_visit_str = visits_response.data[0].get("visit_date")
+                if last_visit_str:
+                    try:
+                        last_visit_date = date.fromisoformat(last_visit_str) if isinstance(last_visit_str, str) else last_visit_str
+                    except Exception:
+                        pass
+            
+            # Skip if visited recently or no visits at all
+            if not last_visit_date or last_visit_date > cutoff_date:
+                continue
+            
+            # Check for duplicate notification created today
+            existing = (
+                client.table("notifications")
+                .select("id")
+                .eq("doctor_id", doctor_id)
+                .eq("patient_id", patient_id)
+                .eq("type", "completed_inactive")
+                .gte("created_at", today_str)
+                .execute()
+            )
+            
+            if existing.data:
+                continue  # Already created today
+            
+            # Calculate days since last visit
+            days_since = (date.today() - last_visit_date).days
+            
+            notification = create_notification(
+                doctor_id=doctor_id,
+                notification_type="completed_inactive",
+                title="Пациент давно не был (завершён)",
+                body=f"{patient['first_name']} {patient['last_name']} — прошло {days_since} дней с последнего визита",
+                patient_id=patient_id,
+                action_type="generate_message",
+                action_payload={"template": "visit_reminder", "patientId": patient_id},
+            )
+            
+            if notification:
+                created.append(notification)
+        
+        return created
+    except Exception as e:
+        logger.error(f"Failed to generate completed inactive notifications: {e}")
+        return []
+
+
+def generate_holiday_notifications(doctor_id: str) -> list[dict[str, Any]]:
+    """
+    Generate smart holiday notifications considering patient gender.
+    
+    Supported holidays:
+    - March 8 (International Women's Day) - only for female patients
+    - February 23 (Defender of the Fatherland Day) - only for male patients (optional, RU-specific)
+    - New Year (Jan 1) - all patients
+    - Armenian holidays (March 8, Mother's Day, etc.)
+    
+    Notifications are created 3-7 days before the holiday to give doctor time to send greetings.
+    
+    Args:
+        doctor_id: Doctor UUID
+        
+    Returns:
+        List of created notifications
+    """
+    try:
+        if not supabase_client.is_configured:
+            return []
+            
+        client = supabase_client.client
+        if not client:
+            return []
+        
+        today = date.today()
+        created = []
+        
+        # Define holidays with gender restrictions
+        # Format: (month, day, title_template, gender_filter, days_before)
+        # gender_filter: 'female', 'male', or None for all
+        holidays = [
+            (3, 8, "8 Марта", "female", [7, 3, 1]),  # Women's Day - female only
+            (2, 23, "23 Февраля", "male", [7, 3, 1]),  # Defender's Day - male only
+            (4, 7, "День материнства и красоты", "female", [7, 3]),  # Armenian Mother's Day
+            (12, 31, "Новый год", None, [14, 7, 3]),  # New Year - all
+            (1, 1, "Новый год", None, [7, 3, 1]),  # New Year (for early Jan notifications)
+        ]
+        
+        for month, day, holiday_name, gender_filter, days_before_list in holidays:
+            try:
+                # Calculate holiday date for this year
+                holiday_date = date(today.year, month, day)
+                
+                # If holiday already passed this year, check next year
+                if holiday_date < today:
+                    holiday_date = date(today.year + 1, month, day)
+                
+                days_until = (holiday_date - today).days
+                
+                # Check if we should create notifications (within days_before range)
+                if days_until not in days_before_list:
+                    continue
+                
+                # Get patients (filtered by gender if needed)
+                query = (
+                    client.table("patients")
+                    .select("id, first_name, last_name, gender")
+                    .eq("doctor_id", doctor_id)
+                )
+                
+                if gender_filter:
+                    query = query.eq("gender", gender_filter)
+                
+                patients_response = query.execute()
+                
+                if not patients_response.data:
+                    continue
+                
+                today_str = today.isoformat()
+                notification_type = f"holiday_{month}_{day}"
+                
+                for patient in patients_response.data:
+                    patient_id = patient["id"]
+                    patient_gender = patient.get("gender")
+                    
+                    # Double-check gender filter (in case DB has NULL)
+                    if gender_filter and patient_gender != gender_filter:
+                        continue
+                    
+                    # Skip if gender is required but not set
+                    if gender_filter and not patient_gender:
+                        continue
+                    
+                    # Check for duplicate notification
+                    existing = (
+                        client.table("notifications")
+                        .select("id")
+                        .eq("doctor_id", doctor_id)
+                        .eq("patient_id", patient_id)
+                        .eq("type", notification_type)
+                        .gte("created_at", today_str)
+                        .execute()
+                    )
+                    
+                    if existing.data:
+                        continue
+                    
+                    notification = create_notification(
+                        doctor_id=doctor_id,
+                        notification_type=notification_type,
+                        title=f"🎉 {holiday_name} через {days_until} дн.",
+                        body=f"Поздравьте {patient['first_name']} {patient['last_name']}!",
+                        patient_id=patient_id,
+                        action_type="generate_message",
+                        action_payload={
+                            "template": "holiday",
+                            "patientId": patient_id,
+                            "holiday": holiday_name
+                        },
+                    )
+                    
+                    if notification:
+                        created.append(notification)
+                        
+            except Exception as e:
+                logger.warning(f"Error processing holiday {holiday_name}: {e}")
+                continue
+        
+        return created
+    except Exception as e:
+        logger.error(f"Failed to generate holiday notifications: {e}")
+        return []
+
+
 def seed_demo_notifications(doctor_id: str) -> list[dict[str, Any]]:
     """
     Create demo notifications for development/testing.

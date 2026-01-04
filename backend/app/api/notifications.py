@@ -145,7 +145,11 @@ async def generate_notifications(
     current_doctor: CurrentDoctor,
 ) -> dict:
     """
-    Generate birthday and inactive patient notifications.
+    Generate all smart notifications:
+    - Birthday notifications (for patients with birthdays tomorrow)
+    - Inactive patient notifications (not visited in 6 months)
+    - Completed inactive notifications (completed patients not visited in 1 month)
+    - Holiday notifications (with gender awareness)
     
     This endpoint is for development/testing.
     In production, this should be triggered by a scheduled job.
@@ -158,11 +162,31 @@ async def generate_notifications(
         doctor_id=current_doctor.doctor_id
     )
     
+    # New: Completed patients who haven't visited in 1 month
+    completed_inactive = notifications_service.generate_completed_inactive_notifications(
+        doctor_id=current_doctor.doctor_id,
+        months=1
+    )
+    
+    # New: Holiday notifications with gender awareness
+    holiday_notifications = notifications_service.generate_holiday_notifications(
+        doctor_id=current_doctor.doctor_id
+    )
+    
+    total_created = (
+        len(birthday_notifications) + 
+        len(inactive_notifications) + 
+        len(completed_inactive) + 
+        len(holiday_notifications)
+    )
+    
     return {
         "ok": True,
         "birthdayCount": len(birthday_notifications),
         "inactiveCount": len(inactive_notifications),
-        "totalCreated": len(birthday_notifications) + len(inactive_notifications),
+        "completedInactiveCount": len(completed_inactive),
+        "holidayCount": len(holiday_notifications),
+        "totalCreated": total_created,
     }
 
 

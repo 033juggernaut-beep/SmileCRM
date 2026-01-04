@@ -15,6 +15,12 @@ export type NotificationType =
   | 'info'
   | 'birthday'
   | 'inactive_6m'
+  | 'completed_inactive'  // Completed patients not visited in 1+ month
+  | 'holiday_3_8'         // Women's Day (March 8)
+  | 'holiday_2_23'        // Defender's Day (Feb 23)
+  | 'holiday_4_7'         // Armenian Mother's Day
+  | 'holiday_12_31'       // New Year's Eve
+  | 'holiday_1_1'         // New Year
 
 export type NotificationStatus = 'unread' | 'read' | 'dismissed' | 'done'
 

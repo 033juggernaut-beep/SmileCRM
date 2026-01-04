@@ -24,6 +24,9 @@ import {
   ExternalLink,
   Check,
   X,
+  Gift,
+  UserCheck,
+  PartyPopper,
 } from 'lucide-react'
 import { useLanguage } from '../../context/LanguageContext'
 import type { Notification, NotificationType } from './types'
@@ -57,6 +60,16 @@ const getNotificationIcon = (type: NotificationType) => {
       return Cake
     case 'inactive_6m':
       return UserMinus
+    case 'completed_inactive':
+      return UserCheck
+    case 'holiday_3_8':
+    case 'holiday_4_7':
+      return Gift  // Women's Day, Mother's Day
+    case 'holiday_2_23':
+      return Gift  // Defender's Day
+    case 'holiday_12_31':
+    case 'holiday_1_1':
+      return PartyPopper  // New Year
     default:
       return Bell
   }
@@ -78,6 +91,11 @@ const getNotificationColors = (type: NotificationType, isDark: boolean) => {
         iconBg: isDark ? 'rgba(245, 158, 11, 0.15)' : '#FFFBEB', // amber-50
         iconColor: isDark ? '#FBBF24' : '#D97706', // amber-400 / amber-600
       }
+    case 'completed_inactive':
+      return {
+        iconBg: isDark ? 'rgba(34, 197, 94, 0.15)' : '#F0FDF4', // green-50
+        iconColor: isDark ? '#4ADE80' : '#16A34A', // green-400 / green-600
+      }
     case 'system_trial':
       return {
         iconBg: isDark ? 'rgba(244, 63, 94, 0.15)' : '#FFF1F2', // rose-50
@@ -92,6 +110,23 @@ const getNotificationColors = (type: NotificationType, isDark: boolean) => {
       return {
         iconBg: isDark ? 'rgba(236, 72, 153, 0.15)' : '#FDF2F8', // pink-50
         iconColor: isDark ? '#F472B6' : '#DB2777', // pink-400 / pink-600
+      }
+    case 'holiday_3_8':
+    case 'holiday_4_7':
+      return {
+        iconBg: isDark ? 'rgba(236, 72, 153, 0.15)' : '#FDF2F8', // pink-50 (women's holidays)
+        iconColor: isDark ? '#F472B6' : '#DB2777', // pink-400 / pink-600
+      }
+    case 'holiday_2_23':
+      return {
+        iconBg: isDark ? 'rgba(59, 130, 246, 0.15)' : '#EFF6FF', // blue-50 (men's holiday)
+        iconColor: isDark ? '#60A5FA' : '#2563EB', // blue-400 / blue-600
+      }
+    case 'holiday_12_31':
+    case 'holiday_1_1':
+      return {
+        iconBg: isDark ? 'rgba(139, 92, 246, 0.15)' : '#F5F3FF', // violet-50 (new year)
+        iconColor: isDark ? '#A78BFA' : '#7C3AED', // violet-400 / violet-600
       }
     default:
       return {

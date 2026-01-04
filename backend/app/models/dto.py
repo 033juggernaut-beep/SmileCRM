@@ -25,6 +25,7 @@ class PatientBase(BaseModel):
   phone: str | None = None
   status: str | None = None
   birth_date: date | None = None
+  gender: Literal["male", "female"] | None = Field(default=None, description="Patient gender: male, female")
   segment: str | None = Field(default="regular", description="Patient segment: regular, vip")
   notes: str | None = Field(default=None, description="Doctor notes for the patient")
   treatment_plan_total: condecimal(max_digits=12, decimal_places=2) | None = None  # type: ignore

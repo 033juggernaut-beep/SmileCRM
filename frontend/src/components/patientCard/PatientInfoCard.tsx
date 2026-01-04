@@ -28,11 +28,11 @@ import {
   HStack,
   VStack,
 } from '@chakra-ui/react'
-import { Phone, User, Star, Pencil, X, Check, UserCircle } from 'lucide-react'
+import { Phone, User, Star, Pencil, X, Check, UserCircle, Users } from 'lucide-react'
 import { useLanguage } from '../../context/LanguageContext'
 import { apiClient } from '../../api/client'
 import { TOKEN_STORAGE_KEY } from '../../constants/storage'
-import type { Patient, PatientStatus, PatientSegment } from '../../api/patients'
+import type { Patient, PatientStatus, PatientSegment, PatientGender } from '../../api/patients'
 
 interface PatientInfoCardProps {
   patient: Patient
@@ -53,6 +53,14 @@ export function PatientInfoCard({ patient, onPatientUpdate }: PatientInfoCardPro
   // Segment editing state
   const segmentPopover = useDisclosure()
   const [isSavingSegment, setIsSavingSegment] = useState(false)
+
+  // Status editing state
+  const statusPopover = useDisclosure()
+  const [isSavingStatus, setIsSavingStatus] = useState(false)
+
+  // Gender editing state
+  const genderPopover = useDisclosure()
+  const [isSavingGender, setIsSavingGender] = useState(false)
 
   const statusConfig: Record<PatientStatus, { label: string; bg: string; text: string }> = {
     in_progress: {
@@ -84,8 +92,15 @@ export function PatientInfoCard({ patient, onPatientUpdate }: PatientInfoCardPro
     },
   }
 
+  const genderConfig: Record<PatientGender | 'unknown', { label: string; icon: string }> = {
+    male: { label: t('patientDetails.genderMale') || 'Male', icon: '♂️' },
+    female: { label: t('patientDetails.genderFemale') || 'Female', icon: '♀️' },
+    unknown: { label: t('patientDetails.genderNotSet') || 'Not set', icon: '?' },
+  }
+
   const status = patient.status ? statusConfig[patient.status] : null
   const segment = patient.segment ? segmentConfig[patient.segment] : segmentConfig.regular
+  const gender = patient.gender ? genderConfig[patient.gender] : genderConfig.unknown
 
   const formatDate = (input?: string | null) => {
     if (!input) return '—'
@@ -227,6 +242,119 @@ export function PatientInfoCard({ patient, onPatientUpdate }: PatientInfoCardPro
     }
   }, [patient, onPatientUpdate, segmentPopover, toast, t])
 
+  // Handle status change
+  const handleStatusChange = useCallback(async (newStatus: PatientStatus) => {
+    if (newStatus === patient.status) {
+      statusPopover.onClose()
+      return
+    }
+
+    setIsSavingStatus(true)
+    try {
+      const authToken = localStorage.getItem(TOKEN_STORAGE_KEY)
+      if (!authToken) {
+        throw new Error(t('patientDetails.authRequired'))
+      }
+
+      await apiClient.patch(
+        `/patients/${patient.id}`,
+        { status: newStatus },
+        { headers: { Authorization: `Bearer ${authToken}` } }
+      )
+
+      // Update local state
+      const updatedPatient = { ...patient, status: newStatus }
+      onPatientUpdate?.(updatedPatient)
+
+      toast({
+        title: newStatus === 'completed' 
+          ? t('patientDetails.statusCompletedSet') || 'Treatment completed'
+          : t('patientDetails.statusInProgressSet') || 'Treatment in progress',
+        status: 'success',
+        duration: 2000,
+        isClosable: true,
+      })
+
+      statusPopover.onClose()
+    } catch (error: unknown) {
+      console.error('Failed to save status:', error)
+      
+      let errorMessage = t('patientDetails.saveError')
+      if (error && typeof error === 'object') {
+        const axiosError = error as { response?: { data?: { detail?: string } }; message?: string }
+        if (axiosError.response?.data?.detail) {
+          errorMessage = axiosError.response.data.detail
+        } else if (axiosError.message) {
+          errorMessage = axiosError.message
+        }
+      }
+      
+      toast({
+        title: t('common.error'),
+        description: errorMessage,
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+      })
+    } finally {
+      setIsSavingStatus(false)
+    }
+  }, [patient, onPatientUpdate, statusPopover, toast, t])
+
+  // Handle gender change
+  const handleGenderChange = useCallback(async (newGender: PatientGender | null) => {
+    if (newGender === patient.gender) {
+      genderPopover.onClose()
+      return
+    }
+
+    setIsSavingGender(true)
+    try {
+      const authToken = localStorage.getItem(TOKEN_STORAGE_KEY)
+      if (!authToken) {
+        throw new Error(t('patientDetails.authRequired'))
+      }
+
+      await apiClient.patch(
+        `/patients/${patient.id}`,
+        { gender: newGender },
+        { headers: { Authorization: `Bearer ${authToken}` } }
+      )
+
+      // Update local state
+      const updatedPatient = { ...patient, gender: newGender ?? undefined }
+      onPatientUpdate?.(updatedPatient)
+
+      toast({
+        title: t('patientDetails.genderSaved'),
+        status: 'success',
+        duration: 2000,
+        isClosable: true,
+      })
+
+      genderPopover.onClose()
+    } catch (error: unknown) {
+      console.error('Failed to save gender:', error)
+      
+      let errorMessage = t('patientDetails.saveError')
+      if (error && typeof error === 'object') {
+        const err = error as { response?: { data?: { detail?: string } } }
+        if (err.response?.data?.detail) {
+          errorMessage = err.response.data.detail
+        }
+      }
+      
+      toast({
+        title: errorMessage,
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+      })
+    } finally {
+      setIsSavingGender(false)
+    }
+  }, [patient, onPatientUpdate, genderPopover, toast, t])
+
   // Theme colors for popover
   const popoverBg = isDark ? 'gray.800' : 'white'
   const inputBg = isDark ? 'gray.700' : 'gray.50'
@@ -332,22 +460,80 @@ export function PatientInfoCard({ patient, onPatientUpdate }: PatientInfoCardPro
               </PopoverBody>
             </PopoverContent>
           </Popover>
-          {/* Status Badge */}
-          {status && (
-            <Flex
-              as="span"
-              px={2.5}
-              py={1}
-              borderRadius="full"
-              fontSize="xs"
-              fontWeight="medium"
-              whiteSpace="nowrap"
-              bg={status.bg}
-              color={status.text}
+          {/* Status Badge - Clickable */}
+          <Popover
+            isOpen={statusPopover.isOpen}
+            onOpen={statusPopover.onOpen}
+            onClose={statusPopover.onClose}
+            placement="bottom-start"
+            closeOnBlur={true}
+          >
+            <PopoverTrigger>
+              <Flex
+                as="button"
+                align="center"
+                gap={1}
+                px={2.5}
+                py={1}
+                borderRadius="full"
+                fontSize="xs"
+                fontWeight="medium"
+                whiteSpace="nowrap"
+                bg={status?.bg || statusConfig.in_progress.bg}
+                color={status?.text || statusConfig.in_progress.text}
+                cursor="pointer"
+                transition="all 0.15s"
+                _hover={{
+                  opacity: 0.8,
+                  transform: 'scale(1.02)',
+                }}
+              >
+                {status?.label || statusConfig.in_progress.label}
+                <Box as={Pencil} w={2.5} h={2.5} ml={0.5} opacity={0.6} />
+              </Flex>
+            </PopoverTrigger>
+            <PopoverContent
+              bg={popoverBg}
+              borderColor={inputBorder}
+              borderRadius="xl"
+              boxShadow="lg"
+              w="auto"
+              minW="160px"
             >
-              {status.label}
-            </Flex>
-          )}
+              <PopoverArrow bg={popoverBg} />
+              <PopoverBody p={2}>
+                <Text fontSize="xs" fontWeight="medium" mb={2} color={isDark ? 'gray.400' : 'gray.500'}>
+                  {t('patientDetails.selectStatus') || 'Select status'}
+                </Text>
+                <VStack spacing={1} align="stretch">
+                  {/* In Progress Option */}
+                  <Button
+                    size="sm"
+                    variant={patient.status === 'in_progress' || !patient.status ? 'solid' : 'ghost'}
+                    colorScheme="blue"
+                    justifyContent="flex-start"
+                    onClick={() => handleStatusChange('in_progress')}
+                    isLoading={isSavingStatus}
+                    isDisabled={isSavingStatus}
+                  >
+                    {t('patients.statusInProgress')}
+                  </Button>
+                  {/* Completed Option */}
+                  <Button
+                    size="sm"
+                    variant={patient.status === 'completed' ? 'solid' : 'ghost'}
+                    colorScheme="gray"
+                    justifyContent="flex-start"
+                    onClick={() => handleStatusChange('completed')}
+                    isLoading={isSavingStatus}
+                    isDisabled={isSavingStatus}
+                  >
+                    {t('patients.statusCompleted')}
+                  </Button>
+                </VStack>
+              </PopoverBody>
+            </PopoverContent>
+          </Popover>
         </Flex>
       </Flex>
 
@@ -457,6 +643,86 @@ export function PatientInfoCard({ patient, onPatientUpdate }: PatientInfoCardPro
                     {t('common.save')}
                   </Button>
                 </HStack>
+              </PopoverBody>
+            </PopoverContent>
+          </Popover>
+        </Flex>
+
+        {/* Gender with Edit */}
+        <Flex align="center" gap={2}>
+          <Box
+            as={Users}
+            w={4}
+            h={4}
+            flexShrink={0}
+            color={isDark ? 'gray.500' : 'gray.400'}
+          />
+          <Text fontSize="sm" color={isDark ? 'gray.300' : 'gray.600'} flex={1}>
+            <Text as="span" color={isDark ? 'gray.500' : 'gray.400'}>
+              {t('patientDetails.gender')}:{' '}
+            </Text>
+            {gender.icon} {gender.label}
+          </Text>
+
+          {/* Edit Gender Popover */}
+          <Popover
+            isOpen={genderPopover.isOpen}
+            onOpen={genderPopover.onOpen}
+            onClose={genderPopover.onClose}
+            placement="bottom-end"
+            closeOnBlur={true}
+          >
+            <PopoverTrigger>
+              <IconButton
+                aria-label={t('common.edit')}
+                icon={<Pencil size={14} />}
+                size="xs"
+                variant="ghost"
+                color={isDark ? 'gray.500' : 'gray.400'}
+                _hover={{
+                  color: isDark ? 'blue.400' : 'blue.600',
+                  bg: isDark ? 'gray.700' : 'gray.100',
+                }}
+              />
+            </PopoverTrigger>
+            <PopoverContent
+              bg={popoverBg}
+              borderColor={inputBorder}
+              borderRadius="xl"
+              boxShadow="lg"
+              w="auto"
+              minW="150px"
+            >
+              <PopoverArrow bg={popoverBg} />
+              <PopoverBody p={2}>
+                <VStack align="stretch" spacing={1}>
+                  {/* Male Option */}
+                  <Button
+                    size="sm"
+                    variant={patient.gender === 'male' ? 'solid' : 'ghost'}
+                    colorScheme="blue"
+                    justifyContent="flex-start"
+                    onClick={() => handleGenderChange('male')}
+                    isLoading={isSavingGender}
+                    isDisabled={isSavingGender}
+                    leftIcon={<UserCircle size={14} />}
+                  >
+                    ♂️ {t('patientDetails.genderMale')}
+                  </Button>
+                  {/* Female Option */}
+                  <Button
+                    size="sm"
+                    variant={patient.gender === 'female' ? 'solid' : 'ghost'}
+                    colorScheme="pink"
+                    justifyContent="flex-start"
+                    onClick={() => handleGenderChange('female')}
+                    isLoading={isSavingGender}
+                    isDisabled={isSavingGender}
+                    leftIcon={<UserCircle size={14} />}
+                  >
+                    ♀️ {t('patientDetails.genderFemale')}
+                  </Button>
+                </VStack>
               </PopoverBody>
             </PopoverContent>
           </Popover>

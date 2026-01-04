@@ -10,6 +10,8 @@ export type PatientStatus = (typeof PATIENT_STATUSES)[number]['value']
 
 export type PatientSegment = 'regular' | 'vip'
 
+export type PatientGender = 'male' | 'female'
+
 export type Patient = {
   id: string
   firstName: string
@@ -18,6 +20,7 @@ export type Patient = {
   phone?: string
   status?: PatientStatus
   segment?: PatientSegment
+  gender?: PatientGender | null
   doctorId?: string
   createdAt?: string
   birthDate?: string | null
@@ -91,6 +94,7 @@ type ApiPatient = {
   phone?: string | null
   status?: string | null
   segment?: string | null
+  gender?: string | null
   doctor_id?: string | null
   created_at?: string
   birth_date?: string | null
@@ -120,6 +124,9 @@ const isKnownStatus = (value: string | null | undefined): value is PatientStatus
 const isKnownSegment = (value: string | null | undefined): value is PatientSegment =>
   Boolean(value && ['regular', 'vip'].includes(value))
 
+const isKnownGender = (value: string | null | undefined): value is PatientGender =>
+  Boolean(value && ['male', 'female'].includes(value))
+
 const mapPatient = (data: ApiPatient): Patient => ({
   id: data.id,
   firstName: data.first_name,
@@ -129,6 +136,7 @@ const mapPatient = (data: ApiPatient): Patient => ({
   // Default to 'in_progress' if status is null/undefined (new patients should be in progress)
   status: isKnownStatus(data.status) ? data.status : 'in_progress',
   segment: isKnownSegment(data.segment) ? data.segment : 'regular',
+  gender: isKnownGender(data.gender) ? data.gender : null,
   doctorId: data.doctor_id ?? undefined,
   createdAt: data.created_at,
   birthDate: data.birth_date ?? undefined,
