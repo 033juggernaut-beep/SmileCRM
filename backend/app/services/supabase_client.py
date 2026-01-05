@@ -92,7 +92,12 @@ class SupabaseClient:
     try:
       response = client.table(table).insert(rows).execute()
     except PostgrestAPIError as exc:  # pragma: no cover
-      raise SupabaseRequestError("Failed to insert data into Supabase.", original_error=exc) from exc
+      import logging
+      logger = logging.getLogger(__name__)
+      logger.error(f"Supabase insert failed for table '{table}': {exc}")
+      logger.error(f"Payload was: {rows}")
+      logger.error(f"Error details: code={getattr(exc, 'code', 'N/A')}, message={getattr(exc, 'message', str(exc))}")
+      raise SupabaseRequestError(f"Failed to insert into {table}: {exc}", original_error=exc) from exc
     return self._extract_rows(response)
 
   def update(
