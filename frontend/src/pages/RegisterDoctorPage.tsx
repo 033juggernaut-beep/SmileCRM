@@ -118,8 +118,25 @@ export const RegisterDoctorPage = () => {
 
     try {
       const token = localStorage.getItem(TOKEN_STORAGE_KEY)
-      const initDataRaw =
-        sessionStorage.getItem(TELEGRAM_INIT_DATA_STORAGE_KEY) ?? undefined
+      
+      // Try to get initData from sessionStorage first, then from Telegram WebApp directly
+      let initDataRaw = sessionStorage.getItem(TELEGRAM_INIT_DATA_STORAGE_KEY)
+      
+      // Fallback: try to get fresh initData from Telegram WebApp (iOS fix)
+      if (!initDataRaw && window.Telegram?.WebApp?.initData) {
+        initDataRaw = window.Telegram.WebApp.initData
+        // Save for future use
+        if (initDataRaw) {
+          sessionStorage.setItem(TELEGRAM_INIT_DATA_STORAGE_KEY, initDataRaw)
+        }
+      }
+      
+      // Check if we have initData
+      if (!initDataRaw) {
+        setError('Telegram initData not found. Please reopen the app from Telegram.')
+        console.error('[REGISTER] No initData available')
+        return
+      }
 
       const payload = {
         firstName: form.firstName.trim(),
@@ -130,6 +147,8 @@ export const RegisterDoctorPage = () => {
         initData: initDataRaw,
       }
 
+      console.log('[REGISTER] Sending registration request...')
+      
       const { data } = await apiClient.post<RegisterResponse>(
         '/doctors/register',
         payload,
@@ -141,12 +160,32 @@ export const RegisterDoctorPage = () => {
       }
 
       navigate('/home', { replace: true })
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('register.submitError'),
-      )
+    } catch (err: unknown) {
+      console.error('[REGISTER] Registration failed:', err)
+      
+      // Extract detailed error message
+      let errorMessage = t('register.submitError')
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosErr = err as { response?: { data?: { detail?: string | object }; status?: number } }
+        const detail = axiosErr.response?.data?.detail
+        const status = axiosErr.response?.status
+        
+        if (status === 400) {
+          if (typeof detail === 'string') {
+            errorMessage = detail
+          } else if (detail && typeof detail === 'object') {
+            errorMessage = JSON.stringify(detail)
+          } else {
+            errorMessage = 'Invalid request. Please check all fields and try again.'
+          }
+        } else if (status === 500) {
+          errorMessage = 'Server error. Please try again later.'
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message
+      }
+      
+      setError(errorMessage)
     } finally {
       setIsSubmitting(false)
     }
