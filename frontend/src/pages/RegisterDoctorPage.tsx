@@ -3,13 +3,14 @@
  * UI/UX styled like main dashboard
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Alert,
   AlertIcon,
   Box,
+  Button,
   Flex,
   FormControl,
   FormLabel,
@@ -23,7 +24,7 @@ import {
   useColorMode,
 } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
-import { UserPlus, User, Stethoscope, Phone, Building2 } from 'lucide-react'
+import { UserPlus, User, Stethoscope, Phone, Building2, RefreshCw } from 'lucide-react'
 
 import { apiClient, buildAuthHeaders } from '../api/client'
 import {
@@ -88,6 +89,44 @@ export const RegisterDoctorPage = () => {
   const [form, setForm] = useState<FormFields>(initialForm)
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [initDataMissing, setInitDataMissing] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
+
+  // Check for initData on mount and after retries
+  useEffect(() => {
+    const checkInitData = () => {
+      const fromStorage = sessionStorage.getItem(TELEGRAM_INIT_DATA_STORAGE_KEY)
+      const fromTelegram = window.Telegram?.WebApp?.initData
+      
+      console.log('[REGISTER] Checking initData...')
+      console.log('[REGISTER] From sessionStorage:', fromStorage ? 'present' : 'missing')
+      console.log('[REGISTER] From Telegram SDK:', fromTelegram ? 'present' : 'missing')
+      console.log('[REGISTER] Telegram SDK available:', !!window.Telegram?.WebApp)
+      
+      if (!fromStorage && !fromTelegram) {
+        setInitDataMissing(true)
+      } else {
+        setInitDataMissing(false)
+        // If we found it from Telegram SDK but not storage, save it
+        if (!fromStorage && fromTelegram) {
+          sessionStorage.setItem(TELEGRAM_INIT_DATA_STORAGE_KEY, fromTelegram)
+        }
+      }
+    }
+    
+    // Check immediately
+    checkInitData()
+    
+    // Also check after a delay (Telegram SDK might load slowly on iOS)
+    const timer = setTimeout(checkInitData, 1000)
+    
+    return () => clearTimeout(timer)
+  }, [retryCount])
+
+  const handleRetry = () => {
+    setRetryCount(c => c + 1)
+    setError(null)
+  }
 
   const handleChange =
     (field: keyof FormFields) =>
@@ -475,8 +514,53 @@ export const RegisterDoctorPage = () => {
                 </Box>
               </MotionDiv>
 
+              {/* InitData Missing Warning */}
+              {initDataMissing && (
+                <MotionDiv variants={itemVariants}>
+                  <Box
+                    bg={isDark ? 'rgba(251, 191, 36, 0.1)' : 'orange.50'}
+                    border="1px solid"
+                    borderColor={isDark ? 'rgba(251, 191, 36, 0.3)' : 'orange.200'}
+                    borderRadius="xl"
+                    p={4}
+                  >
+                    <Stack spacing={3}>
+                      <Flex align="center" gap={2}>
+                        <Text fontSize="xl">⚠️</Text>
+                        <Text color={isDark ? 'orange.200' : 'orange.700'} fontWeight="medium" fontSize="sm">
+                          Telegram не подключён
+                        </Text>
+                      </Flex>
+                      <Text color={isDark ? 'orange.300' : 'orange.600'} fontSize="xs">
+                        Приложение должно быть открыто через Telegram бота @SmileCRM_bot
+                      </Text>
+                      <Flex gap={2} flexWrap="wrap">
+                        <Button
+                          size="sm"
+                          leftIcon={<RefreshCw size={14} />}
+                          onClick={handleRetry}
+                          colorScheme="orange"
+                          variant="outline"
+                        >
+                          Проверить снова
+                        </Button>
+                        <Button
+                          as="a"
+                          href="https://t.me/SmileCRM_bot"
+                          target="_blank"
+                          size="sm"
+                          colorScheme="blue"
+                        >
+                          Открыть бота
+                        </Button>
+                      </Flex>
+                    </Stack>
+                  </Box>
+                </MotionDiv>
+              )}
+
               {/* Error Alert */}
-              {error && (
+              {error && !initDataMissing && (
                 <MotionDiv variants={itemVariants}>
                   <Alert 
                     status="error" 
@@ -499,6 +583,7 @@ export const RegisterDoctorPage = () => {
                   type="submit"
                   size="lg"
                   isLoading={isSubmitting}
+                  isDisabled={initDataMissing}
                   loadingText={t('register.submitting')}
                   w="full"
                 >
