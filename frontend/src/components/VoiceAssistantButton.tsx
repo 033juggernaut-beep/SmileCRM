@@ -54,7 +54,6 @@ import {
   type VoiceParseResponse,
   type VoiceParseStructured,
   parseVoice,
-  uiLanguageToVoiceLanguage,
 } from '../api/ai'
 import { useLanguage } from '../context/LanguageContext'
 
