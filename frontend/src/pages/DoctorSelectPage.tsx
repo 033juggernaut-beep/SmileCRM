@@ -298,7 +298,7 @@ export const DoctorSelectPage = () => {
                   borderColor={cardBorder}
                   boxShadow="0 1px 3px rgba(0, 0, 0, 0.05)"
                   textAlign="left"
-                  transition="all 0.2s"
+                  sx={{ transition: 'all 0.2s' }}
                   _hover={{
                     transform: 'translateY(-2px)',
                     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
