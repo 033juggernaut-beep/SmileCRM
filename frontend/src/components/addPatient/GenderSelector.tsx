@@ -20,8 +20,8 @@ export function GenderSelector({ value, onChange }: GenderSelectorProps) {
   const isDark = colorMode === 'dark'
 
   const genders: { value: PatientGender; label: string }[] = [
-    { value: 'male', label: t('patientCard.genderMale') },
-    { value: 'female', label: t('patientCard.genderFemale') },
+    { value: 'male', label: t('addPatient.genderMale') },
+    { value: 'female', label: t('addPatient.genderFemale') },
   ]
 
   return (
@@ -32,7 +32,7 @@ export function GenderSelector({ value, onChange }: GenderSelectorProps) {
         color={isDark ? 'slate.300' : 'slate.700'}
         mb={1.5}
       >
-        {t('patientCard.gender')}
+        {t('addPatient.gender')}
       </Text>
       <Flex
         display="inline-flex"
