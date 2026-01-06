@@ -191,20 +191,57 @@ async def transcribe_audio(
         raise TranscriptionError(f"Failed to transcribe audio: {str(e)}")
 
 
-def build_parsing_prompt(mode: VoiceMode, transcript: str) -> str:
+def build_parsing_prompt(mode: VoiceMode, transcript: str, language: Language = "auto") -> str:
     """
     Build the LLM prompt for parsing transcript to structured JSON.
     
     Args:
         mode: Parsing mode (patient/visit/note)
         transcript: Transcribed text
+        language: Language hint (auto/hy/ru/en)
         
     Returns:
         Formatted prompt string
     """
-    base_rules = """
+    # Language-specific base rules
+    if language == "hy":
+        base_rules = """
+You are a medical data extraction assistant for a dental clinic in Armenia.
+The input text is in Armenian (may be script or Latin transliteration).
+
+IMPORTANT RULES:
+1. Return ONLY valid JSON, no explanations or markdown.
+2. If you are not confident about a value, use null.
+3. Never invent or guess data - if unclear, use null.
+4. For phone numbers starting with 0 (Armenian format), normalize to +374 format:
+   - 077123456 -> +37477123456
+   - 093123456 -> +37493123456
+5. Status can only be: "in_progress", "completed", or null.
+6. Dates must be in YYYY-MM-DD format or null.
+7. Keep text fields (diagnosis, notes) in Armenian if input was Armenian.
+8. For amounts: recognize "hazar" = 1000, "300.000" = 300000
+9. Currency: default AMD for Armenia. "dram", "dramov" = AMD.
+"""
+    elif language == "ru":
+        base_rules = """
 You are a medical data extraction assistant for a dental clinic.
-The input text may be in Armenian (Հայdelays:), Russian, English, or mixed.
+The input text is in Russian.
+
+IMPORTANT RULES:
+1. Return ONLY valid JSON, no explanations or markdown.
+2. If you are not confident about a value, use null.
+3. Never invent or guess data - if unclear, use null.
+4. For phone numbers starting with 0 (Armenian format), normalize to +374 format:
+   - 077123456 -> +37477123456
+   - 093123456 -> +37493123456
+5. Status can only be: "in_progress", "completed", or null.
+6. Dates must be in YYYY-MM-DD format or null.
+7. Currency: "dram", "dramov", "AMD" = AMD. Default to AMD for Armenia timezone.
+"""
+    else:
+        base_rules = """
+You are a medical data extraction assistant for a dental clinic.
+The input text may be in Armenian, Russian, English, or mixed.
 
 IMPORTANT RULES:
 1. Return ONLY valid JSON, no explanations or markdown.
@@ -262,10 +299,24 @@ Extract notes from the text and return this exact JSON structure:
 }
 """
 
+    # Add language-specific examples for Armenian
+    examples = ""
+    if language == "hy":
+        examples = """
+Armenian date examples:
+- "aysor" (today) -> today's date
+- "vaghe" (tomorrow) -> tomorrow's date
+- "5 hunvar" -> January 5th
+
+Armenian amount examples:
+- "300 hazar dram" -> 300000 AMD
+- "20000 dramov" -> 20000 AMD
+"""
+    
     return f"""{base_rules}
 
 {schema}
-
+{examples}
 TEXT TO PARSE:
 \"\"\"{transcript}\"\"\"
 
@@ -362,13 +413,20 @@ def validate_and_fix_structured(mode: VoiceMode, data: dict[str, Any]) -> tuple[
     return data, warnings
 
 
-async def parse_transcript(mode: VoiceMode, transcript: str) -> tuple[dict[str, Any], list[str]]:
+async def parse_transcript(
+    mode: VoiceMode, 
+    transcript: str,
+    language: Language = "auto",
+    timezone: str = "Asia/Yerevan",
+) -> tuple[dict[str, Any], list[str]]:
     """
-    Parse transcript to structured JSON using LLM.
+    Parse transcript to structured JSON using LLM with Armenian-aware postprocessing.
     
     Args:
         mode: Parsing mode (patient/visit/note)
         transcript: Transcribed text
+        language: Language hint (auto/hy/ru/en)
+        timezone: User's timezone
         
     Returns:
         Tuple of (structured_data, warnings)
@@ -396,9 +454,10 @@ async def parse_transcript(mode: VoiceMode, transcript: str) -> tuple[dict[str, 
         
         client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
         
-        prompt = build_parsing_prompt(mode, transcript)
+        # Build prompt with language hint
+        prompt = build_parsing_prompt(mode, transcript, language)
         
-        logger.info(f"Parsing transcript for mode={mode}")
+        logger.info(f"[VOICE_AI] Parsing transcript: mode={mode}, language={language}, length={len(transcript)}")
         
         response = await client.chat.completions.create(
             model=settings.AI_MODEL_TEXT,
@@ -426,17 +485,50 @@ async def parse_transcript(mode: VoiceMode, transcript: str) -> tuple[dict[str, 
                 lines = lines[:-1]
             cleaned = "\n".join(lines)
         
-        logger.debug(f"LLM response: {cleaned[:200]}...")
+        logger.debug(f"[VOICE_AI] LLM response: {cleaned[:200]}...")
         
         # Parse JSON
         try:
             structured = json.loads(cleaned)
         except json.JSONDecodeError as e:
-            logger.error(f"JSON parse error: {e}, raw: {cleaned[:200]}")
+            logger.error(f"[VOICE_AI] JSON parse error: {e}, raw: {cleaned[:200]}")
             raise ParsingError(f"Failed to parse LLM response as JSON: {e}")
         
         # Validate and fix
         structured, warnings = validate_and_fix_structured(mode, structured)
+        
+        # Apply Armenian-aware postprocessing for visit mode (amounts, currency, dates)
+        if mode == "visit" and language in ("hy", "auto"):
+            from app.services.armenian_normalizer import postprocess_voice_data
+            
+            visit_data = structured.get("visit", {})
+            # Flatten for postprocessing
+            flat_data = {
+                "visit_date": visit_data.get("visit_date"),
+                "next_visit_date": visit_data.get("next_visit_date"),
+                "diagnosis": visit_data.get("diagnosis"),
+                "notes": visit_data.get("notes"),
+                "amount": visit_data.get("amount"),
+                "currency": visit_data.get("currency"),
+            }
+            
+            postprocessed, post_warnings = postprocess_voice_data(
+                transcript=transcript,
+                parsed_data=flat_data,
+                locale="hy" if language == "hy" else "ru",
+                timezone=timezone,
+            )
+            
+            # Merge back
+            structured["visit"]["visit_date"] = postprocessed.get("visit_date")
+            structured["visit"]["next_visit_date"] = postprocessed.get("next_visit_date")
+            if postprocessed.get("diagnosis"):
+                structured["visit"]["diagnosis"] = postprocessed.get("diagnosis")
+            if postprocessed.get("notes"):
+                structured["visit"]["notes"] = postprocessed.get("notes")
+            
+            warnings.extend(post_warnings)
+            logger.info(f"[VOICE_AI] Postprocessed visit data: {structured['visit']}")
         
         return structured, warnings
         
@@ -456,6 +548,7 @@ async def process_voice_input(
     mode: VoiceMode,
     language: Language = "auto",
     context_patient_id: str | None = None,
+    timezone: str = "Asia/Yerevan",
 ) -> VoiceParseResult:
     """
     Main entry point for processing voice input.
@@ -467,6 +560,7 @@ async def process_voice_input(
         mode: Processing mode (patient/visit/note)
         language: Language hint (auto/hy/ru/en)
         context_patient_id: Optional patient ID for context
+        timezone: User's timezone for date calculations
         
     Returns:
         VoiceParseResult with transcript and structured data
@@ -474,14 +568,24 @@ async def process_voice_input(
     Raises:
         VoiceAIError: On any processing error
     """
+    logger.info(
+        f"[VOICE_AI] Processing voice input: mode={mode}, language={language}, "
+        f"timezone={timezone}, file_size={len(file_data)} bytes"
+    )
+    
     # Validate file
     validate_audio_file(file_data, content_type, filename)
     
-    # Transcribe
+    # Transcribe with language hint
     transcript = await transcribe_audio(file_data, filename, language)
     
-    # Parse to structured JSON
-    structured, warnings = await parse_transcript(mode, transcript)
+    logger.info(f"[VOICE_AI] Transcription complete: {len(transcript)} chars")
+    logger.debug(f"[VOICE_AI] Transcript: {transcript[:200]}...")
+    
+    # Parse to structured JSON with Armenian-aware postprocessing
+    structured, warnings = await parse_transcript(mode, transcript, language, timezone)
+    
+    logger.info(f"[VOICE_AI] Parse complete: mode={mode}, warnings={len(warnings)}")
     
     return VoiceParseResult(
         mode=mode,

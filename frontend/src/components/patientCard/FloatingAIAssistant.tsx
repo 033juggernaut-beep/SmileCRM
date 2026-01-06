@@ -29,9 +29,10 @@ import {
 } from '@chakra-ui/react'
 import { X, Check, RotateCcw, Stethoscope, Calendar, Wallet, MessageSquare, Square, Edit2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-// Speech language is selected explicitly in the UI, not from app language
+// Speech language is selected explicitly in the UI, but defaults from app language
 import { voiceApi } from '../../api/ai'
 import type { VoiceAIMode, VoiceParsedData } from '../../api/ai'
+import { useLanguage } from '../../context/LanguageContext'
 
 interface FloatingAIAssistantProps {
   patientId?: string
@@ -87,19 +88,30 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
   const { colorMode } = useColorMode()
   const isDark = colorMode === 'dark'
   const toast = useToast()
+  const { language: uiLanguage } = useLanguage()
 
-  // Speech language options
+  // Speech language options (hy = Armenian ISO 639-1 code for Whisper)
   type SpeechLanguage = 'ru' | 'hy' | 'en'
   const speechLanguageLabels: Record<SpeechLanguage, string> = {
     ru: 'RU',
     hy: 'AM',
     en: 'EN',
   }
+  
+  // Map UI language to speech language (am -> hy for Whisper)
+  const getInitialSpeechLanguage = (): SpeechLanguage => {
+    switch (uiLanguage) {
+      case 'am': return 'hy' // Armenian ISO 639-1 code
+      case 'ru': return 'ru'
+      case 'en': return 'en'
+      default: return 'hy' // Default to Armenian for SmileCRM
+    }
+  }
 
   // UI state
   const [isOpen, setIsOpen] = useState(false)
   const [selectedMode, setSelectedMode] = useState<VoiceAIMode>('visit')
-  const [speechLanguage, setSpeechLanguage] = useState<SpeechLanguage>('ru')
+  const [speechLanguage, setSpeechLanguage] = useState<SpeechLanguage>(getInitialSpeechLanguage())
   const [recordingState, setRecordingState] = useState<RecordingState>('idle')
   const [recordingSeconds, setRecordingSeconds] = useState(0)
   const [error, setError] = useState<string | null>(null)
@@ -230,11 +242,17 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
     
     // Send to API
     try {
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Yerevan'
+      
+      console.log(`[FloatingAI] Sending voice: mode=${selectedMode}, locale=${speechLanguage}, timezone=${timezone}`)
+      
       // Use explicitly selected speech language (not app UI language)
       const response = await voiceApi.parse(audioBlob, selectedMode, patientId, {
         locale: speechLanguage,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timezone,
       })
+      
+      console.log(`[FloatingAI] Parse result: transcript="${response.text.substring(0, 50)}...", amount=${response.data.amount}, currency=${response.data.currency}`)
       
       setTranscript(response.text)
       setEditedData(response.data)
@@ -242,7 +260,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
       setRecordingState('preview')
       
     } catch (err) {
-      console.error('Voice parse failed:', err)
+      console.error('[FloatingAI] Voice parse failed:', err)
       setError('Recognition error. Try again.')
       setRecordingState('error')
     }

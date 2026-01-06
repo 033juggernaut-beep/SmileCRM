@@ -63,8 +63,58 @@ class VoiceParseResult:
         }
 
 
-# System prompt for LLM parsing
-PARSE_PROMPT_TEMPLATE = """Ты — медицинский AI-ассистент стоматологической CRM.
+# System prompt for LLM parsing - supports Armenian, Russian, English
+PARSE_PROMPT_TEMPLATE_HY = """You are a medical AI assistant for a dental CRM in Armenia.
+Extract structured data from the doctor's speech in Armenian.
+
+CRITICAL RULES:
+1. DO NOT invent data that is not in the text
+2. DO NOT change or invent dates
+3. If date is NOT explicitly mentioned — return null
+4. Recognize relative dates in Armenian:
+   - "aysor" (այdelays) → {TODAY}
+   - "vaghe" (delays) → {TOMORROW}  
+   - "verevaghy" (delaysdelays) → {DAY_AFTER}
+   - "mech N or" (delaysdelays N delays) → calculate from {TODAY}
+   - specific dates (5 hunvar, 25.12, etc) → convert to YYYY-MM-DD
+5. If year not specified — use {YEAR} (or next year if date passed)
+
+CURRENCY RULES (CRITICAL for Armenia):
+- If you see 'dram', 'dramov', 'AMD' → currency = "AMD"
+- Default currency for Armenia = AMD (Armenian Dram)
+- NEVER use RUB unless explicitly mentioned as "rubles"
+- Default currency: {DEFAULT_CURRENCY}
+
+LANGUAGE RULES:
+- Input may be in Armenian script, Latin transliteration, or mixed
+- Output text fields (diagnosis, notes) should be in Armenian if input was Armenian
+- Keep the original language of the content
+
+Current date: {TODAY} (timezone: {TIMEZONE})
+Mode: {MODE}
+Locale: {LOCALE}
+
+Return STRICT JSON without markdown:
+{{
+  "visit_date": "YYYY-MM-DD or null",
+  "next_visit_date": "YYYY-MM-DD or null",
+  "diagnosis": "diagnosis text in original language or null",
+  "notes": "doctor notes in original language or null",
+  "amount": number or null,
+  "currency": "AMD" | "RUB" | "USD" | null
+}}
+
+Examples for Armenian:
+- "aysor vizit" → visit_date: "{TODAY}"
+- "vaghe galu" → visit_date: "{TOMORROW}"
+- "25 dektemberi" → visit_date: "YYYY-12-25"
+- "300 hazar dram" → amount: 300000, currency: "AMD"
+- "20000 dramov" → amount: 20000, currency: "AMD"
+
+Doctor's speech: \"\"\"{TEXT}\"\"\"
+"""
+
+PARSE_PROMPT_TEMPLATE_RU = """Ты — медицинский AI-ассистент стоматологической CRM.
 Твоя задача — извлечь структурированные данные из речи врача.
 
 КРИТИЧЕСКИЕ ПРАВИЛА:
@@ -110,6 +160,52 @@ PARSE_PROMPT_TEMPLATE = """Ты — медицинский AI-ассистент
 
 Текст врача: \"\"\"{TEXT}\"\"\"
 """
+
+PARSE_PROMPT_TEMPLATE_EN = """You are a medical AI assistant for a dental CRM.
+Extract structured data from the doctor's speech.
+
+CRITICAL RULES:
+1. DO NOT invent data that is not in the text
+2. DO NOT change or invent dates
+3. If date is NOT explicitly mentioned — return null
+4. Recognize relative dates:
+   - "today" → {TODAY}
+   - "tomorrow" → {TOMORROW}
+   - "day after tomorrow" → {DAY_AFTER}
+   - "in N days" → calculate from {TODAY}
+   - specific dates (January 5, 25.12, etc) → convert to YYYY-MM-DD
+5. If year not specified — use {YEAR} (or next year if date passed)
+
+CURRENCY RULES:
+- Default currency: {DEFAULT_CURRENCY}
+- For Armenia timezone, default = AMD (Armenian Dram)
+- Use explicit currency if mentioned (USD, RUB, AMD)
+
+Current date: {TODAY} (timezone: {TIMEZONE})
+Mode: {MODE}
+Locale: {LOCALE}
+
+Return STRICT JSON without markdown:
+{{
+  "visit_date": "YYYY-MM-DD or null",
+  "next_visit_date": "YYYY-MM-DD or null",
+  "diagnosis": "diagnosis text or null",
+  "notes": "doctor notes or null",
+  "amount": number or null,
+  "currency": "AMD" | "RUB" | "USD" | null
+}}
+
+Doctor's speech: \"\"\"{TEXT}\"\"\"
+"""
+
+def _get_parse_prompt_template(locale: Locale) -> str:
+    """Get the appropriate prompt template based on locale."""
+    if locale == "hy":
+        return PARSE_PROMPT_TEMPLATE_HY
+    elif locale == "ru":
+        return PARSE_PROMPT_TEMPLATE_RU
+    else:
+        return PARSE_PROMPT_TEMPLATE_EN
 
 
 def _get_openai_client() -> OpenAI:
@@ -258,14 +354,16 @@ def transcribe_audio(
     audio_bytes: bytes,
     locale: Locale = "ru",
     filename: str = "audio.webm",
+    language: str | None = None,
 ) -> str:
     """
-    Transcribe audio using OpenAI Whisper
+    Transcribe audio using OpenAI Whisper.
     
     Args:
         audio_bytes: Raw audio data
-        locale: Language hint (ru/hy/en)
+        locale: Language hint (ru/hy/en) - DEPRECATED, use language
         filename: Original filename with extension
+        language: Explicit Whisper language code (hy/ru/en/None for auto)
     
     Returns:
         Transcribed text
@@ -273,31 +371,42 @@ def transcribe_audio(
     client = _get_openai_client()
     settings = get_settings()
     
-    # Map locale to Whisper language code
-    language_map = {
-        "ru": "ru",
-        "hy": "hy",  # Armenian
-        "en": "en",
-    }
-    language = language_map.get(locale, "ru")
+    # Map locale to Whisper language code if language not provided
+    # Whisper uses ISO 639-1 codes: 'hy' for Armenian, 'ru' for Russian, 'en' for English
+    if language is None:
+        language_map = {
+            "ru": "ru",
+            "hy": "hy",  # Armenian ISO 639-1
+            "en": "en",
+        }
+        whisper_language = language_map.get(locale, "ru")
+    else:
+        whisper_language = language
     
-    logger.info(f"Transcribing audio ({len(audio_bytes)} bytes, language={language})")
+    logger.info(
+        f"[STT] Transcribing audio: size={len(audio_bytes)} bytes, "
+        f"locale={locale}, whisper_lang={whisper_language}, file={filename}"
+    )
     
     try:
         # Create a file-like object for the API
         response = client.audio.transcriptions.create(
             model=settings.AI_MODEL_STT,
             file=(filename, audio_bytes),
-            language=language,
+            language=whisper_language,
             response_format="text",
         )
         
         text = response.strip() if isinstance(response, str) else str(response).strip()
-        logger.info(f"Transcription result: {text[:100]}...")
+        
+        # Log transcript (without audio data)
+        logger.info(f"[STT] Transcription complete: locale={locale}, length={len(text)}")
+        logger.debug(f"[STT] Transcript preview: {text[:150]}...")
+        
         return text
         
     except Exception as e:
-        logger.error(f"Whisper transcription failed: {e}")
+        logger.error(f"[STT] Whisper transcription failed: {e}")
         raise VoiceServiceError(f"Speech recognition failed: {e}")
 
 
@@ -316,13 +425,18 @@ def parse_voice_text(
         mode: Parsing mode (visit/diagnosis/payment/message)
         timezone: Timezone for date calculations
         today_override: Optional override for today's date (YYYY-MM-DD)
-        locale: Response language
+        locale: Response language (hy/ru/en)
     
     Returns:
         VoiceParseResult with extracted data
     """
+    from app.services.armenian_normalizer import postprocess_voice_data
+    
     client = _get_openai_client()
     settings = get_settings()
+    
+    logger.info(f"[LLM] Parsing voice text: mode={mode}, locale={locale}, timezone={timezone}")
+    logger.debug(f"[LLM] Input text: {text[:200]}...")
     
     # Pre-process text for currency normalization (before LLM)
     corrected_text, pre_detected_currency, currency_warnings = correct_currency_in_text(
@@ -349,8 +463,11 @@ def parse_voice_text(
     tomorrow = today + timedelta(days=1)
     day_after = today + timedelta(days=2)
     
+    # Get locale-specific prompt template
+    prompt_template = _get_parse_prompt_template(locale)
+    
     # Build prompt with corrected text
-    prompt = PARSE_PROMPT_TEMPLATE.format(
+    prompt = prompt_template.format(
         TODAY=today.isoformat(),
         TOMORROW=tomorrow.isoformat(),
         DAY_AFTER=day_after.isoformat(),
@@ -362,7 +479,7 @@ def parse_voice_text(
         LOCALE=locale,
     )
     
-    logger.debug(f"LLM parse prompt: {prompt[:500]}...")
+    logger.debug(f"[LLM] Prompt preview: {prompt[:300]}...")
     
     try:
         response = client.chat.completions.create(
@@ -383,46 +500,54 @@ def parse_voice_text(
         try:
             data = json.loads(content)
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse LLM response as JSON: {content}")
+            logger.error(f"[LLM] Failed to parse response as JSON: {content}")
             raise VoiceServiceError(f"Invalid JSON from LLM: {e}")
         
-        logger.info(f"LLM parsed data: {data}")
+        logger.info(f"[LLM] Raw parsed data: {data}")
+        
+        # Apply Armenian-aware postprocessing
+        postprocessed_data, postprocess_warnings = postprocess_voice_data(
+            transcript=text,
+            parsed_data=data,
+            locale=locale,
+            timezone=timezone,
+            today=today,
+        )
         
         # Validate and normalize
         warnings: list[str] = []
         
         # Add currency correction warnings from pre-processing
         warnings.extend(currency_warnings)
+        warnings.extend(postprocess_warnings)
         
         # Validate dates
-        visit_date, date_warnings = _validate_date(data.get("visit_date"), today)
+        visit_date, date_warnings = _validate_date(postprocessed_data.get("visit_date"), today)
         warnings.extend(date_warnings)
         
-        next_visit_date, next_warnings = _validate_date(data.get("next_visit_date"), today)
+        next_visit_date, next_warnings = _validate_date(postprocessed_data.get("next_visit_date"), today)
         warnings.extend(next_warnings)
         
-        # Normalize amount
-        amount = _normalize_amount(data.get("amount"))
+        # Get normalized amount from postprocessor
+        amount = postprocessed_data.get("amount")
+        if amount is not None:
+            amount = _normalize_amount(amount)
         
-        # Get currency - priority: pre-detected > LLM > default
-        llm_currency = data.get("currency")
-        if pre_detected_currency:
-            # Use pre-detected currency from text normalization
+        # Get currency - priority: postprocessed > pre-detected > LLM > default
+        currency = postprocessed_data.get("currency")
+        if not currency and pre_detected_currency:
             currency = pre_detected_currency
-        elif llm_currency:
-            currency = llm_currency
-        elif amount:
-            # Default to AMD if we have amount but no currency
+        elif not currency and amount:
             currency = default_currency
-        else:
-            currency = None
+        
+        logger.info(f"[LLM] Final parsed result: visit_date={visit_date}, amount={amount}, currency={currency}")
         
         return VoiceParseResult(
             text=text,  # Return original text, not corrected
             visit_date=visit_date,
             next_visit_date=next_visit_date,
-            diagnosis=data.get("diagnosis"),
-            notes=data.get("notes"),
+            diagnosis=postprocessed_data.get("diagnosis"),
+            notes=postprocessed_data.get("notes"),
             amount=amount,
             currency=currency,
             warnings=warnings,
@@ -431,7 +556,7 @@ def parse_voice_text(
     except VoiceServiceError:
         raise
     except Exception as e:
-        logger.error(f"LLM parsing failed: {e}")
+        logger.error(f"[LLM] Parsing failed: {e}")
         raise VoiceServiceError(f"AI parsing failed: {e}")
 
 
@@ -444,35 +569,56 @@ def process_voice(
     filename: str = "audio.webm",
 ) -> VoiceParseResult:
     """
-    Full voice processing pipeline: STT → LLM parsing → validation
+    Full voice processing pipeline: STT -> LLM parsing -> Armenian postprocessing -> validation.
     
     Args:
         audio_bytes: Raw audio data
         mode: Parsing mode
         timezone: Timezone for date calculations
-        locale: Language
+        locale: Language (hy/ru/en)
         today_override: Optional today date override
         filename: Audio filename with extension
     
     Returns:
         VoiceParseResult with transcription and extracted data
     """
-    # Step 1: Transcribe audio
+    logger.info(
+        f"[VOICE] Processing voice input: mode={mode}, locale={locale}, "
+        f"timezone={timezone}, audio_size={len(audio_bytes)} bytes"
+    )
+    
+    # Step 1: Transcribe audio with locale-specific language hint
+    # Map 'hy' locale to 'hy' Whisper language code (Armenian)
     text = transcribe_audio(audio_bytes, locale, filename)
     
     if not text.strip():
+        logger.warning(f"[VOICE] Empty transcription for locale={locale}")
+        # Return locale-specific error message
+        error_messages = {
+            "hy": "Cannot recognize speech. Please try again.",
+            "ru": "Cannot recognize speech. Please try again.",
+            "en": "Cannot recognize speech. Please try again.",
+        }
         return VoiceParseResult(
             text="",
-            warnings=["Не удалось распознать речь. Попробуйте снова."],
+            warnings=[error_messages.get(locale, error_messages["en"])],
         )
     
-    # Step 2: Parse with LLM
+    logger.info(f"[VOICE] Transcription successful: {len(text)} chars")
+    
+    # Step 2: Parse with LLM + Armenian postprocessing
     result = parse_voice_text(
         text=text,
         mode=mode,
         timezone=timezone,
         today_override=today_override,
         locale=locale,
+    )
+    
+    logger.info(
+        f"[VOICE] Parse complete: visit_date={result.visit_date}, "
+        f"amount={result.amount}, currency={result.currency}, "
+        f"warnings={len(result.warnings)}"
     )
     
     return result

@@ -68,6 +68,24 @@ export interface AIApplyResponse {
 
 export type VoiceLanguage = 'auto' | 'hy' | 'ru' | 'en'
 export type VoiceMode = 'patient' | 'visit' | 'note'
+export type UILanguage = 'am' | 'ru' | 'en'
+
+/**
+ * Convert UI language to Whisper language code.
+ * UI uses 'am' for Armenian, Whisper uses 'hy' (ISO 639-1)
+ */
+export function uiLanguageToVoiceLanguage(uiLang: UILanguage): VoiceLanguage {
+  switch (uiLang) {
+    case 'am':
+      return 'hy' // Armenian ISO 639-1 code
+    case 'ru':
+      return 'ru'
+    case 'en':
+      return 'en'
+    default:
+      return 'hy' // Default to Armenian for SmileCRM
+  }
+}
 
 // Structured data for patient creation
 export interface VoicePatientStructured {
@@ -117,16 +135,25 @@ export interface VoiceParseRequest {
   language: VoiceLanguage
   contextPatientId?: string
   audioBlob: Blob
+  timezone?: string
 }
 
 /**
- * Parse voice input via backend API
+ * Parse voice input via backend API.
+ * 
+ * Language should be the Whisper language code:
+ * - 'hy' for Armenian
+ * - 'ru' for Russian
+ * - 'en' for English
+ * 
+ * Use uiLanguageToVoiceLanguage() to convert UI language to voice language.
  */
 export async function parseVoice(request: VoiceParseRequest): Promise<VoiceParseResponse> {
   const formData = new FormData()
   formData.append('mode', request.mode)
   formData.append('language', request.language)
-  formData.append('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone)
+  // Pass timezone for accurate date parsing
+  formData.append('timezone', request.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Yerevan')
   if (request.contextPatientId) {
     formData.append('patient_id', request.contextPatientId)
   }
@@ -237,7 +264,13 @@ export const aiApi = {
 
 export const voiceApi = {
   /**
-   * Parse voice audio - sends to Whisper STT + LLM parsing
+   * Parse voice audio - sends to Whisper STT + LLM parsing.
+   * 
+   * For Armenian language support:
+   * - Pass locale='hy' to force Armenian transcription
+   * - This ensures Whisper uses Armenian language model
+   * - Currency defaults to AMD (Armenian Dram)
+   * - Date parsing handles Armenian words (aysor, vaghe, etc.)
    */
   async parse(
     audioBlob: Blob,
@@ -253,8 +286,10 @@ export const voiceApi = {
     formData.append('file', audioBlob, 'recording.webm')
     formData.append('mode', mode)
     formData.append('patient_id', patientId)
-    formData.append('timezone', options?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone)
-    formData.append('locale', options?.locale || 'ru')
+    // Always pass timezone for accurate date parsing
+    formData.append('timezone', options?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Yerevan')
+    // Default to 'hy' (Armenian) for SmileCRM since it's Armenia-focused
+    formData.append('locale', options?.locale || 'hy')
     if (options?.today) {
       formData.append('today', options.today)
     }

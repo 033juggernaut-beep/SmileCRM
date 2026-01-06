@@ -54,7 +54,9 @@ import {
   type VoiceParseResponse,
   type VoiceParseStructured,
   parseVoice,
+  uiLanguageToVoiceLanguage,
 } from '../api/ai'
+import { useLanguage } from '../context/LanguageContext'
 
 // Constants
 const MAX_RECORDING_SECONDS = 60
@@ -91,16 +93,27 @@ export const VoiceAssistantButton = ({
 }: VoiceAssistantButtonProps) => {
   const { isOpen, onOpen, onClose } = useDisclosure()
   const toast = useToast()
+  const { language: uiLanguage } = useLanguage()
   
-  // Speech language
+  // Speech language labels
   const speechLanguageLabels: Record<SpeechLanguage, string> = {
     ru: 'RU',
     hy: 'AM',
     en: 'EN',
   }
   
-  // State
-  const [speechLanguage, setSpeechLanguage] = useState<SpeechLanguage>('ru')
+  // Map UI language to speech language (am -> hy for Whisper)
+  const getInitialSpeechLanguage = (): SpeechLanguage => {
+    switch (uiLanguage) {
+      case 'am': return 'hy' // Armenian ISO 639-1 code
+      case 'ru': return 'ru'
+      case 'en': return 'en'
+      default: return 'hy' // Default to Armenian for SmileCRM
+    }
+  }
+  
+  // State - initialize speech language from UI language
+  const [speechLanguage, setSpeechLanguage] = useState<SpeechLanguage>(getInitialSpeechLanguage())
   const [recordingState, setRecordingState] = useState<RecordingState>('idle')
   const [recordingSeconds, setRecordingSeconds] = useState(0)
   const [error, setError] = useState<string | null>(null)
@@ -251,16 +264,23 @@ export const VoiceAssistantButton = ({
   // Process audio - send to API
   const processAudio = async (audioBlob: Blob) => {
     try {
-      // Map speech language to VoiceLanguage
-      const language: VoiceLanguage = speechLanguage === 'hy' ? 'hy' : 
-                                       speechLanguage === 'en' ? 'en' : 'ru'
+      // Use selected speech language (hy/ru/en) - already in Whisper format
+      const language: VoiceLanguage = speechLanguage
+      
+      // Get user's timezone for accurate date parsing
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Yerevan'
+      
+      console.log(`[VoiceAssistant] Processing audio: language=${language}, timezone=${timezone}`)
       
       const result = await parseVoice({
         mode,
         language,
         contextPatientId,
         audioBlob,
+        timezone,
       })
+      
+      console.log(`[VoiceAssistant] Parse result: transcript length=${result.transcript.length}`)
       
       setTranscript(result.transcript)
       setParseResult(result)
@@ -278,7 +298,7 @@ export const VoiceAssistantButton = ({
       setRecordingState('preview')
       
     } catch (err) {
-      console.error('Voice parsing failed:', err)
+      console.error('[VoiceAssistant] Voice parsing failed:', err)
       setError('Recognition error. Try again.')
       setRecordingState('error')
     }
