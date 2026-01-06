@@ -19,7 +19,6 @@ import {
   Box,
   Flex,
   Spinner,
-  Text,
   useColorMode,
 } from '@chakra-ui/react'
 import ReactMarkdown from 'react-markdown'
