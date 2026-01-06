@@ -7,6 +7,7 @@
  * - Answer display with loading/error states
  * - Daily limit indicator
  * - Premium Onyx theme matching Stats page
+ * - Persistence: saves last Q&A to localStorage (24h TTL)
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
@@ -19,9 +20,12 @@ import {
   Spinner,
   useColorMode,
   useToast,
+  IconButton,
+  HStack,
+  Collapse,
 } from '@chakra-ui/react'
 import { useNavigate } from 'react-router-dom'
-import { Bot, Send, Sparkles } from 'lucide-react'
+import { Bot, Send, Sparkles, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 import { Header } from '../components/dashboard/Header'
@@ -32,6 +36,13 @@ import { useLanguage } from '../context/LanguageContext'
 import { useTelegramBackButton } from '../hooks/useTelegramBackButton'
 import { useTelegramSafeArea } from '../hooks/useTelegramSafeArea'
 import { aiAssistantApi, type AILanguage } from '../api/aiAssistant'
+import {
+  loadLastAiAnswer,
+  saveLastAiAnswer,
+  clearLastAiAnswer,
+  formatSavedTime,
+  type AiAssistantSaved,
+} from '../utils/aiAssistantStorage'
 
 const MotionBox = motion.create(Box)
 
@@ -54,6 +65,11 @@ export const AIAssistantPage = () => {
   const [answer, setAnswer] = useState<string | null>(null)
   const [remaining, setRemaining] = useState<number | null>(null)
   const [limit, setLimit] = useState<number | null>(null)
+  
+  // Persistence state
+  const [savedQuestion, setSavedQuestion] = useState<string | null>(null)
+  const [savedAt, setSavedAt] = useState<string | null>(null)
+  const [isAnswerHidden, setIsAnswerHidden] = useState(false)
 
   // Page background (same as Stats page)
   const pageBg = isDark
@@ -66,6 +82,17 @@ export const AIAssistantPage = () => {
     { label: t('home.help'), onClick: () => navigate('/help') },
     { label: t('home.privacy'), onClick: () => navigate('/privacy') },
   ]
+
+  // Load saved answer on mount
+  useEffect(() => {
+    const saved = loadLastAiAnswer()
+    if (saved) {
+      setSavedQuestion(saved.question)
+      setAnswer(saved.answer)
+      setSavedAt(saved.createdAt)
+      setIsAnswerHidden(false)
+    }
+  }, [])
 
   // Fetch initial limits
   useEffect(() => {
@@ -118,6 +145,19 @@ export const AIAssistantPage = () => {
       setAnswer(response.answer)
       setRemaining(response.remainingToday)
       setLimit(response.limitToday)
+      
+      // Persist Q&A
+      const lang = getApiLanguage() as AiAssistantSaved['lang']
+      const now = new Date().toISOString()
+      saveLastAiAnswer({
+        question: question.trim(),
+        answer: response.answer,
+        lang,
+        createdAt: now,
+      })
+      setSavedQuestion(question.trim())
+      setSavedAt(now)
+      setIsAnswerHidden(false)
     } catch (error: any) {
       console.error('AI Assistant error:', error)
       
@@ -153,6 +193,20 @@ export const AIAssistantPage = () => {
       handleSubmit()
     }
   }
+
+  // Clear saved answer
+  const handleClearAnswer = useCallback(() => {
+    clearLastAiAnswer()
+    setAnswer(null)
+    setSavedQuestion(null)
+    setSavedAt(null)
+    setIsAnswerHidden(false)
+  }, [])
+
+  // Toggle hide/show answer
+  const handleToggleHide = useCallback(() => {
+    setIsAnswerHidden(prev => !prev)
+  }, [])
 
   // Theme colors
   const cardBg = isDark ? 'rgba(30, 41, 59, 0.7)' : 'white'
@@ -328,16 +382,49 @@ export const AIAssistantPage = () => {
                 boxShadow={shadow}
                 p={6}
               >
-                <Flex align="center" gap={2} mb={4}>
-                  <Box
-                    w="8px"
-                    h="8px"
-                    borderRadius="full"
-                    bg={iconColor}
-                  />
-                  <Text fontSize="sm" fontWeight="semibold" color={titleColor}>
-                    {t('ai.answerTitle')}
-                  </Text>
+                {/* Header with title and controls */}
+                <Flex align="center" justify="space-between" mb={isAnswerHidden ? 0 : 4}>
+                  <Flex align="center" gap={2}>
+                    <Box
+                      w="8px"
+                      h="8px"
+                      borderRadius="full"
+                      bg={iconColor}
+                    />
+                    <Text fontSize="sm" fontWeight="semibold" color={titleColor}>
+                      {t('ai.answerTitle')}
+                    </Text>
+                    {/* Saved time indicator */}
+                    {savedAt && !isLoading && (
+                      <Text fontSize="xs" color={subtitleColor} ml={2}>
+                        • {formatSavedTime(savedAt, t)}
+                      </Text>
+                    )}
+                  </Flex>
+                  
+                  {/* Control buttons */}
+                  {answer && !isLoading && (
+                    <HStack spacing={1}>
+                      <IconButton
+                        aria-label={isAnswerHidden ? t('ai.showAnswer') : t('ai.hideAnswer')}
+                        icon={isAnswerHidden ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                        size="sm"
+                        variant="ghost"
+                        color={subtitleColor}
+                        _hover={{ color: titleColor, bg: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}
+                        onClick={handleToggleHide}
+                      />
+                      <IconButton
+                        aria-label={t('ai.clearAnswer')}
+                        icon={<Trash2 size={16} />}
+                        size="sm"
+                        variant="ghost"
+                        color={subtitleColor}
+                        _hover={{ color: '#EF4444', bg: isDark ? 'rgba(239,68,68,0.15)' : 'rgba(239,68,68,0.1)' }}
+                        onClick={handleClearAnswer}
+                      />
+                    </HStack>
+                  )}
                 </Flex>
 
                 {isLoading ? (
@@ -345,17 +432,33 @@ export const AIAssistantPage = () => {
                     <Spinner size="lg" color={iconColor} thickness="3px" />
                   </Flex>
                 ) : answer ? (
-                  <Box
-                    bg={answerBg}
-                    borderRadius="lg"
-                    p={4}
-                    fontSize="sm"
-                    color={titleColor}
-                    whiteSpace="pre-wrap"
-                    lineHeight="1.7"
-                  >
-                    {answer}
-                  </Box>
+                  <Collapse in={!isAnswerHidden} animateOpacity>
+                    {/* Saved question display */}
+                    {savedQuestion && (
+                      <Box
+                        bg={isDark ? 'rgba(51, 65, 85, 0.3)' : '#F8FAFC'}
+                        borderRadius="lg"
+                        p={3}
+                        mb={3}
+                        fontSize="sm"
+                        color={subtitleColor}
+                        fontStyle="italic"
+                      >
+                        "{savedQuestion}"
+                      </Box>
+                    )}
+                    <Box
+                      bg={answerBg}
+                      borderRadius="lg"
+                      p={4}
+                      fontSize="sm"
+                      color={titleColor}
+                      whiteSpace="pre-wrap"
+                      lineHeight="1.7"
+                    >
+                      {answer}
+                    </Box>
+                  </Collapse>
                 ) : null}
               </MotionBox>
             )}

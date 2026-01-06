@@ -661,6 +661,12 @@ const ru = {
     limitReached: 'Лимит исчерпан',
     errorGeneric: 'Не удалось получить ответ. Попробуйте позже.',
     answerTitle: 'Ответ AI',
+    clearAnswer: 'Удалить',
+    hideAnswer: 'Свернуть',
+    showAnswer: 'Развернуть',
+    savedJustNow: 'Только что',
+    savedMinutesAgo: 'мин назад',
+    savedHoursAgo: 'ч назад',
   },
 
   // Daily motivation quotes (same index = same meaning across languages)

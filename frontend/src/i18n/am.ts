@@ -639,6 +639,12 @@ const am = {
     limitReached: 'Սահմանաչափը սպառված է',
     errorGeneric: 'Չհաջողվեց ստանալ պատասխան։ Փորձեք ավելի ուշ։',
     answerTitle: 'AI պատասխան',
+    clearAnswer: ' Delays',
+    hideAnswer: 'Delays delays',
+    showAnswer: 'Delays delays',
+    savedJustNow: 'Delays delays',
+    savedMinutesAgo: 'delays delays',
+    savedHoursAgo: 'delays delays',
   },
 
   motivation: {

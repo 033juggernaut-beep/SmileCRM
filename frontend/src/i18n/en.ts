@@ -661,6 +661,12 @@ const en = {
     limitReached: 'Limit reached',
     errorGeneric: 'Failed to get response. Please try later.',
     answerTitle: 'AI Answer',
+    clearAnswer: 'Clear',
+    hideAnswer: 'Hide',
+    showAnswer: 'Show',
+    savedJustNow: 'Just now',
+    savedMinutesAgo: 'min ago',
+    savedHoursAgo: 'h ago',
   },
 
   // Daily motivation quotes (same index = same meaning across languages)
