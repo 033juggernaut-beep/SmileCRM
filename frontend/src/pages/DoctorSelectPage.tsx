@@ -15,7 +15,6 @@ import {
   Spinner,
   useColorMode,
   VStack,
-  Badge,
 } from '@chakra-ui/react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { UserCircle, ChevronRight, AlertCircle, Stethoscope } from 'lucide-react';
@@ -37,16 +36,16 @@ const containerVariants = {
       delayChildren: 0.2,
     },
   },
-};
+} as const;
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.3, ease: 'easeOut' },
+    transition: { duration: 0.3, ease: 'easeOut' as const },
   },
-};
+} as const;
 
 export const DoctorSelectPage = () => {
   const navigate = useNavigate();
