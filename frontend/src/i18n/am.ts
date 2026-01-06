@@ -642,7 +642,7 @@ const am = {
     clearAnswer: 'Ջնջել',
     hideAnswer: 'Թաքցնել',
     showAnswer: 'Բացել',
-    savedJustNow: 'Հիմա հիմա',
+    savedJustNow: 'Հիմա',
     savedMinutesAgo: 'րոպե առաջ',
     savedHoursAgo: 'ժամ առաջ',
   },

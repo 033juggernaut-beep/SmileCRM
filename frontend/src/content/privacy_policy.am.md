@@ -1,215 +1,238 @@
-# SmileCRM Gaxtniutyan Qaghaqakanutyan
+SmileCRM Գաղտնիության Քաղաքականություն
 
-**Gortsoxutyan amsakic:** {{DATE}}  
-**Tarberak:** {{VERSION}}
+Գործողության ամսաթիվ: 2026-01-06
+Տարբերակ: 1.0
 
----
+Համառոտ (TL;DR)
 
-## Hamarot (TL;DR)
+SmileCRM-ը գործիք է ատամնաբույժների համար՝ նախատեսված պացիենտների, այցելությունների և բուժման պլանների կառավարման համար։
 
-- SmileCRM-y atamabnujakan bjishkneri hamar gortsiq e՝ pacientneri, aycelutyunneri ev bujman planneri hashvarkum.
-- Menq pahpanum enq miajn ayn tvyalnery, vor duq mutqagrum eq: bjishki, pacientneri, aycelutyunneri masin teghekatvutyun.
-- Dzer tvyalnery pashpanvac en: Telegram-ov avtorizacia, JWT-tokener, tvyalneri bajanun bjishkneri mijoc.
-- Menq chenq vacharum tvyalnery yerord koghmerun ev chenq pahpanum bankajin qartayin tvyalnery.
-- Duq karox eq haycum uxxarkel dzer hashive ev bolor tvyalnery jnjelu.
+Մենք հավաքում և մշակում ենք միայն այն տվյալները, որոնք դուք ինքներդ մուտքագրում եք՝ բժշկի, պացիենտների և այցելությունների վերաբերյալ։
 
----
+Ձեր տվյալները պաշտպանված են՝
 
-## A. Menq ovqer enq
+Telegram-ով իրականացվող նույնականացմամբ
 
-**SmileCRM**-y atamabnujakan praktikaji karavarmani hamar tsarayutyun e, hasaneli e vorpes Telegram Mini App.
+JWT թոքեններով
 
-**Tvyalneri operator:**  
-{{COMPANY_NAME}}  
-{{ADDRESS}}  
-Email: {{EMAIL}}
+Բժիշկների միջև տվյալների խիստ տարանջատմամբ
 
-SmileCRM-y handisanum e vorpes gortsiq matakararar (tvyalneri mshakox) bjishkneri hamar, ovqer hisanutyun en irenc pacientneri tvyalneri kontrolyornery.
+Մենք չենք վաճառում ձեր տվյալները երրորդ կողմերին և չենք պահպանում բանկային քարտերի տվյալներ։
 
----
+Դուք կարող եք ցանկացած պահի դիմել՝ ձեր հաշիվը և բոլոր տվյալները ջնջելու համար։
 
-## B. Inch tvyalner enq havaqum
+A. Ովքե՞ր ենք մենք
 
-### Bjishki tvyalner (hashiv)
-- Anun ev azganun
-- Masnagitutyun
-- Herakhosahamary
-- Klinikaji anun
-- Telegram User ID
-- Phordzashyani ev bajanorvdagrutyun amsakitsnery
+SmileCRM-ը ատամնաբուժական պրակտիկայի կառավարման ծառայություն է, հասանելի որպես Telegram Mini App։
 
-### Pacientneri tvyalner
-- Anun ev azganun
-- Herakhosahamar (ocpardatir)
-- Akhtorosum ev bjishki nkatutyunner
-- Bujman kargavichak
-- Bujman plan ev vacharner
-- Cnndyan amsakit, ser (ocpardatir)
+Տվյալների օպերատոր՝
+SmileCRM
+Երևան, Հայաստան
+📧 Email: support@smilecrm.app
 
-> ⚠️ **Karovor:** Akhtoroshumnery ev bjshkakan nkatutyunnery verlum en aroghjutyan masin tvyalnerin ev patanjum en bardratsvac pashpanutyun.
+SmileCRM-ը գործում է որպես տվյալների մշակող, իսկ բժիշկները հանդիսանում են իրենց պացիենտների տվյալների վերահսկողներ։
 
-### Aycelutyan tvyalner
-- Aycelutyan amsakit ev hajord aycelutyan amsakit
-- Bjishki nkatutyunner
-- Nshanakved degher
+B. Ինչ տվյալներ ենք մենք հավաքում
+Բժշկի տվյալներ (հաշիվ)
 
-### Media faylery
-- Rentgen lusankarner
-- Luzankarner (araj/heto buzhyunits)
-- Faylery kapvac en konkret pacientin ev bjshkin
+Անուն, ազգանուն
 
-### Tekhnikkakan tvyalner
-- Telegram User ID ev initData tvyalner (avtorizaciayi hamar)
-- IP hascen (serveri lognerum, nvagazujn pahpanum)
-- Sarqi tesy ev browsery (avtomatik Telegram-ic)
+Մասնագիտություն
 
-### Vcharmyan tvyalner
-- Vcharman ID-y matakarararirc (Idram/IDBank)
-- Gumar ev arjhuyt (AMD)
-- Vcharman kargavichak
-- Gorcariqi amsakit
+Հեռախոսահամար
 
-> **Menq CHenq pahpanum bankajin qartayin tvyalner:** Bolor vcharnery mshakvm en uxxakioren Idram ev IDBank matakarararneri koxmic.
+Կլինիկայի անվանում
 
----
+Telegram User ID
 
-## C. Tvyalneri mshakman npatakner
+Փորձաշրջանի և բաժանորդագրության ամսաթվեր
 
-Menq mshakum enq tvyalnery hetevyal npataknerov:
+Պացիենտների տվյալներ
 
-1. **Tsarayutyan matucum** — pacientneri, aycelutyunneri, bujman planneri hashvarkum
-2. **Anvtangutyun** — pashpanutyun charashahman mtqic ev charashahumnerisic
-3. **Ognutyun ogtagoroxnerin** — harcerun patasxanner ev xndirneri lucum
-4. **Vcharneri mshakum** — bajanorvdagrutyun karavarul
-5. **Artadranki barelavum** — hamaxmbvac analitika ogtagurcutyan (aranc andzhnakan tvyalneri)
+Անուն, ազգանուն
 
----
+Հեռախոսահամար (ըստ ցանկության)
 
-## D. Iravakan himqer
+Ախտորոշում և բժշկի նշումներ
 
-Menq mshakum enq tvyalnery hetevyal himqerov:
+Բուժման կարգավիճակ
 
-- **Paymanagreri katarum** — SmileCRM tsarayutyan matucum
-- **Orinakan sharher** — anvtangutyan apahovum ev khertsanqi kanxargelum
-- **Hamadzaynutyun** — marketingayin haskagrutyunneri hamar (yete kirarvum e)
+Բուժման պլան և վճարումներ
 
----
+Ծննդյան ամսաթիվ, սեռ (ըստ ցանկության)
 
-## E. Tvyalneri poxancum yereord koghmerun
+⚠️ Կարևոր: Ախտորոշումները և բժշկական նշումները համարվում են առողջության վերաբերյալ տվյալներ և պահանջում են բարձր մակարդակի պաշտպանություն։
 
-Menq karog enq poxancel tvyalnery hetevyal kategorianeri stacoxnerin:
+Այցելությունների տվյալներ
 
-| Stacox | Npatak | Tvyalneri tesy |
-|--------|--------|----------------|
-| **Supabase** | Tvyalneri bazayi ev fayleri pahpanum | Bolor tvyalnery |
-| **Telegram** | Ogtagoroxneri avtorizacia | Telegram ID, initData |
-| **Idram / IDBank** | Vcharneri mshakum | Vcharneri ID-ner |
-| **Render / Vercel** | Havelvaci hosting | Tekhnikkakan tvyalner |
+Այցելության ամսաթիվ
 
-Menq naev karog enq bacahaytel tvyalnery iravapah marminneri orinakan patanji hamar.
+Հաջորդ այցելության ամսաթիվ
 
----
+Բժշկի նշումներ
 
-## F. Mijazkajin poxancum
+Կիրառված դեղորայք
 
-Mer matakarararneri serverinery (Supabase, Render, Vercel) karog en gtnyel Hajastanic durs. Menq kirarum enq kazmakerpakayin ev tekhnikkakan mijocner tvyalneri pashpanman hamar mijazkajin poxancman jamanak.
+Մեդիա ֆայլեր
 
----
+Ռենտգեն նկարներ
 
-## G. Tvyalneri pahpanman jamketnery
+Լուսանկարներ (մինչև / հետո բուժումից)
 
-- **Hashvi ev pacientneri tvyalner** — pahpanvum en minchev hashivy aktiv e, plus barexos jamketa jnjumits heto verkakngnman hnararutyan hamar
-- **Vcharmyan grancumner** — {{PAYMENTS_RETENTION}} (hashvapahakan ev iravakan npataknerov)
-- **Serveri logner** — minchev 30 or
+Ֆայլերը կապված են կոնկրետ պացիենտի և բժշկի հետ
 
-Jamketnerit avartveluts heto tvyalnery jnjum en kam anonimazacvum en.
+Տեխնիկական տվյալներ
 
----
+Telegram User ID և initData (նույնականացման համար)
 
-## H. Tvyalneri anvtangutyun
+IP հասցե (սերվերի լոգերում, կարճաժամկետ)
 
-Menq kirarum enq hetevyal pashpanman mijocner:
+Սարքի տեսակը և դիտարկիչը (ավտոմատ՝ Telegram-ից)
 
-- ✅ **Telegram initData verificia** — stugum enq storgrut yurakanchyur avtorizaciayin
-- ✅ **JWT-tokener** — anvtang authentifikacia API hartneri hamar
-- ✅ **Tvyalneri bajanun** — yurakanchyur bjishk tesum e miajn ir pacientnerin (filtrum enq doctor_id-ov)
-- ✅ **Gaxtnagrum poxancman jamanak** — HTTPS bolor kapakculyunneri hamar
-- ✅ **Row Level Security** — mtqi sahmanapordum tvyalneri bazayi makardakov
-- ✅ **Mtqi minimalizacia** — miajn anhrashesht andznakazmy unic mtq tvyalnerun
+Վճարման տվյալներ
 
-> ⚠️ Chnayjac dzernarkavac mijocnerin, voch mic hamakar@ chi karog erajavorel 100% anvtangutyun. Menq xorrhurq enq talis ogtavel husali gaghtnabarery ev chi poxancel mtqi tvyalnery yerord andzanc.
+Վճարման ID (Idram / IDBank)
 
----
+Գումար և արժույթ (AMD)
 
-## I. Dzer iravunqnery
+Վճարման կարգավիճակ
 
-Vorpes SmileCRM ogtavorox, duq iravunq uneq:
+Գործարքի ամսաթիվ
 
-- 📋 **Mtq** — stanaly dzer tvyalneri patxeny
-- ✏️ **Shpum** — tarmacnel votachisht tvyalnery
-- 🗑️ **Jnjum** — haycum anely hashvi ev bolor tvyalneri jnjman
-- 📤 **Artahanum** — stanaly tvyalnery mexenayngnyeli dzevachapov (yete tekhnikkapes hnararvor e)
-- ⛔ **Hamadzaynutyan hishoxarkum** — grasanvel marketingayin haskagrutyunnerisn
+❗ Մենք չենք պահպանում բանկային քարտերի տվյալներ։ Բոլոր վճարումները մշակվում են անմիջապես Idram և IDBank համակարգերի կողմից։
 
-**Vonts nerkayacnel haytadrum:**  
-Uxxarkel email {{EMAIL}}-in «Haytadrum tvyalneri masin» temayov ev nshel dzer Telegram username-y.
+C. Տվյալների մշակման նպատակներ
 
-Menq kapatasxanenq 30 orva yntacqum.
+Մենք մշակում ենք տվյալները հետևյալ նպատակներով՝
 
----
+Ծառայության մատուցում (պացիենտներ, այցելություններ, բուժման պլաններ)
 
-## J. Bjishki patasxanatvutyun pacientneri tvyalneri hamar
+Անվտանգության ապահովում և չարաշահումների կանխարգելում
 
-**Karovor e haskanel:**
+Օգտատերերի աջակցություն
 
-- Bjishky hisanum e ir pacientneri tvyalneri **kontrolyor**
-- SmileCRM-y hisanum e **tvyalneri mshakox** (matakararum e gortsiq)
-- Bjishky partavorvum e:
-  - Unenalov orinakan himq pacientneri tvyalner havaqelu hamar
-  - Teghekacnel pacientnerin irenc tvyalneri mshakman masin
-  - Apahovel tvyalneri gaxtniutyun
-  - Chi poxancel hashvi mtq yerord andzanc
+Վճարումների և բաժանորդագրության կառավարում
 
-SmileCRM-y patasxanatvutyun chi krsum bjishki gortsoxutyunneri hamar ir pacientneri tvyalneri nkatmamb.
+Արտադրանքի բարելավում (անանուն վիճակագրություն)
 
----
+D. Իրավական հիմքեր
 
-## K. Erekhaner
+Տվյալների մշակումը կատարվում է՝
 
-SmileCRM-y naxatesvac chi 18 taruc pokr andzanc koxmic orpes ogtavoroxner (bjishkner) ogtagerelun hamar. Menq gitakicoren chi havaqum erekhanneri tvyalner.
+Պայմանագրային պարտավորությունների կատարման համար
 
-Antachahac pacientneri tvyalnery karog en mutqagrvevel bjishki koxmic bjshkakan praktikaji shrjanaknnerum — dra hamar patasxanatvutyun e krum bjishky.
+Օրինական շահերի շրջանակում (անվտանգություն, խարդախության կանխարգելում)
 
----
+Օգտատիրոջ համաձայնությամբ (մարքեթինգային հաղորդագրությունների դեպքում, եթե կիրառվում է)
 
-## L. Cookies ev tracking
+E. Տվյալների փոխանցում երրորդ կողմերին
 
-SmileCRM-y vorpes Telegram Mini App **chi ogtavorum cookies**:
+Մենք կարող ենք փոխանցել տվյալներ հետևյալ ծառայություններին․
 
-Menq ogtavorum enq browseryi **localStorage**-y miajn hetevyal hamar:
-- Entrvac lezvi pahpanman hamar
-- Avtorizaciayi tokeni pahpanman hamar (JWT)
+Ստացող	Նպատակ	Տվյալների տեսակ
+Supabase	Տվյալների բազա և ֆայլերի պահպանում	Բոլոր տվյալները
+Telegram	Օգտատիրոջ նույնականացում	Telegram ID, initData
+Idram / IDBank	Վճարումների մշակում	Վճարման ID
+Render / Vercel	Հավելվածի հոսթինգ	Տեխնիկական տվյալներ
 
-Menq chi ogtavorum gavazyayin trackernerr kam yerord koghmi analyitika.
+Տվյալները կարող են բացահայտվել նաև իրավապահ մարմիններին՝ օրենքով սահմանված պահանջների դեպքում։
 
----
+F. Միջազգային փոխանցում
 
-## M. Qaghaqakanutyan popoxutyunner
+Մեր մատակարարների սերվերները կարող են գտնվել Հայաստանի սահմաններից դուրս։ Մենք կիրառում ենք կազմակերպական և տեխնիկական միջոցներ՝ տվյալների պաշտպանությունն ապահովելու համար։
 
-Menq karog enq tarmacnel ays Gaxtniutyan qaghaqakanutyan. Eshakan popoxutyunneri depqum menq kteghekacnenq dzer havelvaci mijocov.
+G. Տվյալների պահպանման ժամկետներ
 
-Ardiakanal tarberkay misht hasaneli e havelvacum «Gaxtniutyun» hskayov.
+Բժշկի և պացիենտների տվյալներ — մինչ հաշվի ակտիվ լինելը
 
----
+Ջնջումից հետո՝ կարճ ժամանակով՝ վերականգնման հնարավորության համար
 
-## N. Kapner
+Վճարումների գրառումներ — 5 տարի
 
-Gaxtniutyan harcerumnerov dimum:
+Սերվերի լոգեր — մինչև 30 օր
 
-**{{COMPANY_NAME}}**  
-Email: {{EMAIL}}  
-Hascey: {{ADDRESS}}
+Ժամկետների ավարտից հետո տվյալները ջնջվում կամ անանունացվում են։
 
----
+H. Տվյալների անվտանգություն
 
-*Verjin tarmacum: {{DATE}}*
+Մենք կիրառում ենք հետևյալ պաշտպանական միջոցները․
+
+Telegram initData-ի ստորագրության ստուգում
+
+JWT թոքեններով անվտանգ նույնականացում
+
+Տվյալների խիստ տարանջատում բժիշկների միջև
+
+HTTPS կոդավորված կապ
+
+Row Level Security տվյալների բազայում
+
+Մուտքի մինիմալացում
+
+⚠️ Չնայած ձեռնարկված միջոցներին՝ ոչ մի համակարգ չի կարող երաշխավորել 100% անվտանգություն։
+
+I. Ձեր իրավունքները
+
+Դուք իրավունք ունեք՝
+
+📋 Ստանալ ձեր տվյալների պատճենը
+
+✏️ Ուղղել կամ թարմացնել տվյալները
+
+🗑️ Պահանջել տվյալների ամբողջական ջնջում
+
+📤 Ստանալ տվյալները մեքենայական ընթեռնելի ձևաչափով
+
+⛔ Հրաժարվել մարքեթինգային հաղորդագրություններից
+
+📧 Դիմելու համար գրեք՝ support@smilecrm.app
+
+Թեմա՝ «Հայտարարություն տվյալների մասին»
+Նշեք ձեր Telegram username-ը։
+
+Մենք կպատասխանենք 30 օրվա ընթացքում։
+
+J. Բժշկի պատասխանատվություն
+
+Բժիշկը հանդիսանում է պացիենտների տվյալների վերահսկող
+
+SmileCRM-ը միայն տրամադրում է գործիք
+
+Բժիշկը պարտավոր է ունենալ օրինական հիմք տվյալներ հավաքելու համար
+
+Բժիշկը պատասխանատու է պացիենտներին տեղեկացնելու և տվյալների պաշտպանությունը ապահովելու համար
+
+K. Երեխաներ
+
+SmileCRM-ը նախատեսված չէ մինչև 18 տարեկան անձանց համար որպես օգտատեր (բժիշկ)։
+
+Անչափահաս պացիենտների տվյալները կարող են մուտքագրվել բժշկի կողմից՝ բժշկական պրակտիկայի շրջանակում, որի պատասխանատվությունը կրում է բժիշկը։
+
+L. Cookies և tracking
+
+SmileCRM-ը որպես Telegram Mini App չի օգտագործում cookies։
+
+Մենք օգտագործում ենք միայն localStorage՝
+
+Ընտրված լեզվի պահպանման համար
+
+Նույնականացման թոքենի պահպանման համար
+
+Մենք չենք օգտագործում գովազդային tracker-ներ կամ երրորդ կողմի analytics։
+
+M. Քաղաքականության փոփոխություններ
+
+Մենք կարող ենք թարմացնել այս Գաղտնիության քաղաքականությունը։ Էական փոփոխությունների դեպքում ձեզ կտեղեկացնենք հավելվածի միջոցով։
+
+Միշտ գործող տարբերակը հասանելի է հավելվածում՝ «Գաղտնիություն» բաժնում։
+
+N. Կապ
+
+Գաղտնիության վերաբերյալ հարցերի համար՝
+
+SmileCRM
+📧 Email: support@smilecrm.app
+
+📍 Հասցե: Երևան, Հայաստան
+
+Վերջին թարմացում: 2026-01-06
