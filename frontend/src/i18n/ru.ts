@@ -129,6 +129,10 @@ const ru = {
     segment: 'Сегмент',
     segmentRegular: 'Обычный',
     segmentVip: 'VIP',
+    // Gender
+    gender: 'Пол',
+    genderMale: 'Мужской',
+    genderFemale: 'Женский',
     // Collapsible sections
     diagnosisSection: 'Диагноз (опционально)',
     notesSection: 'Заметки врача (опционально)',

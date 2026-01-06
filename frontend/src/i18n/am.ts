@@ -130,6 +130,10 @@ const am = {
     segment: 'Segment',
     segmentRegular: 'Sovorakan',
     segmentVip: 'VIP',
+    // Gender
+    gender: 'Sery',
+    genderMale: 'Arakan',
+    genderFemale: 'Iganakan',
     // Collapsible sections
     diagnosisSection: 'Axtoroshum (och partadir)',
     notesSection: 'Bjshki notaner (och partadir)',

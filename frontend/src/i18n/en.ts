@@ -129,6 +129,10 @@ const en = {
     segment: 'Segment',
     segmentRegular: 'Regular',
     segmentVip: 'VIP',
+    // Gender
+    gender: 'Gender',
+    genderMale: 'Male',
+    genderFemale: 'Female',
     // Collapsible sections
     diagnosisSection: 'Diagnosis (optional)',
     notesSection: 'Doctor Notes (optional)',
