@@ -42,6 +42,53 @@ def get_by_id(doctor_id: str) -> dict[str, Any] | None:
   return rows[0] if rows else None
 
 
+def get_by_id_with_clinic(doctor_id: str) -> dict[str, Any] | None:
+  """
+  Return doctor by UUID with clinic name included.
+  
+  Uses the clinics table join to get clinic name.
+  """
+  doctor = get_by_id(doctor_id)
+  if not doctor:
+    return None
+  
+  # If doctor has clinic_id, fetch clinic name
+  if doctor.get("clinic_id"):
+    try:
+      clinic_rows = supabase_client.select(
+        "clinics",
+        columns=["name"],
+        filters={"id": doctor["clinic_id"]},
+        limit=1,
+      )
+      if clinic_rows:
+        doctor["clinic_name_from_table"] = clinic_rows[0].get("name")
+    except SupabaseNotConfiguredError:
+      pass
+  
+  return doctor
+
+
+def list_doctors_by_clinic(clinic_id: str) -> list[dict[str, Any]]:
+  """List all doctors in a specific clinic."""
+  try:
+    return supabase_client.select(
+      "doctors",
+      columns=["id", "first_name", "last_name", "specialization", "clinic_id", "clinic_name"],
+      filters={"clinic_id": clinic_id},
+    )
+  except SupabaseNotConfiguredError:
+    return []
+
+
+def get_doctor_clinic_id(doctor_id: str) -> str | None:
+  """Get the clinic_id for a doctor."""
+  doctor = get_by_id(doctor_id)
+  if doctor:
+    return doctor.get("clinic_id")
+  return None
+
+
 def create_doctor_from_telegram_and_form(
   telegram_user: TelegramUserInfo,
   form_data: Mapping[str, Any] | None = None,

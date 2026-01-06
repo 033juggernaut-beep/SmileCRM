@@ -20,6 +20,11 @@ const StatsPage = lazy(() => import('./pages/StatsPage').then(m => ({ default: m
 const AIAssistantPage = lazy(() => import('./pages/AIAssistantPage').then(m => ({ default: m.AIAssistantPage })))
 const VisitsPage = lazy(() => import('./pages/VisitsPage').then(m => ({ default: m.VisitsPage })))
 
+// Clinic → Doctor → Patients flow
+const ClinicSelectPage = lazy(() => import('./pages/ClinicSelectPage').then(m => ({ default: m.ClinicSelectPage })))
+const DoctorSelectPage = lazy(() => import('./pages/DoctorSelectPage').then(m => ({ default: m.DoctorSelectPage })))
+const DoctorPatientsPage = lazy(() => import('./pages/DoctorPatientsPage').then(m => ({ default: m.DoctorPatientsPage })))
+
 // Loading fallback for lazy routes (minimal, fast-loading skeleton)
 const PageLoader = () => (
   <Center 
@@ -59,6 +64,10 @@ const router = createBrowserRouter([
       { path: '/stats', element: withSuspense(StatsPage) },
       { path: '/ai-assistant', element: withSuspense(AIAssistantPage) },
       { path: '/visits', element: withSuspense(VisitsPage) },
+      // Clinic → Doctor → Patients flow
+      { path: '/clinics', element: withSuspense(ClinicSelectPage) },
+      { path: '/clinics/:clinicId/doctors', element: withSuspense(DoctorSelectPage) },
+      { path: '/doctors/:doctorId/patients', element: withSuspense(DoctorPatientsPage) },
     ],
   },
 ])

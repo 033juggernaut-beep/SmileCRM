@@ -8,7 +8,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-from app.api import ai, ai_assistant, auth, doctors, marketing, media, notifications, patient_finance, patients, payments, statistics, subscription, test_supabase, visits, voice
+from app.api import ai, ai_assistant, auth, clinics, doctors, marketing, media, notifications, patient_finance, patients, payments, statistics, subscription, test_supabase, visits, voice
 from app.bot.bot import get_bot, is_bot_configured, process_update
 from app.config import get_settings
 
@@ -143,6 +143,8 @@ async def health_check() -> dict[str, str]:
 
 app.include_router(auth.router, prefix="/api")
 app.include_router(doctors.router, prefix="/api")
+app.include_router(clinics.router, prefix="/api")
+app.include_router(clinics.doctors_router, prefix="/api")
 app.include_router(patients.router, prefix="/api")
 app.include_router(patient_finance.router, prefix="/api")
 app.include_router(test_supabase.router)

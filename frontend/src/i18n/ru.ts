@@ -691,6 +691,29 @@ const ru = {
     submitError: 'Не удалось отправить данные',
     hint: 'Данные используются только для работы приложения',
   },
+
+  // Clinic selection
+  clinics: {
+    title: 'Клиники',
+    subtitle: 'Выберите клинику',
+    selectClinic: 'Выберите клинику',
+    noClinic: 'Клиника не найдена',
+    loadError: 'Ошибка загрузки',
+    yourClinic: 'Ваша клиника',
+  },
+
+  // Doctor selection
+  doctors: {
+    title: 'Врачи',
+    subtitle: 'Выберите врача',
+    selectDoctor: 'Выберите врача',
+    noDoctor: 'Врачи не найдены',
+    loadError: 'Ошибка загрузки',
+    allDoctors: 'Все врачи',
+    doctorPatients: 'Пациенты врача',
+    specialization: 'Специализация',
+    patientsCount: 'пациентов',
+  },
 } as const
 
 export default ru

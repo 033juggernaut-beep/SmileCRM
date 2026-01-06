@@ -5,11 +5,63 @@ from typing import Literal
 from pydantic import BaseModel, Field, condecimal
 
 
+# ============================================================
+# Clinic Models
+# ============================================================
+
+class ClinicOut(BaseModel):
+  """Clinic output for API responses"""
+  id: str
+  name: str
+  address: str | None = None
+  phone: str | None = None
+  created_at: datetime | None = None
+
+
+class ClinicSummary(BaseModel):
+  """Minimal clinic info for embedding in other responses"""
+  id: str
+  name: str
+
+
+# ============================================================
+# Doctor Models
+# ============================================================
+
 class DoctorDTO(BaseModel):
   id: str
   first_name: str
   last_name: str
 
+
+class DoctorOut(BaseModel):
+  """Doctor output for API responses (with clinic info)"""
+  id: str
+  first_name: str
+  last_name: str | None = None
+  specialization: str | None = None
+  clinic_id: str | None = None
+  clinic_name: str | None = None
+  
+  @property
+  def full_name(self) -> str:
+    """Get doctor full name"""
+    if self.last_name:
+      return f"{self.first_name} {self.last_name}"
+    return self.first_name
+
+
+class DoctorSummary(BaseModel):
+  """Minimal doctor info for embedding in patient responses"""
+  id: str
+  first_name: str
+  last_name: str | None = None
+  full_name: str | None = None
+
+
+# ============================================================
+# Patient Models
+# ============================================================
 
 class PatientDTO(BaseModel):
   id: str
@@ -44,6 +96,17 @@ class PatientResponse(PatientBase):
   doctor_id: str | None = None
   created_at: datetime | None = None
   marketing_opt_in: bool | None = None
+
+
+class PatientWithDoctorResponse(PatientBase):
+  """Patient response with embedded doctor and clinic info (for admin views)"""
+  id: str
+  doctor_id: str | None = None
+  created_at: datetime | None = None
+  marketing_opt_in: bool | None = None
+  # Embedded doctor info
+  doctor: "DoctorSummary | None" = None
+  clinic_name: str | None = None
 
 
 class TelegramUserInfo(BaseModel):

@@ -690,6 +690,29 @@ const en = {
     submitError: 'Failed to submit data',
     hint: 'Your data is used only for the app',
   },
+
+  // Clinic selection
+  clinics: {
+    title: 'Clinics',
+    subtitle: 'Select a clinic',
+    selectClinic: 'Select clinic',
+    noClinic: 'No clinic found',
+    loadError: 'Loading error',
+    yourClinic: 'Your clinic',
+  },
+
+  // Doctor selection
+  doctors: {
+    title: 'Doctors',
+    subtitle: 'Select a doctor',
+    selectDoctor: 'Select doctor',
+    noDoctor: 'No doctors found',
+    loadError: 'Loading error',
+    allDoctors: 'All doctors',
+    doctorPatients: 'Doctor patients',
+    specialization: 'Specialization',
+    patientsCount: 'patients',
+  },
 } as const
 
 export default en

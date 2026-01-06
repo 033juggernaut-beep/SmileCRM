@@ -41,6 +41,25 @@ def list_by_doctor(doctor_id: str) -> list[dict[str, Any]]:
     return []
 
 
+def list_by_doctor_with_doctor_info(doctor_id: str) -> list[dict[str, Any]]:
+  """
+  Fetch patients with embedded doctor info (from patient_list_view).
+  
+  Returns patient data with additional doctor_full_name and clinic_name fields.
+  Falls back to regular list_by_doctor if view is not available.
+  """
+  try:
+    # Try to use the patient_list_view for enhanced data
+    patients = supabase_client.select(
+      "patient_list_view",
+      filters={"doctor_id": doctor_id}
+    )
+    return patients
+  except Exception:
+    # Fall back to regular patients table
+    return list_by_doctor(doctor_id)
+
+
 def get_patient(patient_id: str) -> dict[str, Any] | None:
   """Fetch a single patient by primary key."""
   try:

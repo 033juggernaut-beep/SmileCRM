@@ -683,6 +683,29 @@ const am = {
     submitError: 'Չի հաջողվել',
     hint: 'ՏՎՅԱԼՆԵՐԸ ՕԳՏԱԳՈՐԾՎՈՒՄ ԵՆ ՄԻԱՅՆ ՀԱՄԱԿԱՐԳԻ ՀԱՄԱՐ',
   },
+
+  // Clinic selection
+  clinics: {
+    title: 'Klinikaner',
+    subtitle: 'Yntreq klinika',
+    selectClinic: 'Yntreq klinika',
+    noClinic: 'Klinika chi gtnvel',
+    loadError: 'Bernman sxal',
+    yourClinic: 'Dzer klinika',
+  },
+
+  // Doctor selection
+  doctors: {
+    title: 'Bjishkner',
+    subtitle: 'Yntreq bjishk',
+    selectDoctor: 'Yntreq bjishk',
+    noDoctor: 'Bjishkner chen gtnvel',
+    loadError: 'Bernman sxal',
+    allDoctors: 'Bolor bjishknere',
+    doctorPatients: 'Bjishki pacientnere',
+    specialization: 'Masnagitutyun',
+    patientsCount: 'pacient',
+  },
 } as const
 
 export default am
