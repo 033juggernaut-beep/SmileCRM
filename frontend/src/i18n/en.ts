@@ -208,6 +208,7 @@ const en = {
     saveError: 'Failed to save',
     birthDateSaved: 'Date of birth saved',
     invalidDateFormat: 'Invalid date format',
+    gender: 'Gender',
     genderMale: 'Male',
     genderFemale: 'Female',
     genderNotSet: 'Not set',

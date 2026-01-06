@@ -25,11 +25,12 @@ import {
   FormField,
   FormTextarea,
   SegmentSelector,
+  GenderSelector,
   AddPatientCollapsibleSection,
   AddPatientHeader,
   ActionButtons,
 } from '../components/addPatient'
-import type { PatientSegment } from '../components/addPatient'
+import type { PatientSegment, PatientGender } from '../components/addPatient'
 
 type FormFields = {
   firstName: string
@@ -37,6 +38,7 @@ type FormFields = {
   phone: string
   birthDate: string
   segment: PatientSegment
+  gender: PatientGender | undefined
   diagnosis: string
   doctorNotes: string
   // First visit
@@ -57,6 +59,7 @@ const initialFormState: FormFields = {
   phone: '',
   birthDate: '',
   segment: 'regular',
+  gender: undefined,
   diagnosis: '',
   doctorNotes: '',
   visitDate: '',
@@ -95,6 +98,14 @@ export const AddPatientPage = () => {
     setForm((prev) => ({
       ...prev,
       segment,
+    }))
+  }
+
+  // Handle gender change
+  const handleGenderChange = (gender: PatientGender) => {
+    setForm((prev) => ({
+      ...prev,
+      gender,
     }))
   }
 
@@ -154,6 +165,7 @@ export const AddPatientPage = () => {
         phone: form.phone.trim() || undefined,
         status: 'in_progress',
         segment: form.segment,
+        gender: form.gender,
         birthDate: form.birthDate || undefined,
       })
 
@@ -315,7 +327,7 @@ export const AddPatientPage = () => {
                   error={errors.phone}
                 />
 
-                {/* Optional Fields - Birth Date & Segment */}
+                {/* Optional Fields - Birth Date & Gender */}
                 <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
                   <FormField
                     label={t('addPatient.birthDate')}
@@ -323,11 +335,17 @@ export const AddPatientPage = () => {
                     onChange={handleFieldChange('birthDate')}
                     type="date"
                   />
-                  <SegmentSelector
-                    value={form.segment}
-                    onChange={handleSegmentChange}
+                  <GenderSelector
+                    value={form.gender}
+                    onChange={handleGenderChange}
                   />
                 </SimpleGrid>
+
+                {/* Segment */}
+                <SegmentSelector
+                  value={form.segment}
+                  onChange={handleSegmentChange}
+                />
               </VStack>
             </Box>
 

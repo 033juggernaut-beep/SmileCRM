@@ -51,6 +51,7 @@ export type CreatePatientInput = {
   phone?: string
   status?: PatientStatus
   segment?: PatientSegment
+  gender?: PatientGender
   birthDate?: string
   treatmentPlanTotal?: number
   treatmentPlanCurrency?: string
@@ -167,6 +168,7 @@ const buildPatientPayload = (payload: CreatePatientInput) => ({
   phone: payload.phone,
   status: payload.status,
   segment: payload.segment,
+  gender: payload.gender,
   birth_date: payload.birthDate,
   treatment_plan_total: payload.treatmentPlanTotal,
   treatment_plan_currency: payload.treatmentPlanCurrency,

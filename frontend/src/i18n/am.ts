@@ -210,6 +210,7 @@ const am = {
     saveError: 'Chhajoxvec pahpanel',
     birthDateSaved: 'Cnndan amsative pahpanvec',
     invalidDateFormat: 'Sxal amsatvi format',
+    gender: 'Sery',
     genderMale: 'Arakan',
     genderFemale: 'Iganakan',
     genderNotSet: 'Nshvac che',
