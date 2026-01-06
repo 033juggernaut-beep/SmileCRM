@@ -63,149 +63,8 @@ class VoiceParseResult:
         }
 
 
-# System prompt for LLM parsing - supports Armenian, Russian, English
-PARSE_PROMPT_TEMPLATE_HY = """You are a medical AI assistant for a dental CRM in Armenia.
-Extract structured data from the doctor's speech in Armenian.
-
-CRITICAL RULES:
-1. DO NOT invent data that is not in the text
-2. DO NOT change or invent dates
-3. If date is NOT explicitly mentioned — return null
-4. Recognize relative dates in Armenian:
-   - "aysor" (այdelays) → {TODAY}
-   - "vaghe" (delays) → {TOMORROW}  
-   - "verevaghy" (delaysdelays) → {DAY_AFTER}
-   - "mech N or" (delaysdelays N delays) → calculate from {TODAY}
-   - specific dates (5 hunvar, 25.12, etc) → convert to YYYY-MM-DD
-5. If year not specified — use {YEAR} (or next year if date passed)
-
-CURRENCY RULES (CRITICAL for Armenia):
-- If you see 'dram', 'dramov', 'AMD' → currency = "AMD"
-- Default currency for Armenia = AMD (Armenian Dram)
-- NEVER use RUB unless explicitly mentioned as "rubles"
-- Default currency: {DEFAULT_CURRENCY}
-
-LANGUAGE RULES:
-- Input may be in Armenian script, Latin transliteration, or mixed
-- Output text fields (diagnosis, notes) should be in Armenian if input was Armenian
-- Keep the original language of the content
-
-Current date: {TODAY} (timezone: {TIMEZONE})
-Mode: {MODE}
-Locale: {LOCALE}
-
-Return STRICT JSON without markdown:
-{{
-  "visit_date": "YYYY-MM-DD or null",
-  "next_visit_date": "YYYY-MM-DD or null",
-  "diagnosis": "diagnosis text in original language or null",
-  "notes": "doctor notes in original language or null",
-  "amount": number or null,
-  "currency": "AMD" | "RUB" | "USD" | null
-}}
-
-Examples for Armenian:
-- "aysor vizit" → visit_date: "{TODAY}"
-- "vaghe galu" → visit_date: "{TOMORROW}"
-- "25 dektemberi" → visit_date: "YYYY-12-25"
-- "300 hazar dram" → amount: 300000, currency: "AMD"
-- "20000 dramov" → amount: 20000, currency: "AMD"
-
-Doctor's speech: \"\"\"{TEXT}\"\"\"
-"""
-
-PARSE_PROMPT_TEMPLATE_RU = """Ты — медицинский AI-ассистент стоматологической CRM.
-Твоя задача — извлечь структурированные данные из речи врача.
-
-КРИТИЧЕСКИЕ ПРАВИЛА:
-1. НЕ ПРИДУМЫВАЙ данные, которых нет в тексте
-2. НЕ МЕНЯЙ И НЕ ВЫДУМЫВАЙ ДАТЫ
-3. Если дата НЕ указана явно — верни null
-4. Распознавай относительные даты:
-   - "сегодня" → {TODAY}
-   - "завтра" → {TOMORROW}
-   - "послезавтра" → {DAY_AFTER}
-   - "через N дней" → вычисли от {TODAY}
-   - конкретные даты (5 января, 25.12, etc) → преобразуй в YYYY-MM-DD
-5. Если год не указан — используй {YEAR} (или следующий год если дата уже прошла)
-
-ПРАВИЛА ВАЛЮТЫ (КРИТИЧЕСКИ ВАЖНО для Армении):
-- Если встречается 'dram', 'драм', 'драма', 'драмов', 'AMD', 'drams' → currency = "AMD"
-- RUB допускается ТОЛЬКО если явно сказано 'рубль/рублей/руб' И НЕТ признаков 'драм/AMD'
-- Для Armenia (timezone: Asia/Yerevan) валюта по умолчанию = AMD
-- НИКОГДА не подменяй "драм" на "рубли"
-- Предустановленная валюта: {DEFAULT_CURRENCY}
-
-Текущая дата: {TODAY} (timezone: {TIMEZONE})
-Режим: {MODE}
-Язык: {LOCALE}
-
-Верни СТРОГО JSON без markdown:
-{{
-  "visit_date": "YYYY-MM-DD или null",
-  "next_visit_date": "YYYY-MM-DD или null",
-  "diagnosis": "текст диагноза или null",
-  "notes": "заметки врача или null",
-  "amount": число или null,
-  "currency": "AMD" | "RUB" | null
-}}
-
-Примеры:
-- "Сегодня визит" → visit_date: "{TODAY}"
-- "Запиши на завтра" → visit_date: "{TOMORROW}"
-- "Визит 25 декабря" → visit_date: "YYYY-12-25" (правильный год)
-- "Оплата 20000 драм" → amount: 20000, currency: "AMD"
-- "Оплата 20000 dram" → amount: 20000, currency: "AMD"
-- "Новый визит" (без даты) → visit_date: null
-
-Текст врача: \"\"\"{TEXT}\"\"\"
-"""
-
-PARSE_PROMPT_TEMPLATE_EN = """You are a medical AI assistant for a dental CRM.
-Extract structured data from the doctor's speech.
-
-CRITICAL RULES:
-1. DO NOT invent data that is not in the text
-2. DO NOT change or invent dates
-3. If date is NOT explicitly mentioned — return null
-4. Recognize relative dates:
-   - "today" → {TODAY}
-   - "tomorrow" → {TOMORROW}
-   - "day after tomorrow" → {DAY_AFTER}
-   - "in N days" → calculate from {TODAY}
-   - specific dates (January 5, 25.12, etc) → convert to YYYY-MM-DD
-5. If year not specified — use {YEAR} (or next year if date passed)
-
-CURRENCY RULES:
-- Default currency: {DEFAULT_CURRENCY}
-- For Armenia timezone, default = AMD (Armenian Dram)
-- Use explicit currency if mentioned (USD, RUB, AMD)
-
-Current date: {TODAY} (timezone: {TIMEZONE})
-Mode: {MODE}
-Locale: {LOCALE}
-
-Return STRICT JSON without markdown:
-{{
-  "visit_date": "YYYY-MM-DD or null",
-  "next_visit_date": "YYYY-MM-DD or null",
-  "diagnosis": "diagnosis text or null",
-  "notes": "doctor notes or null",
-  "amount": number or null,
-  "currency": "AMD" | "RUB" | "USD" | null
-}}
-
-Doctor's speech: \"\"\"{TEXT}\"\"\"
-"""
-
-def _get_parse_prompt_template(locale: Locale) -> str:
-    """Get the appropriate prompt template based on locale."""
-    if locale == "hy":
-        return PARSE_PROMPT_TEMPLATE_HY
-    elif locale == "ru":
-        return PARSE_PROMPT_TEMPLATE_RU
-    else:
-        return PARSE_PROMPT_TEMPLATE_EN
+# System prompts are now in app/services/prompts/voice_system_prompts.py
+# This module uses get_voice_system_prompt() and build_voice_user_message() from there
 
 
 def _get_openai_client() -> OpenAI:
@@ -420,6 +279,10 @@ def parse_voice_text(
     """
     Parse transcribed text using LLM to extract structured data.
     
+    Uses proper system/user message separation:
+    - System message: Language-specific parsing instructions
+    - User message: Transcript with context (dates, timezone, mode)
+    
     Args:
         text: Transcribed speech text
         mode: Parsing mode (visit/diagnosis/payment/message)
@@ -431,6 +294,7 @@ def parse_voice_text(
         VoiceParseResult with extracted data
     """
     from app.services.armenian_normalizer import postprocess_voice_data
+    from app.services.prompts import get_voice_system_prompt, build_voice_user_message
     
     client = _get_openai_client()
     settings = get_settings()
@@ -463,33 +327,33 @@ def parse_voice_text(
     tomorrow = today + timedelta(days=1)
     day_after = today + timedelta(days=2)
     
-    # Get locale-specific prompt template
-    prompt_template = _get_parse_prompt_template(locale)
+    # Get language-specific system prompt (single source of truth)
+    system_prompt = get_voice_system_prompt(locale)
     
-    # Build prompt with corrected text
-    prompt = prompt_template.format(
-        TODAY=today.isoformat(),
-        TOMORROW=tomorrow.isoformat(),
-        DAY_AFTER=day_after.isoformat(),
-        YEAR=today.year,
-        TIMEZONE=timezone,
-        MODE=mode,
-        TEXT=corrected_text,
-        DEFAULT_CURRENCY=default_currency,
-        LOCALE=locale,
+    # Build user message with transcript and context
+    user_message = build_voice_user_message(
+        transcript=corrected_text,
+        mode=mode,
+        today_iso=today.isoformat(),
+        tomorrow_iso=tomorrow.isoformat(),
+        day_after_iso=day_after.isoformat(),
+        timezone=timezone,
     )
     
-    logger.debug(f"[LLM] Prompt preview: {prompt[:300]}...")
+    logger.debug(f"[LLM] System prompt length: {len(system_prompt)}")
+    logger.debug(f"[LLM] User message preview: {user_message[:300]}...")
     
     try:
+        # Use proper system/user message separation
         response = client.chat.completions.create(
             model=settings.AI_MODEL_TEXT,
             messages=[
-                {"role": "user", "content": prompt},
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message},
             ],
             response_format={"type": "json_object"},
             temperature=0.1,  # Low temperature for consistency
-            max_tokens=500,
+            max_tokens=800,
         )
         
         content = response.choices[0].message.content
@@ -505,10 +369,34 @@ def parse_voice_text(
         
         logger.info(f"[LLM] Raw parsed data: {data}")
         
+        # Extract data from new structured format (if using new schema)
+        # The new schema has nested objects: visit, payment, patient, etc.
+        visit_data = data.get("visit", {}) if isinstance(data.get("visit"), dict) else {}
+        payment_data = data.get("payment", {}) if isinstance(data.get("payment"), dict) else {}
+        
+        # Flatten data for postprocessing (merge old and new formats)
+        flat_data = {
+            "visit_date": visit_data.get("visit_date") or data.get("visit_date"),
+            "next_visit_date": visit_data.get("next_visit_date") or data.get("next_visit_date"),
+            "diagnosis": data.get("diagnosis"),
+            "notes": visit_data.get("notes") or data.get("notes"),
+            "amount": payment_data.get("amount") or data.get("amount"),
+            "currency": payment_data.get("currency") or data.get("currency"),
+        }
+        
+        # Replace date tokens with actual dates
+        for date_field in ["visit_date", "next_visit_date"]:
+            if flat_data.get(date_field):
+                val = str(flat_data[date_field])
+                if "TODAY" in val:
+                    flat_data[date_field] = today.isoformat()
+                elif "TOMORROW" in val:
+                    flat_data[date_field] = tomorrow.isoformat()
+        
         # Apply Armenian-aware postprocessing
         postprocessed_data, postprocess_warnings = postprocess_voice_data(
             transcript=text,
-            parsed_data=data,
+            parsed_data=flat_data,
             locale=locale,
             timezone=timezone,
             today=today,
@@ -540,7 +428,10 @@ def parse_voice_text(
         elif not currency and amount:
             currency = default_currency
         
-        logger.info(f"[LLM] Final parsed result: visit_date={visit_date}, amount={amount}, currency={currency}")
+        # Log action from new schema if present
+        action = data.get("action", "unknown")
+        confidence = data.get("confidence", 0.5)
+        logger.info(f"[LLM] Parsed: action={action}, confidence={confidence:.2f}, visit_date={visit_date}, amount={amount}, currency={currency}")
         
         return VoiceParseResult(
             text=text,  # Return original text, not corrected
