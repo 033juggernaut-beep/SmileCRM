@@ -286,11 +286,12 @@ export const AIAssistantPage = () => {
                   bg={iconBg}
                   borderRadius="xl"
                   color={iconColor}
+                  flexShrink={0}
                 >
                   <Bot size={28} />
                 </Flex>
-                <Box flex="1">
-                  <Flex align="center" gap={2}>
+                <Box flex="1" minW="0">
+                  <Flex align="center" gap={2} flexWrap="wrap">
                     <Text fontSize="xl" fontWeight="bold" color={titleColor}>
                       {t('ai.pageTitle')}
                     </Text>
@@ -301,6 +302,7 @@ export const AIAssistantPage = () => {
                       py={0.5}
                       bg={isDark ? 'rgba(59, 130, 246, 0.2)' : '#DBEAFE'}
                       borderRadius="full"
+                      flexShrink={0}
                     >
                       <Sparkles size={12} color={iconColor} />
                       <Text fontSize="xs" fontWeight="semibold" color={iconColor}>
@@ -314,11 +316,11 @@ export const AIAssistantPage = () => {
                 </Box>
                 {/* Limit indicator */}
                 {limit !== null && (
-                  <Box textAlign="right">
-                    <Text fontSize="lg" fontWeight="bold" color={limitColor}>
+                  <Box textAlign="right" flexShrink={0}>
+                    <Text fontSize="lg" fontWeight="bold" color={limitColor} whiteSpace="nowrap">
                       {remaining}/{limit}
                     </Text>
-                    <Text fontSize="xs" color={subtitleColor}>
+                    <Text fontSize="xs" color={subtitleColor} whiteSpace="nowrap">
                       {t('ai.limitLeft')}
                     </Text>
                   </Box>
