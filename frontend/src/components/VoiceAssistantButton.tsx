@@ -523,12 +523,6 @@ export const VoiceAssistantButton = ({
           borderRadius="2xl" 
           overflow="hidden"
           bg={isDark ? 'gray.800' : 'white'}
-          // Android WebView - prevent horizontal scroll from text overflow
-          overflowX="hidden"
-          sx={{
-            wordBreak: 'break-word',
-            overflowWrap: 'anywhere',
-          }}
         >
           {/* Header */}
           <Flex

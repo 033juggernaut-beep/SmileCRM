@@ -589,9 +589,6 @@ export const PatientDetailsPage = () => {
         },
         // Android WebView scroll optimization
         WebkitOverflowScrolling: 'touch',
-        // Text wrapping fixes for Armenian/Latin mixed content
-        wordBreak: 'break-word',
-        overflowWrap: 'anywhere',
       }}
     >
       {/* Subtle Background Pattern */}
