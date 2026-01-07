@@ -587,6 +587,11 @@ export const PatientDetailsPage = () => {
         '@supports not (min-height: 100dvh)': {
           minH: 'var(--app-height, 100vh)',
         },
+        // Android WebView scroll optimization
+        WebkitOverflowScrolling: 'touch',
+        // Text wrapping fixes for Armenian/Latin mixed content
+        wordBreak: 'break-word',
+        overflowWrap: 'anywhere',
       }}
     >
       {/* Subtle Background Pattern */}

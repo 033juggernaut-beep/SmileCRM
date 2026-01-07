@@ -343,6 +343,19 @@ const en = {
     micNotFound: 'Microphone not found. Please connect a microphone and try again.',
     micError: 'Failed to access microphone.',
     recordingError: 'Recording error. Please try again.',
+    // New keys for improved error handling (Android WebView / Telegram)
+    recognitionError: 'Voice recognition failed. Please try again.',
+    networkError: 'Network error. Check your internet connection.',
+    timeout: 'Request timed out. Please try again.',
+    notSupported: 'Voice input is not supported in this browser.',
+    notSupportedHint: 'Voice input is not available. Use text input instead.',
+    micDeniedHint: 'Check browser settings to allow microphone access.',
+    recognitionHint: 'Try speaking more clearly or check your microphone.',
+    useTextInput: 'Use text input',
+    textInputHint: 'Enter data manually',
+    startHint: 'Press and speak. AI will recognize and fill data.',
+    stopHint: 'Press to stop',
+    noPatient: 'Patient not selected',
   },
 
   // Auth

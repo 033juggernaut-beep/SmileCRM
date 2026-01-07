@@ -1,6 +1,12 @@
 /**
  * Voice Assistant Button Component
  * Clean design matching FloatingAIAssistant
+ * 
+ * Android Telegram WebView compatibility:
+ * - Checks for MediaRecorder support before enabling
+ * - Shows fallback to text input when voice not available
+ * - Proper error handling with i18n messages
+ * - Dev logging for debugging voice recognition issues
  */
 
 import {
@@ -22,10 +28,11 @@ import {
   VStack,
   useDisclosure,
   useToast,
+  useColorMode,
 } from '@chakra-ui/react'
 import { keyframes } from '@emotion/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Check, Edit2, RotateCcw, Square, X } from 'lucide-react'
+import { Check, Edit2, RotateCcw, Square, X, Keyboard, AlertCircle } from 'lucide-react'
 
 // Minimal robot/assistant icon - same as FloatingAIAssistant
 function AssistantIcon() {
@@ -67,6 +74,24 @@ const SUPPORTED_MIME_TYPES = [
   'audio/wav',
 ]
 
+// Development logging helper
+const isDev = import.meta.env.DEV
+const devLog = (message: string, data?: unknown) => {
+  if (isDev) {
+    console.log(`[VoiceAssistant] ${message}`, data ?? '')
+  }
+}
+
+// Error types for better UX
+type VoiceErrorType = 
+  | 'mic_denied'      // Microphone access denied
+  | 'mic_not_found'   // No microphone detected
+  | 'not_supported'   // MediaRecorder not available (Telegram WebView)
+  | 'recognition'     // STT/backend failed to recognize
+  | 'network'         // Network/API error
+  | 'timeout'         // Request timeout
+  | 'unknown'         // Fallback error
+
 // Recording pulse animation
 const pulseAnimation = keyframes`
   0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
@@ -74,7 +99,7 @@ const pulseAnimation = keyframes`
   100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 `
 
-type RecordingState = 'idle' | 'recording' | 'processing' | 'preview' | 'editing' | 'error'
+type RecordingState = 'idle' | 'recording' | 'processing' | 'preview' | 'editing' | 'error' | 'fallback'
 type SpeechLanguage = 'ru' | 'hy' | 'en'
 
 export type VoiceAssistantButtonProps = {
@@ -92,7 +117,9 @@ export const VoiceAssistantButton = ({
 }: VoiceAssistantButtonProps) => {
   const { isOpen, onOpen, onClose } = useDisclosure()
   const toast = useToast()
-  const { language: uiLanguage } = useLanguage()
+  const { t, language: uiLanguage } = useLanguage()
+  const { colorMode } = useColorMode()
+  const isDark = colorMode === 'dark'
   
   // Speech language labels
   const speechLanguageLabels: Record<SpeechLanguage, string> = {
@@ -116,6 +143,7 @@ export const VoiceAssistantButton = ({
   const [recordingState, setRecordingState] = useState<RecordingState>('idle')
   const [recordingSeconds, setRecordingSeconds] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const [errorType, setErrorType] = useState<VoiceErrorType | null>(null)
   const [transcript, setTranscript] = useState<string>('')
   const [parseResult, setParseResult] = useState<VoiceParseResponse | null>(null)
   const [isEditing, setIsEditing] = useState(false)
@@ -133,11 +161,33 @@ export const VoiceAssistantButton = ({
   const timerRef = useRef<number | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   
-  // Check MediaRecorder support
-  const isMediaRecorderSupported = typeof MediaRecorder !== 'undefined'
+  // Check MediaRecorder support - critical for Telegram WebView
+  const isMediaRecorderSupported = typeof MediaRecorder !== 'undefined' && 
+    typeof navigator?.mediaDevices?.getUserMedia !== 'undefined'
+  
+  // Get localized error message based on error type
+  const getErrorMessage = (type: VoiceErrorType): string => {
+    switch (type) {
+      case 'mic_denied':
+        return t('voice.micAccessDenied')
+      case 'mic_not_found':
+        return t('voice.micNotFound')
+      case 'not_supported':
+        return t('voice.notSupported') || 'Voice input not supported in this browser'
+      case 'recognition':
+        return t('voice.recognitionError') || t('voice.processingError')
+      case 'network':
+        return t('voice.networkError') || t('common.error')
+      case 'timeout':
+        return t('voice.timeout') || 'Request timed out'
+      default:
+        return t('voice.processingError')
+    }
+  }
   
   // Get supported MIME type
   const getSupportedMimeType = (): string => {
+    if (!isMediaRecorderSupported) return 'audio/webm'
     for (const mimeType of SUPPORTED_MIME_TYPES) {
       if (MediaRecorder.isTypeSupported(mimeType)) {
         return mimeType
@@ -172,12 +222,14 @@ export const VoiceAssistantButton = ({
     audioChunksRef.current = []
   }, [])
   
-  // Reset state
+  // Reset state - fully clears everything for retry
   const handleReset = useCallback(() => {
+    devLog('Resetting state')
     cleanup()
     setRecordingState('idle')
     setRecordingSeconds(0)
     setError(null)
+    setErrorType(null)
     setTranscript('')
     setParseResult(null)
     setIsEditing(false)
@@ -188,22 +240,54 @@ export const VoiceAssistantButton = ({
     setEditedBirthDate('')
   }, [cleanup])
   
+  // Switch to text fallback mode
+  const handleFallbackToText = useCallback(() => {
+    devLog('Switching to text fallback')
+    setRecordingState('fallback')
+    setError(null)
+    setErrorType(null)
+  }, [])
+  
   // Close modal
   const handleClose = () => {
     handleReset()
     onClose()
   }
   
-  // Start recording
+  // Handle modal open - check support and show fallback if needed
+  const handleOpen = () => {
+    if (!isMediaRecorderSupported) {
+      devLog('MediaRecorder not supported - showing fallback')
+      setRecordingState('fallback')
+      setErrorType('not_supported')
+    }
+    onOpen()
+  }
+  
+  // Start recording with proper error handling
   const startRecording = async () => {
+    devLog('Starting recording...')
     setError(null)
+    setErrorType(null)
     audioChunksRef.current = []
     
+    // Check support first
+    if (!isMediaRecorderSupported) {
+      devLog('MediaRecorder not available')
+      setErrorType('not_supported')
+      setError(getErrorMessage('not_supported'))
+      setRecordingState('error')
+      return
+    }
+    
     try {
+      devLog('Requesting microphone access...')
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      devLog('Microphone access granted')
       streamRef.current = stream
       
       const mimeType = getSupportedMimeType()
+      devLog(`Using MIME type: ${mimeType}`)
       const recorder = new MediaRecorder(stream, { mimeType })
       mediaRecorderRef.current = recorder
       
@@ -216,9 +300,22 @@ export const VoiceAssistantButton = ({
       recorder.onstop = async () => {
         // Process audio when recording stops
         const audioBlob = new Blob(audioChunksRef.current, { type: mimeType })
+        devLog(`Audio blob size: ${audioBlob.size}`)
         if (audioBlob.size > 100) {
           await processAudio(audioBlob)
+        } else {
+          devLog('Recording too short')
+          setErrorType('recognition')
+          setError(t('voice.tooShort'))
+          setRecordingState('error')
         }
+      }
+      
+      recorder.onerror = (e) => {
+        devLog('MediaRecorder error', e)
+        setErrorType('unknown')
+        setError(t('voice.recordingError'))
+        setRecordingState('error')
       }
       
       recorder.start()
@@ -237,14 +334,27 @@ export const VoiceAssistantButton = ({
       }, 1000)
       
     } catch (err) {
-      console.error('Failed to start recording:', err)
-      setError('Microphone access denied')
+      devLog('Failed to start recording', err)
+      
+      // Determine error type from browser error
+      const errorName = (err as Error)?.name || ''
+      if (errorName === 'NotAllowedError' || errorName === 'PermissionDeniedError') {
+        setErrorType('mic_denied')
+        setError(getErrorMessage('mic_denied'))
+      } else if (errorName === 'NotFoundError' || errorName === 'DevicesNotFoundError') {
+        setErrorType('mic_not_found')
+        setError(getErrorMessage('mic_not_found'))
+      } else {
+        setErrorType('unknown')
+        setError(t('voice.micError'))
+      }
       setRecordingState('error')
     }
   }
   
   // Stop recording
   const stopRecording = () => {
+    devLog('Stopping recording...')
     if (timerRef.current) {
       clearInterval(timerRef.current)
       timerRef.current = null
@@ -260,7 +370,7 @@ export const VoiceAssistantButton = ({
     }
   }
   
-  // Process audio - send to API
+  // Process audio - send to API with proper error handling
   const processAudio = async (audioBlob: Blob) => {
     try {
       // Use selected speech language (hy/ru/en) - already in Whisper format
@@ -269,7 +379,7 @@ export const VoiceAssistantButton = ({
       // Get user's timezone for accurate date parsing
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Yerevan'
       
-      console.log(`[VoiceAssistant] Processing audio: language=${language}, timezone=${timezone}`)
+      devLog(`Processing audio: language=${language}, timezone=${timezone}, size=${audioBlob.size}`)
       
       const result = await parseVoice({
         mode,
@@ -279,7 +389,16 @@ export const VoiceAssistantButton = ({
         timezone,
       })
       
-      console.log(`[VoiceAssistant] Parse result: transcript length=${result.transcript.length}`)
+      devLog(`Parse result: transcript length=${result.transcript.length}`)
+      
+      // Check if we got a meaningful transcript
+      if (!result.transcript || result.transcript.trim().length < 2) {
+        devLog('Empty or too short transcript')
+        setErrorType('recognition')
+        setError(t('voice.noData'))
+        setRecordingState('error')
+        return
+      }
       
       setTranscript(result.transcript)
       setParseResult(result)
@@ -297,8 +416,24 @@ export const VoiceAssistantButton = ({
       setRecordingState('preview')
       
     } catch (err) {
-      console.error('[VoiceAssistant] Voice parsing failed:', err)
-      setError('Recognition error. Try again.')
+      devLog('Voice parsing failed', err)
+      
+      // Determine error type from API response
+      const axiosError = err as { response?: { status?: number }; code?: string }
+      
+      if (axiosError.code === 'ECONNABORTED' || axiosError.code === 'ETIMEDOUT') {
+        setErrorType('timeout')
+      } else if (axiosError.response?.status === 400 || axiosError.response?.status === 422) {
+        setErrorType('recognition')
+      } else if (axiosError.response?.status && axiosError.response.status >= 500) {
+        setErrorType('network')
+      } else if (!navigator.onLine) {
+        setErrorType('network')
+      } else {
+        setErrorType('recognition')
+      }
+      
+      setError(getErrorMessage(errorType || 'recognition'))
       setRecordingState('error')
     }
   }
@@ -354,14 +489,13 @@ export const VoiceAssistantButton = ({
     <>
       {isFloatingStyle ? (
         <Button
-          onClick={onOpen}
+          onClick={handleOpen}
           borderRadius="full"
           w="56px"
           h="56px"
           colorScheme="blue"
           boxShadow="lg"
           p={0}
-          isDisabled={!isMediaRecorderSupported}
           _hover={{ transform: 'scale(1.1)' }}
           transition="transform 0.2s"
         >
@@ -371,13 +505,12 @@ export const VoiceAssistantButton = ({
         </Button>
       ) : (
         <Button
-          onClick={onOpen}
+          onClick={handleOpen}
           leftIcon={<Box w={4} h={4}><AssistantIcon /></Box>}
           variant="outline"
           size="sm"
           borderRadius="lg"
           colorScheme="blue"
-          isDisabled={!isMediaRecorderSupported}
         >
           {buttonLabel}
         </Button>
@@ -385,7 +518,18 @@ export const VoiceAssistantButton = ({
       
       <Modal isOpen={isOpen} onClose={handleClose} size="sm" isCentered>
         <ModalOverlay bg="blackAlpha.600" backdropFilter="blur(4px)" />
-        <ModalContent mx={4} borderRadius="2xl" overflow="hidden">
+        <ModalContent 
+          mx={4} 
+          borderRadius="2xl" 
+          overflow="hidden"
+          bg={isDark ? 'gray.800' : 'white'}
+          // Android WebView - prevent horizontal scroll from text overflow
+          overflowX="hidden"
+          sx={{
+            wordBreak: 'break-word',
+            overflowWrap: 'anywhere',
+          }}
+        >
           {/* Header */}
           <Flex
             px={4}
@@ -393,11 +537,11 @@ export const VoiceAssistantButton = ({
             align="center"
             justify="space-between"
             borderBottom="1px solid"
-            borderColor="gray.200"
+            borderColor={isDark ? 'gray.700' : 'gray.200'}
           >
             <Flex align="center" gap={2}>
               <Box w={5} h={5} color="blue.500"><AssistantIcon /></Box>
-              <Text fontSize="sm" fontWeight="semibold">
+              <Text fontSize="sm" fontWeight="semibold" color={isDark ? 'white' : 'gray.800'}>
                 {getModeLabel()}
               </Text>
             </Flex>
@@ -411,8 +555,8 @@ export const VoiceAssistantButton = ({
           </Flex>
           
           <ModalBody p={4}>
-            {/* Language Selection */}
-            {recordingState === 'idle' && (
+            {/* Language Selection - show in idle and fallback modes */}
+            {(recordingState === 'idle' || recordingState === 'fallback') && (
               <HStack spacing={1} mb={4} justify="center">
                 {(Object.entries(speechLanguageLabels) as [SpeechLanguage, string][]).map(([lang, label]) => (
                   <Button
@@ -433,8 +577,8 @@ export const VoiceAssistantButton = ({
             {/* Idle State */}
             {recordingState === 'idle' && (
               <VStack spacing={4}>
-                <Text fontSize="sm" color="gray.500" textAlign="center">
-                  Press and speak. AI will recognize and fill data.
+                <Text fontSize="sm" color={isDark ? 'gray.400' : 'gray.500'} textAlign="center">
+                  {t('voice.startHint') || 'Press and speak. AI will recognize and fill data.'}
                 </Text>
                 <Button
                   size="lg"
@@ -448,6 +592,126 @@ export const VoiceAssistantButton = ({
                 >
                   <Box w={8} h={8}><AssistantIcon /></Box>
                 </Button>
+                
+                {/* Text fallback link */}
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  leftIcon={<Box as={Keyboard} w={3} h={3} />}
+                  onClick={handleFallbackToText}
+                  color={isDark ? 'gray.400' : 'gray.500'}
+                  fontWeight="normal"
+                >
+                  {t('voice.useTextInput') || 'Use text input'}
+                </Button>
+              </VStack>
+            )}
+            
+            {/* Fallback Text Input State - for when voice is not available */}
+            {recordingState === 'fallback' && (
+              <VStack spacing={4} align="stretch">
+                {/* Show notice if voice not supported */}
+                {errorType === 'not_supported' && (
+                  <Flex
+                    p={3}
+                    borderRadius="lg"
+                    bg={isDark ? 'orange.900' : 'orange.50'}
+                    align="center"
+                    gap={2}
+                  >
+                    <Box as={AlertCircle} w={4} h={4} color="orange.500" flexShrink={0} />
+                    <Text fontSize="xs" color={isDark ? 'orange.200' : 'orange.700'}>
+                      {t('voice.notSupportedHint') || 'Voice input is not available. Use text input instead.'}
+                    </Text>
+                  </Flex>
+                )}
+                
+                <Text fontSize="sm" color={isDark ? 'gray.400' : 'gray.500'} textAlign="center">
+                  {t('voice.textInputHint') || 'Enter patient information manually'}
+                </Text>
+                
+                {/* Manual input fields for patient mode */}
+                <VStack spacing={3} align="stretch">
+                  <Input
+                    size="sm"
+                    placeholder={t('addPatient.firstNamePlaceholder')}
+                    value={editedFirstName}
+                    onChange={(e) => setEditedFirstName(e.target.value)}
+                    bg={isDark ? 'gray.700' : 'white'}
+                  />
+                  <Input
+                    size="sm"
+                    placeholder={t('addPatient.lastNamePlaceholder')}
+                    value={editedLastName}
+                    onChange={(e) => setEditedLastName(e.target.value)}
+                    bg={isDark ? 'gray.700' : 'white'}
+                  />
+                  <Input
+                    size="sm"
+                    placeholder={t('addPatient.phonePlaceholder')}
+                    value={editedPhone}
+                    onChange={(e) => setEditedPhone(e.target.value)}
+                    bg={isDark ? 'gray.700' : 'white'}
+                  />
+                  <Textarea
+                    size="sm"
+                    rows={2}
+                    placeholder={t('addPatient.diagnosisPlaceholderShort')}
+                    value={editedDiagnosis}
+                    onChange={(e) => setEditedDiagnosis(e.target.value)}
+                    bg={isDark ? 'gray.700' : 'white'}
+                  />
+                  <Input
+                    type="date"
+                    size="sm"
+                    value={editedBirthDate}
+                    onChange={(e) => setEditedBirthDate(e.target.value)}
+                    bg={isDark ? 'gray.700' : 'white'}
+                  />
+                </VStack>
+                
+                {/* Action buttons */}
+                <HStack spacing={2} pt={2}>
+                  <Button
+                    flex={1}
+                    colorScheme="green"
+                    leftIcon={<Box as={Check} w={4} h={4} />}
+                    onClick={() => {
+                      // Create structured data from manual input
+                      const structured: VoiceParseStructured = {
+                        patient: {
+                          first_name: editedFirstName || undefined,
+                          last_name: editedLastName || undefined,
+                          phone: editedPhone || undefined,
+                          diagnosis: editedDiagnosis || undefined,
+                          birth_date: editedBirthDate || undefined,
+                        }
+                      }
+                      onApply(structured, `[Manual input]`)
+                      toast({
+                        title: t('voice.dataApplied'),
+                        description: t('voice.checkAndSave'),
+                        status: 'success',
+                        duration: 3000,
+                      })
+                      handleClose()
+                    }}
+                    size="sm"
+                    borderRadius="lg"
+                    isDisabled={!editedFirstName && !editedLastName && !editedPhone}
+                  >
+                    {t('voice.apply')}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    leftIcon={<Box as={RotateCcw} w={4} h={4} />}
+                    onClick={handleReset}
+                    size="sm"
+                    borderRadius="lg"
+                  >
+                    {t('voice.discard')}
+                  </Button>
+                </HStack>
               </VStack>
             )}
             
@@ -466,7 +730,9 @@ export const VoiceAssistantButton = ({
                     {formatTime(recordingSeconds)}
                   </Text>
                 </HStack>
-                <Text fontSize="sm" color="gray.500">Speaking...</Text>
+                <Text fontSize="sm" color={isDark ? 'gray.400' : 'gray.500'}>
+                  {t('patientCard.ai.listening') || 'Speaking...'}
+                </Text>
                 <Button
                   size="lg"
                   colorScheme="red"
@@ -477,7 +743,9 @@ export const VoiceAssistantButton = ({
                 >
                   <Box as={Square} w={8} h={8} fill="currentColor" />
                 </Button>
-                <Text fontSize="xs" color="gray.400">Press to stop</Text>
+                <Text fontSize="xs" color={isDark ? 'gray.500' : 'gray.400'}>
+                  {t('voice.stopHint') || 'Press to stop'}
+                </Text>
               </VStack>
             )}
             
@@ -485,34 +753,84 @@ export const VoiceAssistantButton = ({
             {recordingState === 'processing' && (
               <VStack spacing={4} py={6}>
                 <Spinner size="lg" color="blue.500" />
-                <Text fontSize="sm" color="gray.500">AI processing...</Text>
+                <Text fontSize="sm" color={isDark ? 'gray.400' : 'gray.500'}>
+                  {t('voice.processing')}
+                </Text>
                 <Progress size="sm" isIndeterminate colorScheme="blue" w="full" borderRadius="full" />
               </VStack>
             )}
             
-            {/* Error State */}
+            {/* Error State - Improved with retry and fallback options */}
             {recordingState === 'error' && (
               <VStack spacing={4}>
-                <Box p={3} borderRadius="lg" bg="red.50" w="full">
-                  <Text fontSize="sm" color="red.500">{error}</Text>
-                </Box>
-                <Button
-                  leftIcon={<Box as={RotateCcw} w={4} h={4} />}
-                  onClick={handleReset}
-                  size="sm"
+                <Flex
+                  p={3}
+                  borderRadius="lg"
+                  bg={isDark ? 'red.900' : 'red.50'}
+                  w="full"
+                  align="flex-start"
+                  gap={2}
                 >
-                  Try again
-                </Button>
+                  <Box as={AlertCircle} w={5} h={5} color="red.500" flexShrink={0} mt={0.5} />
+                  <Box flex={1}>
+                    <Text fontSize="sm" color="red.500" fontWeight="medium">
+                      {error}
+                    </Text>
+                    {/* Additional hint based on error type */}
+                    {errorType === 'mic_denied' && (
+                      <Text fontSize="xs" color={isDark ? 'red.300' : 'red.400'} mt={1}>
+                        {t('voice.micDeniedHint') || 'Check browser settings to allow microphone access.'}
+                      </Text>
+                    )}
+                    {errorType === 'recognition' && (
+                      <Text fontSize="xs" color={isDark ? 'red.300' : 'red.400'} mt={1}>
+                        {t('voice.recognitionHint') || 'Try speaking more clearly or check your microphone.'}
+                      </Text>
+                    )}
+                  </Box>
+                </Flex>
+                
+                <HStack spacing={2} w="full">
+                  <Button
+                    flex={1}
+                    leftIcon={<Box as={RotateCcw} w={4} h={4} />}
+                    onClick={handleReset}
+                    size="sm"
+                    colorScheme="blue"
+                  >
+                    {t('common.tryAgain')}
+                  </Button>
+                  <Button
+                    flex={1}
+                    leftIcon={<Box as={Keyboard} w={4} h={4} />}
+                    onClick={handleFallbackToText}
+                    size="sm"
+                    variant="outline"
+                  >
+                    {t('voice.useTextInput') || 'Text input'}
+                  </Button>
+                </HStack>
               </VStack>
             )}
             
             {/* Preview State */}
             {recordingState === 'preview' && parseResult && (
               <VStack spacing={3} align="stretch">
-                {/* Transcript */}
-                <Box p={3} borderRadius="lg" bg="gray.100">
-                  <Text fontSize="xs" color="gray.500" mb={1}>Recognized:</Text>
-                  <Text fontSize="sm">{transcript}</Text>
+                {/* Transcript - with proper text wrapping for Armenian */}
+                <Box p={3} borderRadius="lg" bg={isDark ? 'gray.700' : 'gray.100'}>
+                  <Text fontSize="xs" color={isDark ? 'gray.400' : 'gray.500'} mb={1}>
+                    {t('voice.transcript') || 'Recognized:'}
+                  </Text>
+                  <Text 
+                    fontSize="sm"
+                    color={isDark ? 'white' : 'gray.800'}
+                    // Text wrapping fixes for Armenian/Latin mixed content
+                    wordBreak="break-word"
+                    overflowWrap="anywhere"
+                    whiteSpace="pre-wrap"
+                  >
+                    {transcript}
+                  </Text>
                 </Box>
                 
                 {/* Editable Fields */}

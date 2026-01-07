@@ -266,7 +266,7 @@ export const AIAssistantPage = () => {
               </Box>
             )}
 
-            {/* Header Card */}
+            {/* Header Card - prevent horizontal scroll, ensure text wraps */}
             <Box
               bg={cardBg}
               border="1px solid"
@@ -275,6 +275,10 @@ export const AIAssistantPage = () => {
               boxShadow={shadow}
               p={6}
               mb={6}
+              // Android WebView text overflow fix
+              overflowX="hidden"
+              overflowWrap="anywhere"
+              wordBreak="break-word"
             >
               <Flex align="center" gap={4} mb={4}>
                 <Flex
@@ -369,7 +373,7 @@ export const AIAssistantPage = () => {
               </Button>
             </Box>
 
-            {/* Answer Card */}
+            {/* Answer Card - prevent horizontal scroll on mobile */}
             {(answer || isLoading) && (
               <MotionBox
                 ref={answerRef}
@@ -381,6 +385,8 @@ export const AIAssistantPage = () => {
                 borderRadius="xl"
                 boxShadow={shadow}
                 p={6}
+                // Android WebView text overflow fix
+                overflowX="hidden"
               >
                 {/* Header with title and controls */}
                 <Flex align="center" justify="space-between" mb={isAnswerHidden ? 0 : 4}>
@@ -433,7 +439,7 @@ export const AIAssistantPage = () => {
                   </Flex>
                 ) : answer ? (
                   <Collapse in={!isAnswerHidden} animateOpacity>
-                    {/* Saved question display */}
+                    {/* Saved question display - with proper text wrapping */}
                     {savedQuestion && (
                       <Box
                         bg={isDark ? 'rgba(51, 65, 85, 0.3)' : '#F8FAFC'}
@@ -443,6 +449,9 @@ export const AIAssistantPage = () => {
                         fontSize="sm"
                         color={subtitleColor}
                         fontStyle="italic"
+                        // Text wrapping fixes for Armenian/Latin mixed content
+                        wordBreak="break-word"
+                        overflowWrap="anywhere"
                       >
                         "{savedQuestion}"
                       </Box>
@@ -453,8 +462,12 @@ export const AIAssistantPage = () => {
                       p={4}
                       fontSize="sm"
                       color={titleColor}
+                      // Text wrapping fixes for Armenian/Latin mixed content
                       whiteSpace="pre-wrap"
                       lineHeight="1.7"
+                      wordBreak="break-word"
+                      overflowWrap="anywhere"
+                      overflowX="hidden"
                     >
                       {answer}
                     </Box>

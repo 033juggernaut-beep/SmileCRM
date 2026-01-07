@@ -3,10 +3,16 @@
  * 
  * Flow:
  * 1. Doctor records voice
- * 2. Audio sent to /api/ai/voice/parse (Whisper STT в†’ LLM parsing)
+ * 2. Audio sent to /api/ai/voice/parse (Whisper STT → LLM parsing)
  * 3. Show preview with parsed data (editable)
  * 4. Doctor confirms or edits
  * 5. Commit to /api/ai/voice/commit
+ * 
+ * Android Telegram WebView compatibility:
+ * - Checks for MediaRecorder support before enabling
+ * - Shows text fallback when voice not available
+ * - Proper error handling with i18n messages
+ * - Dev logging for debugging voice recognition issues
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react'
@@ -27,12 +33,30 @@ import {
   Input,
   Textarea,
 } from '@chakra-ui/react'
-import { X, Check, RotateCcw, Stethoscope, Calendar, Wallet, MessageSquare, Square, Edit2 } from 'lucide-react'
+import { X, Check, RotateCcw, Stethoscope, Calendar, Wallet, MessageSquare, Square, Edit2, AlertCircle, Keyboard } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 // Speech language is selected explicitly in the UI, but defaults from app language
 import { voiceApi } from '../../api/ai'
 import type { VoiceAIMode, VoiceParsedData } from '../../api/ai'
 import { useLanguage } from '../../context/LanguageContext'
+
+// Development logging helper
+const isDev = import.meta.env.DEV
+const devLog = (message: string, data?: unknown) => {
+  if (isDev) {
+    console.log(`[FloatingAI] ${message}`, data ?? '')
+  }
+}
+
+// Error types for better UX
+type VoiceErrorType = 
+  | 'mic_denied'      // Microphone access denied
+  | 'mic_not_found'   // No microphone detected
+  | 'not_supported'   // MediaRecorder not available (Telegram WebView)
+  | 'recognition'     // STT/backend failed to recognize
+  | 'network'         // Network/API error
+  | 'timeout'         // Request timeout
+  | 'unknown'         // Fallback error
 
 interface FloatingAIAssistantProps {
   patientId?: string
@@ -74,7 +98,7 @@ const SUPPORTED_MIME_TYPES = [
   'audio/wav',
 ]
 
-type RecordingState = 'idle' | 'recording' | 'processing' | 'preview' | 'editing' | 'error'
+type RecordingState = 'idle' | 'recording' | 'processing' | 'preview' | 'editing' | 'error' | 'text_fallback'
 
 // Mode configuration
 const modeConfig: Record<VoiceAIMode, { icon: typeof Stethoscope; label: string; color: string }> = {
@@ -88,7 +112,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
   const { colorMode } = useColorMode()
   const isDark = colorMode === 'dark'
   const toast = useToast()
-  const { language: uiLanguage } = useLanguage()
+  const { t, language: uiLanguage } = useLanguage()
 
   // Speech language options (hy = Armenian ISO 639-1 code for Whisper)
   type SpeechLanguage = 'ru' | 'hy' | 'en'
@@ -107,6 +131,10 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
       default: return 'hy' // Default to Armenian for SmileCRM
     }
   }
+  
+  // Check MediaRecorder support - critical for Telegram WebView
+  const isMediaRecorderSupported = typeof MediaRecorder !== 'undefined' && 
+    typeof navigator?.mediaDevices?.getUserMedia !== 'undefined'
 
   // UI state
   const [isOpen, setIsOpen] = useState(false)
@@ -115,7 +143,28 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
   const [recordingState, setRecordingState] = useState<RecordingState>('idle')
   const [recordingSeconds, setRecordingSeconds] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const [errorType, setErrorType] = useState<VoiceErrorType | null>(null)
   const [isCommitting, setIsCommitting] = useState(false)
+  
+  // Get localized error message based on error type
+  const getErrorMessage = useCallback((type: VoiceErrorType): string => {
+    switch (type) {
+      case 'mic_denied':
+        return t('voice.micAccessDenied')
+      case 'mic_not_found':
+        return t('voice.micNotFound')
+      case 'not_supported':
+        return t('voice.notSupported') || 'Voice input not supported in this browser'
+      case 'recognition':
+        return t('voice.recognitionError') || t('voice.processingError')
+      case 'network':
+        return t('voice.networkError') || t('common.error')
+      case 'timeout':
+        return t('voice.timeout') || 'Request timed out'
+      default:
+        return t('voice.processingError')
+    }
+  }, [t])
 
   // Result state
   const [transcript, setTranscript] = useState('')
@@ -163,16 +212,47 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
     return 'audio/webm'
   }
 
-  // Start recording
+  // Switch to text fallback mode
+  const handleFallbackToText = useCallback(() => {
+    devLog('Switching to text fallback')
+    setRecordingState('text_fallback')
+    setError(null)
+    setErrorType(null)
+    // Initialize empty data for text input
+    setEditedData({
+      visit_date: null,
+      next_visit_date: null,
+      diagnosis: null,
+      notes: null,
+      amount: null,
+      currency: 'AMD',
+    })
+  }, [])
+
+  // Start recording with proper error handling
   const startRecording = async () => {
+    devLog('Starting recording...')
+    setError(null)
+    setErrorType(null)
+    audioChunksRef.current = []
+    
+    // Check support first
+    if (!isMediaRecorderSupported) {
+      devLog('MediaRecorder not available')
+      setErrorType('not_supported')
+      setError(getErrorMessage('not_supported'))
+      setRecordingState('error')
+      return
+    }
+    
     try {
-      setError(null)
-      audioChunksRef.current = []
-      
+      devLog('Requesting microphone access...')
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      devLog('Microphone access granted')
       streamRef.current = stream
       
       const mimeType = getSupportedMimeType()
+      devLog(`Using MIME type: ${mimeType}`)
       const mediaRecorder = new MediaRecorder(stream, { mimeType })
       mediaRecorderRef.current = mediaRecorder
       
@@ -180,6 +260,13 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data)
         }
+      }
+      
+      mediaRecorder.onerror = (e) => {
+        devLog('MediaRecorder error', e)
+        setErrorType('unknown')
+        setError(t('voice.recordingError'))
+        setRecordingState('error')
       }
       
       mediaRecorder.start(100) // Collect data every 100ms
@@ -192,14 +279,27 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
       }, 1000)
       
     } catch (err) {
-      console.error('Failed to start recording:', err)
-      setError('Microphone access denied')
+      devLog('Failed to start recording', err)
+      
+      // Determine error type from browser error
+      const errorName = (err as Error)?.name || ''
+      if (errorName === 'NotAllowedError' || errorName === 'PermissionDeniedError') {
+        setErrorType('mic_denied')
+        setError(getErrorMessage('mic_denied'))
+      } else if (errorName === 'NotFoundError' || errorName === 'DevicesNotFoundError') {
+        setErrorType('mic_not_found')
+        setError(getErrorMessage('mic_not_found'))
+      } else {
+        setErrorType('unknown')
+        setError(t('voice.micError'))
+      }
       setRecordingState('error')
     }
   }
 
   // Stop recording and send to API
   const stopRecording = async () => {
+    devLog('Stopping recording...')
     if (!mediaRecorderRef.current) return
     
     // Stop timer
@@ -226,16 +326,19 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
     // Create audio blob
     const mimeType = getSupportedMimeType()
     const audioBlob = new Blob(audioChunksRef.current, { type: mimeType })
+    devLog(`Audio blob size: ${audioBlob.size}`)
     
     if (audioBlob.size < 100) {
-      setError('Recording too short')
+      devLog('Recording too short')
+      setErrorType('recognition')
+      setError(t('voice.tooShort'))
       setRecordingState('error')
       return
     }
     
     // Check patient ID
     if (!patientId) {
-      setError('Patient not selected')
+      setError(t('voice.noPatient') || 'Patient not selected')
       setRecordingState('error')
       return
     }
@@ -244,7 +347,7 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
     try {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Yerevan'
       
-      console.log(`[FloatingAI] Sending voice: mode=${selectedMode}, locale=${speechLanguage}, timezone=${timezone}`)
+      devLog(`Sending voice: mode=${selectedMode}, locale=${speechLanguage}, timezone=${timezone}`)
       
       // Use explicitly selected speech language (not app UI language)
       const response = await voiceApi.parse(audioBlob, selectedMode, patientId, {
@@ -252,7 +355,16 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
         timezone,
       })
       
-      console.log(`[FloatingAI] Parse result: transcript="${response.text.substring(0, 50)}...", amount=${response.data.amount}, currency=${response.data.currency}`)
+      devLog(`Parse result: transcript="${response.text.substring(0, 50)}...", amount=${response.data.amount}, currency=${response.data.currency}`)
+      
+      // Check if we got a meaningful transcript
+      if (!response.text || response.text.trim().length < 2) {
+        devLog('Empty or too short transcript')
+        setErrorType('recognition')
+        setError(t('voice.noData'))
+        setRecordingState('error')
+        return
+      }
       
       setTranscript(response.text)
       setEditedData(response.data)
@@ -260,8 +372,24 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
       setRecordingState('preview')
       
     } catch (err) {
-      console.error('[FloatingAI] Voice parse failed:', err)
-      setError('Recognition error. Try again.')
+      devLog('Voice parse failed', err)
+      
+      // Determine error type from API response
+      const axiosError = err as { response?: { status?: number }; code?: string }
+      
+      if (axiosError.code === 'ECONNABORTED' || axiosError.code === 'ETIMEDOUT') {
+        setErrorType('timeout')
+      } else if (axiosError.response?.status === 400 || axiosError.response?.status === 422) {
+        setErrorType('recognition')
+      } else if (axiosError.response?.status && axiosError.response.status >= 500) {
+        setErrorType('network')
+      } else if (!navigator.onLine) {
+        setErrorType('network')
+      } else {
+        setErrorType('recognition')
+      }
+      
+      setError(getErrorMessage(errorType || 'recognition'))
       setRecordingState('error')
     }
   }
@@ -309,14 +437,16 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
     }
   }
 
-  // Reset to initial state
+  // Reset to initial state - fully clears everything for retry
   const handleReset = () => {
+    devLog('Resetting state')
     cleanup()
     setRecordingState('idle')
     setTranscript('')
     setEditedData(null)
     setWarnings([])
     setError(null)
+    setErrorType(null)
     setRecordingSeconds(0)
     setIsCommitting(false)
   }
@@ -367,6 +497,14 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
             bg={isDark ? 'gray.800' : 'white'}
             border="1px solid"
             borderColor={isDark ? 'gray.700' : 'gray.200'}
+            // Android WebView text overflow fix - prevent horizontal scroll
+            overflowX="hidden"
+            sx={{
+              // Enable smooth scrolling on iOS
+              WebkitOverflowScrolling: 'touch',
+              // Prevent scroll chaining issues on Android
+              overscrollBehavior: 'contain',
+            }}
           >
             {/* Header */}
             <Flex
@@ -507,40 +645,232 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                 </VStack>
               )}
 
-              {/* Error State */}
+              {/* Error State - Improved with retry and fallback options */}
               {recordingState === 'error' && (
                 <VStack spacing={4}>
-                  <Box 
-                    p={3} 
-                    borderRadius="lg" 
+                  <Flex
+                    p={3}
+                    borderRadius="lg"
                     bg={isDark ? 'red.900' : 'red.50'}
                     w="full"
+                    align="flex-start"
+                    gap={2}
                   >
-                    <Text fontSize="sm" color="red.500">{error}</Text>
-                  </Box>
-                  <Button
-                    leftIcon={<Box as={RotateCcw} w={4} h={4} />}
-                    onClick={handleReset}
-                    size="sm"
-                  >
-                    Try again
-                  </Button>
+                    <Box as={AlertCircle} w={5} h={5} color="red.500" flexShrink={0} mt={0.5} />
+                    <Box flex={1}>
+                      <Text fontSize="sm" color="red.500" fontWeight="medium">
+                        {error}
+                      </Text>
+                      {/* Additional hint based on error type */}
+                      {errorType === 'mic_denied' && (
+                        <Text fontSize="xs" color={isDark ? 'red.300' : 'red.400'} mt={1}>
+                          {t('voice.micDeniedHint') || 'Check browser settings to allow microphone access.'}
+                        </Text>
+                      )}
+                      {errorType === 'recognition' && (
+                        <Text fontSize="xs" color={isDark ? 'red.300' : 'red.400'} mt={1}>
+                          {t('voice.recognitionHint') || 'Try speaking more clearly or check your microphone.'}
+                        </Text>
+                      )}
+                      {errorType === 'not_supported' && (
+                        <Text fontSize="xs" color={isDark ? 'red.300' : 'red.400'} mt={1}>
+                          {t('voice.notSupportedHint') || 'Voice input is not available in this browser.'}
+                        </Text>
+                      )}
+                    </Box>
+                  </Flex>
+                  
+                  <HStack spacing={2} w="full">
+                    <Button
+                      flex={1}
+                      leftIcon={<Box as={RotateCcw} w={4} h={4} />}
+                      onClick={handleReset}
+                      size="sm"
+                      colorScheme="blue"
+                    >
+                      {t('common.tryAgain')}
+                    </Button>
+                    <Button
+                      flex={1}
+                      leftIcon={<Box as={Keyboard} w={4} h={4} />}
+                      onClick={handleFallbackToText}
+                      size="sm"
+                      variant="outline"
+                    >
+                      {t('voice.useTextInput') || 'Text input'}
+                    </Button>
+                  </HStack>
+                </VStack>
+              )}
+              
+              {/* Text Fallback State - for when voice is not available */}
+              {recordingState === 'text_fallback' && editedData && (
+                <VStack spacing={3} align="stretch">
+                  {/* Show notice if voice not supported */}
+                  {errorType === 'not_supported' && (
+                    <Flex
+                      p={3}
+                      borderRadius="lg"
+                      bg={isDark ? 'orange.900' : 'orange.50'}
+                      align="center"
+                      gap={2}
+                    >
+                      <Box as={AlertCircle} w={4} h={4} color="orange.500" flexShrink={0} />
+                      <Text fontSize="xs" color={isDark ? 'orange.200' : 'orange.700'}>
+                        {t('voice.notSupportedHint') || 'Voice input is not available. Use text input instead.'}
+                      </Text>
+                    </Flex>
+                  )}
+                  
+                  <Text fontSize="sm" color={isDark ? 'gray.400' : 'gray.500'} textAlign="center">
+                    {t('voice.textInputHint') || 'Enter data manually'}
+                  </Text>
+                  
+                  <Divider />
+                  
+                  {/* Manual input fields based on selected mode */}
+                  <VStack spacing={3} align="stretch">
+                    {/* Visit Date - for visit mode */}
+                    {selectedMode === 'visit' && (
+                      <Box>
+                        <Text fontSize="xs" color={isDark ? 'gray.500' : 'gray.400'} mb={1}>
+                          {t('patientCard.visitDate') || 'Visit Date'}
+                        </Text>
+                        <Input
+                          type="date"
+                          size="sm"
+                          value={editedData.visit_date || ''}
+                          onChange={(e) => setEditedData({ ...editedData, visit_date: e.target.value || null })}
+                          bg={isDark ? 'gray.700' : 'white'}
+                        />
+                      </Box>
+                    )}
+                    
+                    {/* Notes - for visit and message modes */}
+                    {(selectedMode === 'visit' || selectedMode === 'message') && (
+                      <Box>
+                        <Text fontSize="xs" color={isDark ? 'gray.500' : 'gray.400'} mb={1}>
+                          {t('patientCard.doctorNotes') || 'Notes'}
+                        </Text>
+                        <Textarea
+                          size="sm"
+                          rows={2}
+                          value={editedData.notes || ''}
+                          onChange={(e) => setEditedData({ ...editedData, notes: e.target.value || null })}
+                          placeholder={t('patientCard.notesPlaceholder')}
+                          bg={isDark ? 'gray.700' : 'white'}
+                        />
+                      </Box>
+                    )}
+                    
+                    {/* Diagnosis - for diagnosis mode */}
+                    {selectedMode === 'diagnosis' && (
+                      <Box>
+                        <Text fontSize="xs" color={isDark ? 'gray.500' : 'gray.400'} mb={1}>
+                          {t('patientCard.diagnosis') || 'Diagnosis'}
+                        </Text>
+                        <Textarea
+                          size="sm"
+                          rows={3}
+                          value={editedData.diagnosis || ''}
+                          onChange={(e) => setEditedData({ ...editedData, diagnosis: e.target.value || null })}
+                          placeholder={t('patientCard.diagnosisPlaceholder')}
+                          bg={isDark ? 'gray.700' : 'white'}
+                        />
+                      </Box>
+                    )}
+                    
+                    {/* Amount - for payment mode */}
+                    {selectedMode === 'payment' && (
+                      <Box>
+                        <Text fontSize="xs" color={isDark ? 'gray.500' : 'gray.400'} mb={1}>
+                          {t('patientCard.finance.amount') || 'Amount'}
+                        </Text>
+                        <HStack>
+                          <Input
+                            type="number"
+                            size="sm"
+                            flex={1}
+                            value={editedData.amount || ''}
+                            onChange={(e) => setEditedData({ ...editedData, amount: parseFloat(e.target.value) || null })}
+                            placeholder="0"
+                            bg={isDark ? 'gray.700' : 'white'}
+                          />
+                          <HStack spacing={1}>
+                            <Button
+                              size="xs"
+                              variant={editedData.currency === 'AMD' ? 'solid' : 'outline'}
+                              colorScheme={editedData.currency === 'AMD' ? 'green' : 'gray'}
+                              onClick={() => setEditedData({ ...editedData, currency: 'AMD' })}
+                            >
+                              AMD
+                            </Button>
+                            <Button
+                              size="xs"
+                              variant={editedData.currency === 'RUB' ? 'solid' : 'outline'}
+                              colorScheme={editedData.currency === 'RUB' ? 'blue' : 'gray'}
+                              onClick={() => setEditedData({ ...editedData, currency: 'RUB' })}
+                            >
+                              RUB
+                            </Button>
+                          </HStack>
+                        </HStack>
+                      </Box>
+                    )}
+                  </VStack>
+                  
+                  {/* Action buttons */}
+                  <HStack spacing={2} pt={2}>
+                    <Button
+                      flex={1}
+                      colorScheme="green"
+                      leftIcon={<Box as={Check} w={4} h={4} />}
+                      onClick={handleCommit}
+                      isLoading={isCommitting}
+                      loadingText={t('patientCard.saving') || 'Saving...'}
+                      size="sm"
+                      borderRadius="lg"
+                      isDisabled={
+                        (selectedMode === 'visit' && !editedData.visit_date) ||
+                        (selectedMode === 'diagnosis' && !editedData.diagnosis) ||
+                        (selectedMode === 'payment' && !editedData.amount)
+                      }
+                    >
+                      {t('common.save')}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      leftIcon={<Box as={RotateCcw} w={4} h={4} />}
+                      onClick={handleReset}
+                      size="sm"
+                      borderRadius="lg"
+                    >
+                      {t('voice.discard') || 'Reset'}
+                    </Button>
+                  </HStack>
                 </VStack>
               )}
 
               {/* Preview/Editing State */}
               {(recordingState === 'preview' || recordingState === 'editing') && editedData && (
                 <VStack spacing={3} align="stretch">
-                  {/* Transcript */}
+                  {/* Transcript - with proper text wrapping for Armenian */}
                   <Box 
                     p={3} 
                     borderRadius="lg" 
                     bg={isDark ? 'gray.700' : 'gray.100'}
                   >
                     <Text fontSize="xs" color={isDark ? 'gray.400' : 'gray.500'} mb={1}>
-                      Recognized:
+                      {t('voice.transcript') || 'Recognized:'}
                     </Text>
-                    <Text fontSize="sm" color={isDark ? 'white' : 'gray.800'}>
+                    <Text 
+                      fontSize="sm" 
+                      color={isDark ? 'white' : 'gray.800'}
+                      // Text wrapping fixes for Armenian/Latin mixed content
+                      wordBreak="break-word"
+                      overflowWrap="anywhere"
+                      whiteSpace="pre-wrap"
+                    >
                       "{transcript}"
                     </Text>
                   </Box>
