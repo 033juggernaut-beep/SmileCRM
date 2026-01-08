@@ -30,6 +30,7 @@ import {
 } from '@chakra-ui/react'
 import { Phone, User, Star, Pencil, X, Check, UserCircle, Users } from 'lucide-react'
 import { useLanguage } from '../../context/LanguageContext'
+import { DateInput } from '../DateInput'
 import { apiClient } from '../../api/client'
 import { TOKEN_STORAGE_KEY } from '../../constants/storage'
 import type { Patient, PatientStatus, PatientSegment, PatientGender } from '../../api/patients'
@@ -607,22 +608,13 @@ export function PatientInfoCard({ patient, onPatientUpdate }: PatientInfoCardPro
                 <Text fontSize="xs" fontWeight="medium" mb={2} color={isDark ? 'gray.400' : 'gray.500'}>
                   {t('patientDetails.birthDate')}
                 </Text>
-                <Input
-                  type="date"
-                  value={dobValue}
-                  onChange={(e) => setDobValue(e.target.value)}
-                  size="sm"
-                  bg={inputBg}
-                  border="1px solid"
-                  borderColor={inputBorder}
-                  borderRadius="lg"
-                  color={isDark ? 'white' : 'gray.800'}
-                  _focus={{
-                    borderColor: 'blue.500',
-                    boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)',
-                  }}
-                  mb={3}
-                />
+                <Box mb={3}>
+                  <DateInput
+                    value={dobValue}
+                    onChange={setDobValue}
+                    placeholder={t('addPatient.birthDatePlaceholder')}
+                  />
+                </Box>
                 <HStack justify="flex-end" spacing={2}>
                   <Button
                     size="xs"

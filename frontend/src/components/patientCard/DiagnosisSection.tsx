@@ -7,7 +7,7 @@
 
 import { useState } from 'react'
 import { Box, Flex, Text, Textarea, Button, useColorMode, useToast } from '@chakra-ui/react'
-import { Save, Edit2 } from 'lucide-react'
+import { Edit2 } from 'lucide-react'
 import { CollapsibleSection } from './CollapsibleSection'
 import { useLanguage } from '../../context/LanguageContext'
 
@@ -83,46 +83,38 @@ export function DiagnosisSection({
               outline: 'none',
             }}
           />
-          <Flex mt={3} align="center" justify="space-between">
-            {hasChanges && (
-              <Text fontSize="xs" color={isDark ? 'yellow.400' : 'yellow.600'}>
-                {t('patientCard.hasChanges')}
-              </Text>
-            )}
-            <Flex align="center" gap={2} ml="auto">
-              <Button
-                onClick={handleCancel}
-                variant="ghost"
-                size="sm"
-                fontWeight="medium"
-                color={isDark ? 'gray.400' : 'gray.500'}
-                _hover={{
-                  color: isDark ? 'gray.300' : 'gray.700',
-                  bg: isDark ? 'whiteAlpha.100' : 'gray.100',
-                }}
-              >
-                {t('common.cancel')}
-              </Button>
-              <Button
-                onClick={handleSave}
-                isLoading={isSaving}
-                isDisabled={!hasChanges}
-                size="sm"
-                fontWeight="medium"
-                leftIcon={<Box as={Save} w={4} h={4} />}
-                bg={hasChanges ? 'blue.600' : (isDark ? 'gray.700' : 'gray.200')}
-                color={hasChanges ? 'white' : (isDark ? 'gray.500' : 'gray.400')}
-                _hover={hasChanges ? {
-                  bg: isDark ? 'blue.500' : 'blue.700',
-                } : {}}
-                _disabled={{
-                  cursor: 'not-allowed',
-                  opacity: 1,
-                }}
-              >
-                {isSaving ? t('patientCard.saving') : t('patientCard.save')}
-              </Button>
-            </Flex>
+          <Flex mt={3} align="center" justify="flex-end" gap={2}>
+            <Button
+              onClick={handleCancel}
+              variant="ghost"
+              size="sm"
+              fontWeight="medium"
+              color={isDark ? 'gray.400' : 'gray.500'}
+              _hover={{
+                color: isDark ? 'gray.300' : 'gray.700',
+                bg: isDark ? 'whiteAlpha.100' : 'gray.100',
+              }}
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button
+              onClick={handleSave}
+              isLoading={isSaving}
+              isDisabled={!hasChanges}
+              size="sm"
+              fontWeight="medium"
+              bg={hasChanges ? 'blue.600' : (isDark ? 'gray.700' : 'gray.200')}
+              color={hasChanges ? 'white' : (isDark ? 'gray.500' : 'gray.400')}
+              _hover={hasChanges ? {
+                bg: isDark ? 'blue.500' : 'blue.700',
+              } : {}}
+              _disabled={{
+                cursor: 'not-allowed',
+                opacity: 1,
+              }}
+            >
+              {isSaving ? t('patientCard.saving') : t('patientCard.save')}
+            </Button>
           </Flex>
         </>
       ) : (
