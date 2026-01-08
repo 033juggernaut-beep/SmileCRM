@@ -66,6 +66,7 @@ import {
   FinanceSection,
   FloatingAIAssistant,
 } from '../components/patientCard'
+import { DateInput } from '../components/DateInput'
 import { BackgroundPattern } from '../components/dashboard/BackgroundPattern'
 
 // Types for local finance structure
@@ -749,13 +750,10 @@ export const PatientDetailsPage = () => {
                 <FormLabel fontSize="sm" color={isDark ? 'gray.300' : 'gray.700'}>
                   {t('patientCard.visitDate')}
                 </FormLabel>
-                <Input
-                  type="date"
-                  size="sm"
+                <DateInput
                   value={newVisitDate}
-                  onChange={(e) => setNewVisitDate(e.target.value)}
-                  borderColor={isDark ? 'gray.600' : 'gray.200'}
-                  bg={isDark ? 'gray.700' : 'white'}
+                  onChange={setNewVisitDate}
+                  placeholder={t('patientCard.visitDate')}
                 />
               </FormControl>
               <FormControl>

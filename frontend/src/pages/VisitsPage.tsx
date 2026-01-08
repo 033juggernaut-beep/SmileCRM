@@ -47,6 +47,7 @@ import { useTelegramBackButton } from '../hooks/useTelegramBackButton'
 import { useTelegramSafeArea } from '../hooks/useTelegramSafeArea'
 import { useLanguage } from '../context/LanguageContext'
 import { visitsApi, type Visit, type VisitStatus } from '../api/visits'
+import { DateInput } from '../components/DateInput'
 
 const MotionBox = motion.create(Box)
 
@@ -490,13 +491,11 @@ export function VisitsPage() {
             <VStack spacing={4}>
               <FormControl isRequired>
                 <FormLabel fontSize="sm" color={titleColor}>{t('visits.newDate') || 'New Date'}</FormLabel>
-                <Input
-                  type="date"
-                  size="sm"
+                <DateInput
                   value={rescheduleDate}
-                  onChange={(e) => setRescheduleDate(e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
-                  borderColor={borderColor}
+                  onChange={setRescheduleDate}
+                  placeholder={t('visits.newDate')}
+                  minDate={new Date()}
                 />
               </FormControl>
               <FormControl>

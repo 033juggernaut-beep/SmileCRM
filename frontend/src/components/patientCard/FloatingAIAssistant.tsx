@@ -35,6 +35,7 @@ import {
 } from '@chakra-ui/react'
 import { X, Check, RotateCcw, Stethoscope, Calendar, Wallet, MessageSquare, Square, Edit2, AlertCircle, Keyboard } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { DateInput } from '../DateInput'
 // Speech language is selected explicitly in the UI, but defaults from app language
 import { voiceApi } from '../../api/ai'
 import type { VoiceAIMode, VoiceParsedData } from '../../api/ai'
@@ -736,12 +737,10 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                         <Text fontSize="xs" color={isDark ? 'gray.500' : 'gray.400'} mb={1}>
                           {t('patientCard.visitDate') || 'Visit Date'}
                         </Text>
-                        <Input
-                          type="date"
-                          size="sm"
+                        <DateInput
                           value={editedData.visit_date || ''}
-                          onChange={(e) => setEditedData({ ...editedData, visit_date: e.target.value || null })}
-                          bg={isDark ? 'gray.700' : 'white'}
+                          onChange={(date) => setEditedData({ ...editedData, visit_date: date || null })}
+                          placeholder={t('patientCard.visitDate')}
                         />
                       </Box>
                     )}
@@ -928,12 +927,11 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                                 Tomorrow
                               </Button>
                             </HStack>
-                            <Input
-                              type="date"
-                              size="sm"
+                            <DateInput
                               value={editedData.visit_date || ''}
-                              onChange={(e) => updateField('visit_date', e.target.value || null)}
-                              min={getToday()}
+                              onChange={(date) => updateField('visit_date', date || null)}
+                              placeholder={t('patientCard.visitDate')}
+                              minDate={new Date()}
                             />
                           </VStack>
                         ) : (
@@ -951,11 +949,10 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                           Next Visit
                         </Text>
                         {recordingState === 'editing' ? (
-                          <Input
-                            type="date"
-                            size="sm"
+                          <DateInput
                             value={editedData.next_visit_date || ''}
-                            onChange={(e) => updateField('next_visit_date', e.target.value || null)}
+                            onChange={(date) => updateField('next_visit_date', date || null)}
+                            placeholder={t('patientCard.nextVisit')}
                           />
                         ) : (
                           <Badge colorScheme="blue">{editedData.next_visit_date}</Badge>

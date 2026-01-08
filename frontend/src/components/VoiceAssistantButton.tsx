@@ -33,6 +33,7 @@ import {
 import { keyframes } from '@emotion/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Check, Edit2, RotateCcw, Square, X, Keyboard, AlertCircle } from 'lucide-react'
+import { DateInput } from './DateInput'
 
 // Minimal robot/assistant icon - same as FloatingAIAssistant
 function AssistantIcon() {
@@ -655,12 +656,10 @@ export const VoiceAssistantButton = ({
                     onChange={(e) => setEditedDiagnosis(e.target.value)}
                     bg={isDark ? 'gray.700' : 'white'}
                   />
-                  <Input
-                    type="date"
-                    size="sm"
+                  <DateInput
                     value={editedBirthDate}
-                    onChange={(e) => setEditedBirthDate(e.target.value)}
-                    bg={isDark ? 'gray.700' : 'white'}
+                    onChange={setEditedBirthDate}
+                    placeholder={t('addPatient.birthDate')}
                   />
                 </VStack>
                 
@@ -918,11 +917,10 @@ export const VoiceAssistantButton = ({
                       <Box>
                         <Text fontSize="xs" color="gray.500" mb={1}>Birth Date</Text>
                         {isEditing ? (
-                          <Input
-                            type="date"
-                            size="sm"
+                          <DateInput
                             value={editedBirthDate}
-                            onChange={(e) => setEditedBirthDate(e.target.value)}
+                            onChange={setEditedBirthDate}
+                            placeholder={t('addPatient.birthDate')}
                           />
                         ) : (
                           <Badge colorScheme="blue">{editedBirthDate}</Badge>

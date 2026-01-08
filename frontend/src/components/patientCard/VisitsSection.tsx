@@ -33,6 +33,7 @@ import {
 import { Plus, Calendar, ArrowRight, Pencil, Check } from 'lucide-react'
 import { CollapsibleSection } from './CollapsibleSection'
 import { useLanguage } from '../../context/LanguageContext'
+import { DateInput } from '../DateInput'
 import type { Visit } from '../../api/patients'
 
 interface VisitsSectionProps {
@@ -271,14 +272,10 @@ export function VisitsSection({
                 >
                   {t('patientCard.visitDate')}
                 </FormLabel>
-                <Input
-                  type="date"
+                <DateInput
                   value={editForm.visitDate}
-                  onChange={(e) => setEditForm({ ...editForm, visitDate: e.target.value })}
-                  borderRadius="xl"
-                  bg={isDark ? 'gray.700' : 'white'}
-                  borderColor={isDark ? 'gray.600' : 'gray.200'}
-                  _focus={{ borderColor: 'blue.500' }}
+                  onChange={(date) => setEditForm({ ...editForm, visitDate: date })}
+                  placeholder={t('patientCard.visitDate')}
                 />
               </FormControl>
 
@@ -310,14 +307,10 @@ export function VisitsSection({
                 >
                   {t('patientCard.nextVisitDate')}
                 </FormLabel>
-                <Input
-                  type="date"
+                <DateInput
                   value={editForm.nextVisitDate}
-                  onChange={(e) => setEditForm({ ...editForm, nextVisitDate: e.target.value })}
-                  borderRadius="xl"
-                  bg={isDark ? 'gray.700' : 'white'}
-                  borderColor={isDark ? 'gray.600' : 'gray.200'}
-                  _focus={{ borderColor: 'blue.500' }}
+                  onChange={(date) => setEditForm({ ...editForm, nextVisitDate: date })}
+                  placeholder={t('patientCard.nextVisitDate')}
                 />
               </FormControl>
             </VStack>

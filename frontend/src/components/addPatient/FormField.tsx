@@ -14,6 +14,7 @@
  */
 
 import { Box, FormControl, FormLabel, Input, FormErrorMessage, useColorMode } from '@chakra-ui/react'
+import { DateInput } from '../DateInput'
 
 export interface FormFieldProps {
   label: string
@@ -52,39 +53,48 @@ export function FormField({
           <Box as="span" color="blue.500" ml={1}>*</Box>
         )}
       </FormLabel>
-      <Input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        isDisabled={isDisabled}
-        h="auto"
-        px={4}
-        py={3}
-        borderRadius="xl"
-        fontSize="md"
-        transition="all 0.2s"
-        bg={isDark ? 'rgba(30, 41, 59, 0.7)' : 'white'}
-        border="1px solid"
-        borderColor={isDark ? 'slate.700' : 'slate.200'}
-        color={isDark ? 'white' : 'slate.800'}
-        _placeholder={{
-          color: isDark ? 'slate.500' : 'slate.400',
-        }}
-        _hover={{
-          borderColor: isDark ? 'slate.600' : 'slate.300',
-        }}
-        _focus={{
-          borderColor: isDark ? 'blue.500' : 'blue.400',
-          boxShadow: isDark
-            ? '0 0 0 2px rgba(59, 130, 246, 0.2)'
-            : '0 0 0 2px rgba(191, 219, 254, 1)',
-          outline: 'none',
-        }}
-        sx={{
-          boxShadow: isDark ? 'none' : 'sm',
-        }}
-      />
+      {type === 'date' ? (
+        <DateInput
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          isDisabled={isDisabled}
+        />
+      ) : (
+        <Input
+          type={type}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          isDisabled={isDisabled}
+          h="auto"
+          px={4}
+          py={3}
+          borderRadius="xl"
+          fontSize="md"
+          transition="all 0.2s"
+          bg={isDark ? 'rgba(30, 41, 59, 0.7)' : 'white'}
+          border="1px solid"
+          borderColor={isDark ? 'slate.700' : 'slate.200'}
+          color={isDark ? 'white' : 'slate.800'}
+          _placeholder={{
+            color: isDark ? 'slate.500' : 'slate.400',
+          }}
+          _hover={{
+            borderColor: isDark ? 'slate.600' : 'slate.300',
+          }}
+          _focus={{
+            borderColor: isDark ? 'blue.500' : 'blue.400',
+            boxShadow: isDark
+              ? '0 0 0 2px rgba(59, 130, 246, 0.2)'
+              : '0 0 0 2px rgba(191, 219, 254, 1)',
+            outline: 'none',
+          }}
+          sx={{
+            boxShadow: isDark ? 'none' : 'sm',
+          }}
+        />
+      )}
       {error && (
         <FormErrorMessage color="error.500" fontSize="xs" mt={1}>
           {error}

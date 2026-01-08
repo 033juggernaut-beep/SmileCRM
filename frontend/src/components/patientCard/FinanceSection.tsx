@@ -32,6 +32,7 @@ import {
 import { Wallet, Calendar, CheckCircle2, Pencil, Trash2, Plus, Check } from 'lucide-react'
 import { CollapsibleSection } from './CollapsibleSection'
 import { useLanguage } from '../../context/LanguageContext'
+import { DateInput } from '../DateInput'
 import { patientFinanceApi } from '../../api/patientFinance'
 
 interface Payment {
@@ -506,13 +507,10 @@ export function FinanceSection({
                 <FormLabel fontSize="sm" color={isDark ? 'gray.300' : 'gray.700'}>
                   {t('patientCard.finance.date')}
                 </FormLabel>
-                <Input
-                  type="date"
+                <DateInput
                   value={newPayment.date}
-                  onChange={(e) => setNewPayment({ ...newPayment, date: e.target.value })}
-                  borderRadius="xl"
-                  bg={isDark ? 'gray.700' : 'white'}
-                  borderColor={isDark ? 'gray.600' : 'gray.200'}
+                  onChange={(date) => setNewPayment({ ...newPayment, date })}
+                  placeholder={t('patientCard.finance.date')}
                 />
               </FormControl>
               <FormControl>
