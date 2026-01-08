@@ -153,3 +153,69 @@ body {
   outline: none;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
 }
+
+/* =============================================
+ * Date picker styling (blue theme for Android/iOS)
+ * Forces blue accent instead of system default (brown/orange)
+ * ============================================= */
+
+/* Set accent color for all form controls (date picker, checkbox, etc.) */
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"] {
+  accent-color: var(--app-primary);
+  color-scheme: light;
+}
+
+/* Dark mode date picker */
+[data-theme='dark'] input[type="date"],
+[data-theme='dark'] input[type="datetime-local"],
+[data-theme='dark'] input[type="time"],
+.chakra-ui-dark input[type="date"],
+.chakra-ui-dark input[type="datetime-local"],
+.chakra-ui-dark input[type="time"] {
+  color-scheme: dark;
+}
+
+/* Webkit calendar picker icon styling */
+::-webkit-calendar-picker-indicator {
+  filter: invert(0.5) sepia(1) saturate(5) hue-rotate(195deg);
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* Dark mode calendar icon */
+[data-theme='dark'] ::-webkit-calendar-picker-indicator,
+.chakra-ui-dark ::-webkit-calendar-picker-indicator {
+  filter: invert(0.8) sepia(1) saturate(5) hue-rotate(195deg);
+}
+
+/* Date input inner elements */
+::-webkit-datetime-edit-fields-wrapper {
+  padding: 0;
+}
+
+::-webkit-datetime-edit-text {
+  color: var(--app-muted);
+  padding: 0 2px;
+}
+
+::-webkit-datetime-edit-day-field,
+::-webkit-datetime-edit-month-field,
+::-webkit-datetime-edit-year-field {
+  padding: 2px;
+  border-radius: 4px;
+}
+
+::-webkit-datetime-edit-day-field:focus,
+::-webkit-datetime-edit-month-field:focus,
+::-webkit-datetime-edit-year-field:focus {
+  background-color: var(--app-primary);
+  color: white;
+  outline: none;
+}

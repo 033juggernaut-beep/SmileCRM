@@ -56,8 +56,10 @@ interface FinanceSectionProps {
 }
 
 // Format number with thousand separators (e.g., 1,200,000 AMD)
-const formatAmount = (amount: number, showCurrency = false, currency = 'AMD') => {
-  const formatted = Math.round(amount).toLocaleString('en-US')
+// Handle NaN and undefined values gracefully
+const formatAmount = (amount: number | undefined | null, showCurrency = false, currency = 'AMD') => {
+  const safeAmount = typeof amount === 'number' && !isNaN(amount) ? amount : 0
+  const formatted = Math.round(safeAmount).toLocaleString('en-US')
   return showCurrency ? `${formatted} ${currency}` : formatted
 }
 
@@ -91,8 +93,15 @@ export function FinanceSection({
     setEditTotalAmount(initialFinance.totalCost.toString())
   }, [initialFinance])
 
-  const totalPaid = finance.payments.reduce((sum, p) => sum + p.amount, 0)
-  const remaining = finance.totalCost - totalPaid
+  // Safely calculate total paid - handle string amounts from API
+  const totalPaid = finance.payments.reduce((sum, p) => {
+    const amount = typeof p.amount === 'number' ? p.amount : parseFloat(String(p.amount)) || 0
+    return sum + (isNaN(amount) ? 0 : amount)
+  }, 0)
+  const safeTotalCost = typeof finance.totalCost === 'number' && !isNaN(finance.totalCost) 
+    ? finance.totalCost 
+    : parseFloat(String(finance.totalCost)) || 0
+  const remaining = safeTotalCost - totalPaid
 
   const handleUpdateTotalCost = async () => {
     const newTotal = parseFloat(editTotalAmount) || 0
