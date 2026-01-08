@@ -370,11 +370,20 @@ input[type="time"] {
   color: #60A5FA;
 }
 
-/* Popper positioning */
+/* Popper positioning - prevent calendar from being cut off */
 .react-datepicker-popper {
-  z-index: 1000 !important;
+  z-index: 9999 !important;
 }
 
 .react-datepicker__triangle {
   display: none;
+}
+
+/* Ensure calendar opens upward when near bottom of screen */
+.react-datepicker-popper[data-placement^="top"] .react-datepicker {
+  margin-bottom: 10px;
+}
+
+.react-datepicker-popper[data-placement^="bottom"] .react-datepicker {
+  margin-top: 10px;
 }

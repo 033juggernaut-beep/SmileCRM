@@ -11,12 +11,12 @@
  * - Loading state with spinner
  */
 
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { Box, SimpleGrid, VStack, Alert, AlertIcon, useToast, useColorMode } from '@chakra-ui/react'
 import { useNavigate } from 'react-router-dom'
 import { patientsApi } from '../api/patients'
-import { type VoiceParseStructured, isPatientStructured } from '../api/ai'
-import { VoiceAssistantButton } from '../components/VoiceAssistantButton'
+// import { type VoiceParseStructured, isPatientStructured } from '../api/ai' // Temporarily hidden
+// import { VoiceAssistantButton } from '../components/VoiceAssistantButton' // Temporarily hidden
 import { BackgroundPattern } from '../components/dashboard/BackgroundPattern'
 import { Header } from '../components/dashboard/Header'
 import { Footer } from '../components/dashboard/Footer'
@@ -109,24 +109,21 @@ export const AddPatientPage = () => {
     }))
   }
 
-  // Handle voice assistant result
-  const handleVoiceApply = useCallback((structured: VoiceParseStructured, transcript: string) => {
-    console.log('[AddPatientPage] Voice apply:', { structured, transcript })
-    
-    if (isPatientStructured(structured)) {
-      const { patient } = structured
-      
-      setForm((prev) => ({
-        ...prev,
-        firstName: patient.first_name || prev.firstName,
-        lastName: patient.last_name || prev.lastName,
-        phone: patient.phone || prev.phone,
-        diagnosis: patient.diagnosis || prev.diagnosis,
-        // Keep other fields
-      }))
-      setErrors({})
-    }
-  }, [])
+  // Handle voice assistant result - temporarily disabled
+  // const handleVoiceApply = useCallback((structured: VoiceParseStructured, transcript: string) => {
+  //   console.log('[AddPatientPage] Voice apply:', { structured, transcript })
+  //   if (isPatientStructured(structured)) {
+  //     const { patient } = structured
+  //     setForm((prev) => ({
+  //       ...prev,
+  //       firstName: patient.first_name || prev.firstName,
+  //       lastName: patient.last_name || prev.lastName,
+  //       phone: patient.phone || prev.phone,
+  //       diagnosis: patient.diagnosis || prev.diagnosis,
+  //     }))
+  //     setErrors({})
+  //   }
+  // }, [])
 
   // Validate form
   const validateForm = (): boolean => {
@@ -275,14 +272,14 @@ export const AddPatientPage = () => {
             px={4}
             spacing={6}
           >
-            {/* Voice Assistant - floating */}
-            <Box position="fixed" bottom={24} right={4} zIndex={20}>
+            {/* Voice Assistant - temporarily hidden */}
+            {/* <Box position="fixed" bottom={24} right={4} zIndex={20}>
               <VoiceAssistantButton
                 mode="patient"
                 onApply={handleVoiceApply}
                 buttonLabel="🤖"
               />
-            </Box>
+            </Box> */}
 
             {/* Main Form Card */}
             <Box
