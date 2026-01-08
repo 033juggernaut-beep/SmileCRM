@@ -263,7 +263,7 @@ const en = {
     payIdram: 'Pay with Idram',
     payIdbank: 'Pay with IDBank Pay',
     opening: 'Opening...',
-    hint: '💡 Tip: Trial lasts 7 days for free. Subscription costs 5000 AMD per month.',
+    hint: '💡 Tip: Trial lasts 14 days for free. Subscription costs 10000 AMD per month.',
     errorLoad: 'Failed to get subscription status',
     errorPayment: 'Failed to start payment',
     paymentFailed: 'Payment failed',
