@@ -194,6 +194,16 @@ export const visitsApi = {
     )
     return mapVisit(data)
   },
+
+  /**
+   * Delete a visit
+   */
+  async deleteVisit(visitId: string): Promise<void> {
+    const authToken = getAuthToken()
+    await apiClient.delete(`/visits/${visitId}`, {
+      headers: buildAuthHeaders(authToken),
+    })
+  },
 }
 
 export default visitsApi

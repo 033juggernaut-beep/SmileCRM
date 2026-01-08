@@ -133,6 +133,26 @@ async def update_visit(
   return VisitResponse(**updated)
 
 
+@router.delete(
+  "/{visit_id}",
+  status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_visit(
+  visit_id: str,
+  current_doctor: CurrentDoctor,
+) -> None:
+  """Delete a visit by ID."""
+  # Check if visit exists
+  visit = visits_service.get_visit_by_id(visit_id)
+  if not visit:
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Visit not found.")
+  
+  # Delete the visit
+  deleted = visits_service.delete_visit(visit_id)
+  if not deleted:
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Visit not found.")
+
+
 @router.patch(
   "/{visit_id}/status",
   response_model=VisitWithPatientResponse,

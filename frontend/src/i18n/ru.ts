@@ -20,6 +20,7 @@ const ru = {
     noData: '—',
     tryAgain: 'Попробовать снова',
     copied: '✓ Скопировано',
+    deleted: 'Удалено',
   },
 
   // Home page
@@ -449,6 +450,8 @@ const ru = {
     noVisits: 'Визитов пока нет',
     addFirstVisit: 'Добавить первый визит',
     editVisit: 'Редактировать визит',
+    deleteVisit: 'Удалить визит',
+    deleteVisitConfirm: 'Вы уверены, что хотите удалить этот визит?',
     visitDate: 'Дата визита',
     description: 'Описание',
     visitNotesPlaceholder: 'Описание визита...',

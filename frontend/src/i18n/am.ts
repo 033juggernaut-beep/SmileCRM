@@ -21,6 +21,7 @@ const am = {
     tryAgain: 'Կրկին փորձել',
     copied: '✓ Պատճենված է',
     saved: 'Պահպանված է',
+    deleted: 'Ջնված է',
   },
 
   // Home page
@@ -455,6 +456,8 @@ const am = {
     noVisits: 'Այցեր դեռ չկան',
     addFirstVisit: 'Ավելացնել առաջին այցը',
     editVisit: 'Խմբագրել այցը',
+    deleteVisit: 'Ջնջել այցը',
+    deleteVisitConfirm: 'Վստահահ եք, որ ցանկանում եք ջնջել այցը?',
     visitDate: 'Այցի ամսաթիվ',
     description: 'Նկարագրություն',
     visitNotesPlaceholder: 'Այցի նկարագրություն…',

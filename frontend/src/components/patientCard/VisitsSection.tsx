@@ -28,17 +28,25 @@ import {
   useToast,
   VStack,
   IconButton,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogContent,
+  AlertDialogOverlay,
 } from '@chakra-ui/react'
-import { Plus, Calendar, ArrowRight, Pencil, Check } from 'lucide-react'
+import { Plus, Calendar, ArrowRight, Pencil, Check, Trash2 } from 'lucide-react'
 import { CollapsibleSection } from './CollapsibleSection'
 import { useLanguage } from '../../context/LanguageContext'
 import { DateInput } from '../DateInput'
 import type { Visit } from '../../api/patients'
+import { useRef } from 'react'
 
 interface VisitsSectionProps {
   visits: Visit[]
   onAddVisit: () => void
   onEditVisit?: (visit: Visit) => void | Promise<void>
+  onDeleteVisit?: (visitId: string) => void | Promise<void>
   defaultOpen?: boolean
 }
 
@@ -46,6 +54,7 @@ export function VisitsSection({
   visits,
   onAddVisit,
   onEditVisit,
+  onDeleteVisit,
   defaultOpen = true,
 }: VisitsSectionProps) {
   const { t } = useLanguage()
@@ -53,14 +62,18 @@ export function VisitsSection({
   const isDark = colorMode === 'dark'
   const toast = useToast()
   const { isOpen, onOpen, onClose } = useDisclosure()
+  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure()
+  const cancelRef = useRef<HTMLButtonElement>(null)
   
   const [editingVisit, setEditingVisit] = useState<Visit | null>(null)
+  const [deletingVisit, setDeletingVisit] = useState<Visit | null>(null)
   const [editForm, setEditForm] = useState({
     visitDate: '',
     notes: '',
     nextVisitDate: '',
   })
   const [isSaving, setIsSaving] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const isEmpty = visits.length === 0
 
@@ -99,6 +112,35 @@ export function VisitsSection({
       })
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const handleDeleteClick = (visit: Visit) => {
+    setDeletingVisit(visit)
+    onDeleteOpen()
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!deletingVisit || !onDeleteVisit) return
+    
+    setIsDeleting(true)
+    try {
+      await onDeleteVisit(deletingVisit.id)
+      toast({
+        title: t('common.deleted'),
+        status: 'success',
+        duration: 2000,
+      })
+      onDeleteClose()
+    } catch (err) {
+      toast({
+        title: t('common.error'),
+        status: 'error',
+        duration: 3000,
+      })
+    } finally {
+      setIsDeleting(false)
+      setDeletingVisit(null)
     }
   }
 
@@ -193,21 +235,35 @@ export function VisitsSection({
                       {formatDate(visit.visitDate)}
                     </Text>
                   </Flex>
-                  {/* Edit Button */}
-                  <IconButton
-                    aria-label={t('common.edit')}
-                    icon={<Box as={Pencil} w={3.5} h={3.5} />}
-                    size="xs"
-                    variant="ghost"
-                    opacity={0}
-                    _groupHover={{ opacity: 1 }}
-                    color={isDark ? 'gray.400' : 'gray.400'}
-                    _hover={{
-                      bg: isDark ? 'gray.600' : 'gray.200',
-                      color: isDark ? 'blue.400' : 'blue.600',
-                    }}
-                    onClick={() => handleEditClick(visit)}
-                  />
+                  {/* Action Buttons */}
+                  <Flex gap={1} opacity={0} _groupHover={{ opacity: 1 }}>
+                    <IconButton
+                      aria-label={t('common.edit')}
+                      icon={<Box as={Pencil} w={3.5} h={3.5} />}
+                      size="xs"
+                      variant="ghost"
+                      color={isDark ? 'gray.400' : 'gray.400'}
+                      _hover={{
+                        bg: isDark ? 'gray.600' : 'gray.200',
+                        color: isDark ? 'blue.400' : 'blue.600',
+                      }}
+                      onClick={() => handleEditClick(visit)}
+                    />
+                    {onDeleteVisit && (
+                      <IconButton
+                        aria-label={t('common.delete')}
+                        icon={<Box as={Trash2} w={3.5} h={3.5} />}
+                        size="xs"
+                        variant="ghost"
+                        color={isDark ? 'gray.400' : 'gray.400'}
+                        _hover={{
+                          bg: isDark ? 'red.900' : 'red.50',
+                          color: 'red.500',
+                        }}
+                        onClick={() => handleDeleteClick(visit)}
+                      />
+                    )}
+                  </Flex>
                 </Flex>
 
                 {/* Summary/Notes */}
@@ -336,6 +392,57 @@ export function VisitsSection({
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        isOpen={isDeleteOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={onDeleteClose}
+        isCentered
+      >
+        <AlertDialogOverlay bg="blackAlpha.500" backdropFilter="blur(4px)">
+          <AlertDialogContent
+            borderRadius="2xl"
+            bg={isDark ? 'gray.800' : 'white'}
+            mx={4}
+          >
+            <AlertDialogHeader
+              fontSize="lg"
+              fontWeight="semibold"
+              color={isDark ? 'white' : 'gray.800'}
+            >
+              {t('patientCard.deleteVisit')}
+            </AlertDialogHeader>
+
+            <AlertDialogBody color={isDark ? 'gray.300' : 'gray.600'}>
+              {t('patientCard.deleteVisitConfirm')}
+              {deletingVisit && (
+                <Text fontWeight="medium" mt={2} color={isDark ? 'white' : 'gray.800'}>
+                  {formatDate(deletingVisit.visitDate)}
+                </Text>
+              )}
+            </AlertDialogBody>
+
+            <AlertDialogFooter gap={3}>
+              <Button
+                ref={cancelRef}
+                onClick={onDeleteClose}
+                variant="ghost"
+                color={isDark ? 'gray.300' : 'gray.600'}
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button
+                colorScheme="red"
+                onClick={handleConfirmDelete}
+                isLoading={isDeleting}
+              >
+                {t('common.delete')}
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
     </>
   )
 }

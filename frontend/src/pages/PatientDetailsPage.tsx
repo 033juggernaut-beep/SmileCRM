@@ -45,6 +45,7 @@ import {
 import { treatmentPlanApi } from '../api/treatmentPlan'
 import { mediaApi, type MediaFile } from '../api/media'
 import { apiClient } from '../api/client'
+import { visitsApi } from '../api/visits'
 import { TOKEN_STORAGE_KEY } from '../constants/storage'
 
 import { useLanguage } from '../context/LanguageContext'
@@ -325,6 +326,20 @@ export const PatientDetailsPage = () => {
         )
       } catch (err) {
         console.error('Failed to update visit:', err)
+        throw err
+      }
+    },
+    []
+  )
+
+  // Handle delete visit
+  const handleDeleteVisit = useCallback(
+    async (visitId: string) => {
+      try {
+        await visitsApi.deleteVisit(visitId)
+        setVisits((prev) => prev.filter((v) => v.id !== visitId))
+      } catch (err) {
+        console.error('Failed to delete visit:', err)
         throw err
       }
     },
@@ -630,6 +645,7 @@ export const PatientDetailsPage = () => {
               visits={sortedVisits as Visit[]}
               onAddVisit={handleAddVisit}
               onEditVisit={handleEditVisit}
+              onDeleteVisit={handleDeleteVisit}
               defaultOpen={false}
             />
 

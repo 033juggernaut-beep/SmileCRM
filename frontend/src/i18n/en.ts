@@ -20,6 +20,7 @@ const en = {
     noData: '—',
     tryAgain: 'Try again',
     copied: '✓ Copied',
+    deleted: 'Deleted',
   },
 
   // Home page
@@ -449,6 +450,8 @@ const en = {
     noVisits: 'No visits yet',
     addFirstVisit: 'Add first visit',
     editVisit: 'Edit visit',
+    deleteVisit: 'Delete visit',
+    deleteVisitConfirm: 'Are you sure you want to delete this visit?',
     visitDate: 'Visit date',
     description: 'Description',
     visitNotesPlaceholder: 'Visit description...',

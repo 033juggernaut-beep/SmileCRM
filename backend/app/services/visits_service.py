@@ -195,3 +195,12 @@ def update_reminder_status(
     return {"id": visit_id, **values}
   
   return updated[0] if updated else None
+
+
+def delete_visit(visit_id: str) -> bool:
+  """Delete a visit by ID. Returns True if deleted, False if not found."""
+  try:
+    result = supabase_client.delete("visits", filters={"id": visit_id})
+    return len(result) > 0 if result else False
+  except SupabaseNotConfiguredError:
+    return True  # In local mode, pretend it worked
