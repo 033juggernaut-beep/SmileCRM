@@ -64,7 +64,7 @@ import {
   NotesSection,
   MarketingSection,
   FinanceSection,
-  FloatingAIAssistant,
+  // FloatingAIAssistant, // Temporarily hidden
 } from '../components/patientCard'
 import { DateInput } from '../components/DateInput'
 import { BackgroundPattern } from '../components/dashboard/BackgroundPattern'
@@ -108,7 +108,7 @@ export const PatientDetailsPage = () => {
   const [visits, setVisits] = useState<Visit[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [refreshKey, setRefreshKey] = useState(0)
+  // const [refreshKey, setRefreshKey] = useState(0) // Temporarily disabled with FloatingAIAssistant
 
   // Finance state
   const [financeSummary, setFinanceSummary] = useState<PatientFinanceSummary | null>(null)

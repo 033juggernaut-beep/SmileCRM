@@ -132,19 +132,18 @@ export function TreatmentPlanBlock({
     })
   }
 
-  // PDF export stub
-  const handleExportPdf = async () => {
-    if (onExportPdf) {
-      await onExportPdf()
-    } else {
-      // Stub - will be replaced with API call
-      toast({
-        title: t('treatmentPlan.pdfComingSoon'),
-        status: 'info',
-        duration: 3000,
-      })
-    }
-  }
+  // PDF export stub - temporarily disabled
+  // const handleExportPdf = async () => {
+  //   if (onExportPdf) {
+  //     await onExportPdf()
+  //   } else {
+  //     toast({
+  //       title: t('treatmentPlan.pdfComingSoon'),
+  //       status: 'info',
+  //       duration: 3000,
+  //     })
+  //   }
+  // }
 
   // Format price in AMD
   const formatPrice = (price: number) => {
