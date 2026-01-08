@@ -21,7 +21,7 @@ type CreatePaymentApiResponse = {
   paymentUrl: string
 }
 
-const DEFAULT_PAYMENT_AMOUNT_AMD = 15000
+const DEFAULT_PAYMENT_AMOUNT_AMD = 10000
 const DEFAULT_PAYMENT_CURRENCY = 'AMD'
 
 export const getSubscription = async (): Promise<SubscriptionSnapshot> => {
