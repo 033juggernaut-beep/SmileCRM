@@ -95,22 +95,6 @@ export function DateInput({
       calendarClassName="blue-calendar"
       wrapperClassName="date-picker-wrapper"
       portalId="root"
-      popperPlacement="auto"
-      popperModifiers={[
-        {
-          name: 'preventOverflow',
-          options: {
-            boundary: 'viewport',
-            padding: 8,
-          },
-        },
-        {
-          name: 'flip',
-          options: {
-            fallbackPlacements: ['top', 'bottom'],
-          },
-        },
-      ]}
     />
   )
 }
