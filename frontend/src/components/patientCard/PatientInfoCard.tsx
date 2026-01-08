@@ -16,7 +16,6 @@ import {
   Grid,
   useColorMode,
   IconButton,
-  Input,
   Button,
   Popover,
   PopoverTrigger,
@@ -358,7 +357,6 @@ export function PatientInfoCard({ patient, onPatientUpdate }: PatientInfoCardPro
 
   // Theme colors for popover
   const popoverBg = isDark ? 'gray.800' : 'white'
-  const inputBg = isDark ? 'gray.700' : 'gray.50'
   const inputBorder = isDark ? 'gray.600' : 'gray.200'
 
   return (

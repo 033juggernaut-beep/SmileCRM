@@ -13,7 +13,6 @@ import {
   Flex,
   Text,
   Button,
-  Input,
   Textarea,
   Modal,
   ModalOverlay,
