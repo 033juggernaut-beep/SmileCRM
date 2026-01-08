@@ -727,14 +727,14 @@ export const PatientDetailsPage = () => {
         </Box>
       </Box>
 
-      {/* Floating AI Assistant Widget - Bottom Right */}
-      <FloatingAIAssistant 
+      {/* Floating AI Assistant Widget - Hidden temporarily, will be enabled later */}
+      {/* <FloatingAIAssistant 
         patientId={id} 
         onActionsApplied={() => {
           // Trigger refetch of patient and visits data after AI actions applied
           setRefreshKey(prev => prev + 1)
         }}
-      />
+      /> */}
 
       {/* New Visit Modal */}
       <Modal isOpen={newVisitModal.isOpen} onClose={newVisitModal.onClose} isCentered>

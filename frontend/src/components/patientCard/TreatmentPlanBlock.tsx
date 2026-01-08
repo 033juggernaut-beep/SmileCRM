@@ -32,7 +32,7 @@ import {
   useToast,
   VStack,
 } from '@chakra-ui/react'
-import { Plus, FileText, Trash2 } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { CollapsibleSection } from './CollapsibleSection'
 import { useLanguage } from '../../context/LanguageContext'
 
@@ -151,42 +151,24 @@ export function TreatmentPlanBlock({
     return new Intl.NumberFormat('en-US').format(price) + ' AMD'
   }
 
-  // Header actions (Add + PDF buttons)
+  // Header actions (Add button only, PDF temporarily hidden)
   const headerActions = (
-    <Flex gap={2}>
-      <Button
-        size="xs"
-        variant="ghost"
-        leftIcon={<Plus size={14} />}
-        color={isDark ? 'blue.400' : 'blue.600'}
-        fontWeight="medium"
-        _hover={{
-          bg: isDark ? 'whiteAlpha.100' : 'blue.50',
-        }}
-        onClick={(e) => {
-          e.stopPropagation()
-          onOpen()
-        }}
-      >
-        {t('treatmentPlan.addStep')}
-      </Button>
-      <Button
-        size="xs"
-        variant="ghost"
-        leftIcon={<FileText size={14} />}
-        color={isDark ? 'gray.400' : 'gray.500'}
-        fontWeight="medium"
-        _hover={{
-          bg: isDark ? 'whiteAlpha.100' : 'gray.100',
-        }}
-        onClick={(e) => {
-          e.stopPropagation()
-          handleExportPdf()
-        }}
-      >
-        PDF
-      </Button>
-    </Flex>
+    <Button
+      size="xs"
+      variant="ghost"
+      leftIcon={<Plus size={14} />}
+      color={isDark ? 'blue.400' : 'blue.600'}
+      fontWeight="medium"
+      _hover={{
+        bg: isDark ? 'whiteAlpha.100' : 'blue.50',
+      }}
+      onClick={(e) => {
+        e.stopPropagation()
+        onOpen()
+      }}
+    >
+      {t('treatmentPlan.addStep')}
+    </Button>
   )
 
   return (
