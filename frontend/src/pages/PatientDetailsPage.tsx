@@ -226,7 +226,7 @@ export const PatientDetailsPage = () => {
     return () => {
       cancelled = true
     }
-  }, [id, t, refreshKey])
+  }, [id, t])
 
   // Handle diagnosis save
   const handleSaveDiagnosis = useCallback(

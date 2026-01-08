@@ -55,7 +55,7 @@ export interface TreatmentPlanBlockProps {
 export function TreatmentPlanBlock({
   steps,
   onStepsChange,
-  onExportPdf,
+  // onExportPdf, // Temporarily disabled
   defaultOpen = true,
 }: TreatmentPlanBlockProps) {
   const { t } = useLanguage()
