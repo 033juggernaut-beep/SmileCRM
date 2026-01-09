@@ -1,5 +1,8 @@
 """
-Voice AI API endpoints - Whisper STT + LLM parsing + commit
+Voice AI API endpoints - Whisper STT + LLM parsing + auto-commit
+
+Supports Armenian (HY), Russian (RU), and English (EN) voice commands.
+Automatically routes parsed commands to correct database tables when confidence is high.
 """
 import logging
 from typing import Annotated, Any, Literal
@@ -13,6 +16,12 @@ from app.services.voice_service import (
     VoiceNotConfiguredError,
     VoiceServiceError,
     process_voice,
+)
+from app.services.voice_actions import (
+    apply_voice_action,
+    should_auto_commit,
+    VoiceActionError,
+    CONFIDENCE_THRESHOLD,
 )
 
 logger = logging.getLogger(__name__)
@@ -42,6 +51,24 @@ class VoiceParseResponse(BaseModel):
     text: str = Field(..., description="Transcribed text from audio")
     data: VoiceParsedData = Field(..., description="Parsed structured data")
     warnings: list[str] = Field(default_factory=list, description="Validation warnings")
+
+
+class VoiceActionResult(BaseModel):
+    """Result of automatic voice action execution"""
+    performed_action: str = Field(..., description="Action that was performed (create_visit, create_payment, etc.)")
+    updated: dict[str, Any] | None = Field(None, description="Updated record info")
+    warnings: list[str] = Field(default_factory=list, description="Action warnings")
+    needs_confirmation: bool = Field(False, description="True if user should confirm before saving")
+
+
+class VoiceAutoParseResponse(BaseModel):
+    """Response from voice parse with auto-commit"""
+    ok: bool = True
+    transcript: str = Field(..., description="Transcribed text from audio")
+    parsed: dict[str, Any] = Field(..., description="Full parsed data from LLM")
+    confidence: float = Field(..., description="LLM confidence (0.0 - 1.0)")
+    result: VoiceActionResult | None = Field(None, description="Action result if auto-committed")
+    needs_confirmation: bool = Field(False, description="True if confidence too low for auto-commit")
 
 
 class VoiceCommitRequest(BaseModel):
@@ -142,6 +169,230 @@ async def parse_voice(
     except Exception as e:
         logger.exception(f"Unexpected error in voice parse: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.post("/auto-parse", response_model=VoiceAutoParseResponse)
+async def auto_parse_voice(
+    current_doctor: CurrentDoctor,
+    file: UploadFile = File(..., description="Audio file (webm/wav/mp3)"),
+    patient_id: str = Form(..., description="Patient UUID"),
+    timezone: str = Form("Asia/Yerevan", description="Client timezone"),
+    locale: Literal["ru", "hy", "en"] = Form("ru", description="Language hint"),
+    today: str | None = Form(None, description="Optional today override YYYY-MM-DD"),
+    auto_commit: bool = Form(True, description="Auto-commit if confidence >= 0.75"),
+):
+    """
+    Parse voice audio and automatically save to database if confidence is high.
+    
+    Flow:
+    1. Receive audio file
+    2. Transcribe with Whisper STT
+    3. Parse with LLM to extract structured action and data
+    4. If confidence >= 0.75 and auto_commit=True:
+       - Automatically save to correct table (visits, payments, etc.)
+       - Return result with performed_action
+    5. If confidence < 0.75:
+       - Return needs_confirmation=True for user review
+    
+    Supported voice commands:
+    - "добавь визит сегодня" → creates visit
+    - "վճարեց 300 հազար դրամ" → creates payment in patient_payments
+    - "добавь препарат амоксициллин" → creates medication
+    - "diagnosis" → updates patient diagnosis
+    """
+    # Validate patient exists and belongs to doctor
+    patient = patients_service.get_patient(patient_id)
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    
+    if patient.get("doctor_id") != current_doctor.doctor_id:
+        raise HTTPException(status_code=403, detail="Access denied to this patient")
+    
+    # Read audio file
+    try:
+        audio_bytes = await file.read()
+    except Exception as e:
+        logger.error(f"Failed to read audio file: {e}")
+        raise HTTPException(status_code=400, detail="Failed to read audio file")
+    
+    if len(audio_bytes) > MAX_AUDIO_SIZE:
+        raise HTTPException(status_code=413, detail="Audio file too large (max 25MB)")
+    
+    if len(audio_bytes) < 100:
+        raise HTTPException(status_code=400, detail="Audio file too small or empty")
+    
+    filename = file.filename or "audio.webm"
+    
+    logger.info(
+        f"[VOICE_AUTO] Parse request: patient={patient_id}, "
+        f"timezone={timezone}, locale={locale}, auto_commit={auto_commit}, "
+        f"file={filename} ({len(audio_bytes)} bytes)"
+    )
+    
+    try:
+        # Process voice (STT + LLM parsing)
+        result = process_voice(
+            audio_bytes=audio_bytes,
+            mode="visit",  # Use visit mode for full parsing
+            timezone=timezone,
+            locale=locale,
+            today_override=today,
+            filename=filename,
+        )
+        
+        # Build full parsed structure matching LLM output schema
+        parsed_data = {
+            "action": _infer_action_from_data(result),
+            "confidence": _calculate_confidence(result),
+            "visit": {
+                "visit_date": result.visit_date,
+                "next_visit_date": result.next_visit_date,
+                "notes": result.notes,
+                "medications": None,
+            },
+            "payment": {
+                "amount": result.amount,
+                "currency": result.currency,
+                "comment": None,
+            },
+            "diagnosis": result.diagnosis,
+            "patient": {
+                "first_name": None,
+                "last_name": None,
+                "phone": None,
+                "patient_id": patient_id,
+            },
+        }
+        
+        confidence = parsed_data["confidence"]
+        
+        logger.info(
+            f"[VOICE_AUTO] Parsed: action={parsed_data['action']}, "
+            f"confidence={confidence:.2f}, amount={result.amount}, "
+            f"visit_date={result.visit_date}"
+        )
+        
+        # Check if we should auto-commit
+        action_result: VoiceActionResult | None = None
+        needs_confirmation = confidence < CONFIDENCE_THRESHOLD
+        
+        if auto_commit and not needs_confirmation:
+            try:
+                # Apply the voice action to database
+                db_result = apply_voice_action(
+                    doctor_id=current_doctor.doctor_id,
+                    patient_id=patient_id,
+                    parsed=parsed_data,
+                )
+                
+                action_result = VoiceActionResult(
+                    performed_action=db_result.get("performed_action", "none"),
+                    updated=db_result.get("updated"),
+                    warnings=db_result.get("warnings", []) + result.warnings,
+                    needs_confirmation=db_result.get("needs_confirmation", False),
+                )
+                
+                if db_result.get("needs_confirmation"):
+                    needs_confirmation = True
+                
+                logger.info(
+                    f"[VOICE_AUTO] Action applied: {action_result.performed_action}, "
+                    f"table={action_result.updated.get('table') if action_result.updated else 'none'}"
+                )
+                
+            except VoiceActionError as e:
+                logger.error(f"[VOICE_AUTO] Action failed: {e}")
+                action_result = VoiceActionResult(
+                    performed_action="error",
+                    updated=None,
+                    warnings=[str(e)] + result.warnings,
+                    needs_confirmation=True,
+                )
+                needs_confirmation = True
+        else:
+            # Add warning about low confidence
+            all_warnings = result.warnings.copy()
+            if needs_confirmation:
+                all_warnings.insert(0, f"Уверенность распознавания: {confidence:.0%}. Проверьте данные.")
+            
+            action_result = VoiceActionResult(
+                performed_action="none",
+                updated=None,
+                warnings=all_warnings,
+                needs_confirmation=True,
+            )
+        
+        return VoiceAutoParseResponse(
+            ok=True,
+            transcript=result.text,
+            parsed=parsed_data,
+            confidence=confidence,
+            result=action_result,
+            needs_confirmation=needs_confirmation,
+        )
+        
+    except VoiceNotConfiguredError as e:
+        logger.error(f"Voice AI not configured: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="Voice AI is not configured. Please set OPENAI_API_KEY.",
+        )
+    except VoiceServiceError as e:
+        logger.error(f"Voice service error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        logger.exception(f"Unexpected error in voice auto-parse: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+def _infer_action_from_data(result) -> str:
+    """Infer action type from parsed voice result."""
+    # Payment takes priority if amount is present
+    if result.amount and result.amount > 0:
+        return "create_payment"
+    
+    # Visit if date is present
+    if result.visit_date:
+        return "create_visit"
+    
+    # Next visit scheduling
+    if result.next_visit_date:
+        return "update_visit"
+    
+    # Diagnosis update
+    if result.diagnosis:
+        return "update_patient"
+    
+    # Notes
+    if result.notes:
+        return "add_note"
+    
+    return "unknown"
+
+
+def _calculate_confidence(result) -> float:
+    """Calculate confidence score based on parsed data completeness."""
+    score = 0.5  # Base score
+    
+    # Increase confidence for each valid field
+    if result.amount and result.amount > 0:
+        score += 0.2
+    if result.visit_date:
+        score += 0.15
+    if result.next_visit_date:
+        score += 0.1
+    if result.diagnosis:
+        score += 0.15
+    if result.notes:
+        score += 0.1
+    if result.currency:
+        score += 0.05
+    
+    # Decrease for warnings
+    score -= len(result.warnings) * 0.05
+    
+    # Clamp to valid range
+    return max(0.0, min(1.0, score))
 
 
 @router.post("/commit", response_model=VoiceCommitResponse)
