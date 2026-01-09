@@ -65,7 +65,7 @@ import {
   NotesSection,
   MarketingSection,
   FinanceSection,
-  // FloatingAIAssistant, // Temporarily hidden
+  FloatingAIAssistant,
 } from '../components/patientCard'
 import { DateInput } from '../components/DateInput'
 import { BackgroundPattern } from '../components/dashboard/BackgroundPattern'
@@ -109,7 +109,7 @@ export const PatientDetailsPage = () => {
   const [visits, setVisits] = useState<Visit[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  // const [refreshKey, setRefreshKey] = useState(0) // Temporarily disabled with FloatingAIAssistant
+  const [refreshKey, setRefreshKey] = useState(0)
 
   // Finance state
   const [financeSummary, setFinanceSummary] = useState<PatientFinanceSummary | null>(null)
@@ -227,7 +227,7 @@ export const PatientDetailsPage = () => {
     return () => {
       cancelled = true
     }
-  }, [id, t])
+  }, [id, t, refreshKey])
 
   // Handle diagnosis save
   const handleSaveDiagnosis = useCallback(
@@ -743,14 +743,14 @@ export const PatientDetailsPage = () => {
         </Box>
       </Box>
 
-      {/* Floating AI Assistant Widget - Hidden temporarily, will be enabled later */}
-      {/* <FloatingAIAssistant 
+      {/* Floating AI Assistant Widget */}
+      <FloatingAIAssistant 
         patientId={id} 
         onActionsApplied={() => {
           // Trigger refetch of patient and visits data after AI actions applied
           setRefreshKey(prev => prev + 1)
         }}
-      /> */}
+      />
 
       {/* New Visit Modal */}
       <Modal isOpen={newVisitModal.isOpen} onClose={newVisitModal.onClose} isCentered>
