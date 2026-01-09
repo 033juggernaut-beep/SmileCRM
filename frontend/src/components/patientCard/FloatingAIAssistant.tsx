@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Floating Voice AI Assistant - Whisper STT + LLM parsing + preview/confirm
  * 
  * Flow:
@@ -1004,8 +1004,8 @@ export function FloatingAIAssistant({ patientId, onActionsApplied }: FloatingAIA
                       </Box>
                     )}
 
-                    {/* Amount */}
-                    {(selectedMode === 'payment' || editedData.amount) && (
+                    {/* Amount - ONLY show for payment mode */}
+                    {selectedMode === 'payment' && (
                       <Box>
                         <Text fontSize="xs" color={isDark ? 'gray.500' : 'gray.400'} mb={1}>
                           Amount

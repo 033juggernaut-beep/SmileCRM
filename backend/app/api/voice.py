@@ -240,9 +240,20 @@ async def auto_parse_voice(
             filename=filename,
         )
         
+        # Infer action first
+        inferred_action = _infer_action_from_data(result)
+        
+        # GUARD: Clear payment data for non-payment actions
+        # Numbers in visit commands are dates, not money
+        payment_amount = result.amount
+        payment_currency = result.currency
+        if inferred_action != "create_payment":
+            payment_amount = None
+            payment_currency = None
+        
         # Build full parsed structure matching LLM output schema
         parsed_data = {
-            "action": _infer_action_from_data(result),
+            "action": inferred_action,
             "confidence": _calculate_confidence(result),
             "visit": {
                 "visit_date": result.visit_date,
@@ -251,8 +262,8 @@ async def auto_parse_voice(
                 "medications": None,
             },
             "payment": {
-                "amount": result.amount,
-                "currency": result.currency,
+                "amount": payment_amount,
+                "currency": payment_currency,
                 "comment": None,
             },
             "diagnosis": result.diagnosis,

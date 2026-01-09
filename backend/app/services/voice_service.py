@@ -1,4 +1,4 @@
-﻿"""
+"""
 Voice AI Service - Whisper STT + LLM parsing with strict validation
 """
 import json
@@ -431,6 +431,15 @@ def parse_voice_text(
         # Log action from new schema if present
         action = data.get("action", "unknown")
         confidence = data.get("confidence", 0.5)
+        
+        # GUARD: Only allow payment amount for payment actions
+        # Numbers in visit/diagnosis/note commands are dates, not money
+        if action in ("create_visit", "update_visit", "add_note", "update_patient", "set_diagnosis"):
+            if amount is not None:
+                logger.info(f"[LLM] Clearing amount={amount} for non-payment action={action}")
+                amount = None
+                currency = None
+        
         logger.info(f"[LLM] Parsed: action={action}, confidence={confidence:.2f}, visit_date={visit_date}, amount={amount}, currency={currency}")
         
         return VoiceParseResult(
